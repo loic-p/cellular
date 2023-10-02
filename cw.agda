@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical --safe #-}
+{-# OPTIONS --cubical --allow-unsolved-metas #-}
 
 open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude
@@ -24,6 +24,9 @@ open import Cubical.ZCohomology.Groups.Sn
 open import Cubical.Algebra.AbGroup
 
 open import prelude
+
+
+open import freeabgroup
 
 module cw where
 
@@ -125,98 +128,17 @@ pre∂ zero C x y = pos (snd C .snd .snd .fst .fst (C .snd .snd .fst zero (x , t
                 - pos (snd C .snd .snd .fst .fst (C .snd .snd .fst zero (x , false)) .fst)
 pre∂ (suc n) C x y = degree n λ z → ∂-aux* n C (snd C .snd .fst (suc n) (x , z)) (y .fst)
 
-open import freeabgroup
-open import Cubical.Data.Int renaming (_·_ to _·ℤ_ ; -_ to -ℤ_)
+
+
 open import Cubical.Foundations.GroupoidLaws
+open import Cubical.Data.Int renaming (_·_ to _·ℤ_ ; -_ to -ℤ_)
 open import Cubical.Foundations.Function
-
-Fin↑ : {n : ℕ} → Fin n → Fin (suc n)
-Fin↑ {n = n} p = fst p , <-trans (snd p) (0 , refl)
-
-sumFin : {n : ℕ} (f : Fin n → ℤ) → ℤ
-sumFin {n = zero} f = 0
-sumFin {n = suc n} f = f flast + sumFin {n = n} λ x → f (Fin↑ x)
-
-sumFin-hom : {n : ℕ} (f g : Fin n → ℤ)
-  → sumFin (λ x → f x + g x) ≡ sumFin f + sumFin g
-sumFin-hom {n = zero} f g = refl
-sumFin-hom {n = suc n} f g =
-    cong ((f flast + g flast) +_) (sumFin-hom {n = n} (f ∘ Fin↑) (g ∘ Fin↑))
-  ∙ move4 (f flast) (g flast) (sumFin {n = n} (f ∘ Fin↑)) (sumFin {n = n} (g ∘ Fin↑))
-          _+_ +Assoc +Comm
-
 open import Cubical.Algebra.Group.Morphisms
 open import Cubical.Algebra.Group.MorphismProperties
 open import Cubical.Algebra.Group.Subgroup
 open import Cubical.Algebra.Group.QuotientGroup renaming (_/_ to _//_)
 
 open import Cubical.Algebra.Group.Base
-
-generator : {n : ℕ} (k : Fin n) → ℤ[A n ] .fst
-generator {n = n} k s with (Cubical.Data.Nat.Order._≟_ (fst k) (fst s))
-... | lt x = 0
-... | eq x = 1
-... | gt x = 0
-
-generator-is-generator : {n : ℕ} (f : ℤ[A n ] .fst) (a : _)
-  → f a ≡ sumFin {n = n} λ s → f s ·ℤ (generator s a)
-generator-is-generator {n = zero} f a = ⊥.rec (¬Fin0 a)
-generator-is-generator {n = suc n} f (a , zero , p) = {!!}
-generator-is-generator {n = suc n} f (a , suc diff , p) =
-     cong f (Σ≡Prop (λ _ → Cubical.Data.Nat.Order.isProp≤) refl)
-  ∙∙ generator-is-generator {n = n} (f ∘ Fin↑) (a , diff , cong predℕ p)
-  ∙∙ (λ i → sumFin (λ x → f (Fin↑ x) ·ℤ help x a diff p i))
-  ∙∙ +Comm F 0
-  ∙∙ λ i → (sym (·Comm (f flast) 0) 
-           ∙ (cong (f flast ·ℤ_) (sym (help₂ flast refl)))) i + F
-  where
-  F = sumFin (λ x → f (Fin↑ x) ·ℤ generator (Fin↑ x) (a , suc diff , p))
-
-  help : (x : _) (a : _) (diff : _) (p : _)
-    → generator {n = n} x (a , diff , cong predℕ p)
-     ≡ generator {n = suc n} (Fin↑ x) (a , suc diff , p)
-  help x a diff p with (Cubical.Data.Nat.Order._≟_ (fst x) a)
-  ... | lt _ = refl
-  ... | eq _ = refl
-  ... | gt _ = refl
-
-  help₂ : (k : Fin (suc n)) → fst k ≡ n → generator {n = suc n} k (a , suc diff , p) ≡ 0
-  help₂ k q with (Cubical.Data.Nat.Order._≟_ (fst k) a)
-  ... | lt _ = refl
-  ... | eq x = ⊥.rec
-    (snotz (sym (+∸ (suc diff) a)
-           ∙ cong (_∸ a) (sym (+-suc diff a))
-           ∙ (cong (_∸ suc a) (p ∙ cong suc (sym q ∙ x)))
-           ∙ n∸n a))
-  ... | gt _ = refl
-
-elimFreeGroup : ∀ {ℓ} {n : ℕ}
-  → (P : ℤ[A (suc n) ] .fst → Type ℓ)
-  → ((x : _) → P (generator x))
-  → ((f : _) → P f → P (λ x → -ℤ (f x)))
-  → ((f g : _) → P f → P g → P (λ x → f x + g x))
-  → (x : _) → P x
-elimFreeGroup {n = zero} P gen d ind f =
-  subst P (sym (funExt (generator-is-generator f)))
-    {!!}
-elimFreeGroup {n = suc n} P gen d ind f =
-  subst P (sym (funExt (generator-is-generator f)))
-    (ind (λ x → f flast ·ℤ generator flast x) (λ x → (f (Fin↑ flast) ·ℤ generator (Fin↑ flast) x +
-          sumFin
-          (λ x₁ → f (Fin↑ (Fin↑ x₁)) ·ℤ generator (Fin↑ (Fin↑ x₁)) x)))
-            {!!}
-            {!!})
-    where
-    ct : {!!}
-    ct = {!!}
-
-    c : (y : ℤ) → P (λ x → y ·ℤ generator flast x)
-    c (pos zero) = {!!}
-    c (pos (suc n)) =
-      ind (generator flast) (λ x → pos n ·ℤ generator flast x) (gen flast) (c (pos n)) 
-    c (negsuc n) = {!!}
-elimFreeGroup {n = suc n} P gen d ind = {!!}
-
 
 module _ (C : CW') where
   ∂-alt : (n : ℕ) → ℤ[A snd C .fst (suc n) ] .fst → ℤ[A snd C .fst n ] .fst
