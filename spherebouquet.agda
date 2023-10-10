@@ -30,6 +30,13 @@ open import Cubical.Algebra.Group.Base
 open import Cubical.Algebra.Group.Subgroup
 open import Cubical.Algebra.AbGroup
 
+open import Cubical.Foundations.GroupoidLaws
+open import Cubical.Foundations.Univalence
+
+open import Cubical.Foundations.Function
+open import Cubical.HITs.S1
+open import Cubical.Foundations.Path
+
 open import prelude
 open import freeabgroup
 
@@ -39,44 +46,96 @@ module spherebouquet where
 terminal : (A : Type) → A → Unit
 terminal A x = tt
 
+--
+suspFunS∙ : {n : ℕ} → (S₊ n → S₊ n) → S₊∙ (suc n) →∙ S₊∙ (suc n)
+suspFunS∙ {n = zero} f with (f true)
+... | false = invLooper , refl
+... | true = idfun S¹ , refl
+suspFunS∙ {n = suc n} f = suspFun f , refl
+
 --a sphere bouquet is the wedge sum of A n-dimensional spheres
 SphereBouquet : (n : ℕ) (A : Type) → Pointed₀
 SphereBouquet n A = Pushout (terminal A) ((λ a → (a , ptSn n))) , inl tt
+
+Bouquet : (A : Type) (B : A → Pointed₀) → Pointed₀
+Bouquet A B = Pushout (terminal A) (λ a → a , pt (B a)) , inl tt
+
+Bouquet→ΩBouquetSusp : (A : Type) (B : A → Pointed₀)
+  → Bouquet A B .fst
+  → Ω (Bouquet A λ a → Susp∙ (fst (B a))) .fst
+Bouquet→ΩBouquetSusp A B (inl x) = refl
+Bouquet→ΩBouquetSusp A B (inr (a , b)) =
+  (push a ∙∙ (λ i → inr (a , toSusp (B a) b i)) ∙∙ sym (push a))
+Bouquet→ΩBouquetSusp A B (push a i) j =
+  ((λ i → push a ∙∙ (λ j → inr (a , rCancel (merid (snd (B a))) i j)) ∙∙ sym (push a))
+    ∙ ∙∙lCancel (sym (push a))) (~ i) j
+
+SuspBouquet→Bouquet : (A : Type) (B : A → Pointed₀)
+  → Susp (Bouquet A B .fst) → Bouquet A (λ a → Susp∙ (fst (B a))) .fst
+SuspBouquet→Bouquet A B north = inl tt
+SuspBouquet→Bouquet A B south = inl tt
+SuspBouquet→Bouquet A B (merid a i) = Bouquet→ΩBouquetSusp A B a i
+
+sphereBouquetSuspFun : {A : Type} {n : ℕ}
+  → Susp (SphereBouquet n A .fst) → SphereBouquet (suc n) A .fst
+sphereBouquetSuspFun {A = A} {n = n} = {!!}
 
 --the suspension of a n-dimensional bouquet is a (n+1)-dimensional bouquet
 --here is the action of suspension on morphisms
 bouquetSusp→ : {n : ℕ} {A B : Type} → (SphereBouquet n A →∙ SphereBouquet n B)
                                     → (SphereBouquet (suc n) A →∙ SphereBouquet (suc n) B)
-bouquetSusp→ {n} {A} {B} f = {!!} , {!!}
+fst (bouquetSusp→ {n} {A} {B} f) (inl x) = inl x
+fst (bouquetSusp→ {n} {A} {B} f) (inr (x , a)) =
+  sphereBouquetSuspFun (suspFun (fst f ∘ inr ∘ (x ,_)) (Iso.fun (IsoSucSphereSusp n) a))
+fst (bouquetSusp→ {n} {A} {B} f) (push a i) = {!!}
+snd (bouquetSusp→ {n} {A} {B} f) = refl
+
+degree : (n : ℕ) → (S₊ n → S₊ n) → ℤ
+degree zero f = 0 -- just to get the indexing right
+degree (suc n) f = Iso.fun ((Hⁿ-Sⁿ≅ℤ n) .fst) ∣ (λ x → ∣ f x ∣) ∣₂
+
+chooseS : {n k : ℕ} (b : Fin k)
+  → fst (SphereBouquet n (Fin k)) → S₊ n 
+chooseS {n = n} b (inl x) = ptSn n
+chooseS {n = n} b (inr (b' , x)) with (Cubical.Data.Nat.Order._≟_ (fst b) (fst b'))
+... | lt x₁ = ptSn n
+... | eq x₁ = x
+... | gt x₁ = ptSn n
+chooseS {n = n} {k = k} b (push b' i) with (Cubical.Data.Nat.Order._≟_ (fst b) (fst b'))
+... | lt x = ptSn n
+... | eq x = ptSn n
+... | gt x = ptSn n
 
 --a morphisms between bouquets gives a morphisms of free abelian groups by taking degrees
-bouquetDegree : {n : ℕ} {A B : Type} → (SphereBouquet n A →∙ SphereBouquet n B)
-                                     → (AbGroupHom ℤ[ A ] ℤ[ B ])
-bouquetDegree f = {!!}
+bouquetDegree : {n m k : ℕ} → (SphereBouquet n (Fin m) →∙ SphereBouquet n (Fin k))
+                             → (AbGroupHom (FreeAbGroup (Fin m)) (FreeAbGroup (Fin k)))
+fst (bouquetDegree {m = m} {k = k} f) r x = sumFin λ (a : Fin m) → r a ·ℤ (degree _ (chooseS x ∘ f .fst ∘ inr ∘ (a ,_)))
+snd (bouquetDegree {n = n} f) =
+  makeIsGroupHom λ x y
+    → funExt λ a'
+      → (λ j → sumFin (λ a → ·DistL+ (x a) (y a) (degree _ (chooseS a' ∘ f .fst ∘ inr ∘ (a ,_))) j))
+      ∙ sumFin-hom (λ a → x a ·ℤ (degree _ (chooseS a' ∘ f .fst ∘ inr ∘ (a ,_))))
+                              λ a → y a ·ℤ (degree _ (chooseS a' ∘ f .fst ∘ inr ∘ (a ,_)))
 
 --degree is compatible with composition
-degreeComp : {n : ℕ} {A B C : Type} → (f : SphereBouquet n B →∙ SphereBouquet n C)
-                                    → (g : SphereBouquet n A →∙ SphereBouquet n B)
-                                    → bouquetDegree (f ∘∙ g) ≡ compGroupHom (bouquetDegree g) (bouquetDegree f)
-degreeComp f g = {!!}
+
+-- degreeComp : {n : ℕ} {A B C : Type} → (f : SphereBouquet n ? →∙ SphereBouquet n C)
+--                                     → (g : SphereBouquet n A →∙ SphereBouquet n B)
+--                                     → bouquetDegree (f ∘∙ g) ≡ compGroupHom (bouquetDegree g) (bouquetDegree f)
+-- degreeComp f g = {!!}
 
 --the degree of a suspension is the same as the original degree
 --in fact, ℤ[ A ] is basically the infinite suspension of a bouquet
-degreeSusp : {n : ℕ} {A B : Type} → (f : SphereBouquet n A →∙ SphereBouquet n B)
-                                  → bouquetDegree f ≡ bouquetDegree (bouquetSusp→ f)
-degreeSusp f = {!!}
+-- degreeSusp : {n : ℕ} {A B : Type} → (f : SphereBouquet n A →∙ SphereBouquet n B)
+--                                   → bouquetDegree f ≡ bouquetDegree (bouquetSusp→ f)
+-- degreeSusp f = {!!}
 
 
 ------------------
 -- Equivalence between Bouquet of spheres and the cofibre
 -- Dunno where to place this.
 
-open import Cubical.Foundations.GroupoidLaws
-open import Cubical.Foundations.Univalence
 
-open import Cubical.Foundations.Function
-open import Cubical.HITs.S1
-open import Cubical.Foundations.Path
 
 preBTC : {Cₙ Cₙ₊₁ : Type} (n mₙ : ℕ)
     (αₙ : Fin mₙ × S₊ n → Cₙ)
