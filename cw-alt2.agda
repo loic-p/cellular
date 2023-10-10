@@ -76,8 +76,12 @@ cofiber : (n : ℕ) (C : CW) → Pointed₀
 cofiber n C = Pushout (terminal (fst C n)) (CW↪ C n) , inl tt
 
 --...is basically a sphere bouquet
-cofiber≃bouquet : (n : ℕ) (C : CW) → cofiber n C ≃∙ (SphereBouquet (suc n) (Fin (snd C .fst (suc n))))
-cofiber≃bouquet n C = {!!}
+cofiber≃bouquet : (n : ℕ) (C : CW)
+  → cofiber n C ≃∙ (SphereBouquet (suc n) (Fin (snd C .fst (suc n))))
+cofiber≃bouquet n C = Bouquet≃∙-gen n (fst (C .snd) (suc n)) (α n) e
+  where
+  α = C .snd .snd .fst
+  e = C .snd .snd .snd .snd n
 
 --sending X (suc n) into the cofiber
 to_cofiber : (n : ℕ) (C : CW) → (fst C (suc n)) → fst (cofiber n C)
