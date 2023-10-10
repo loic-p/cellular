@@ -76,6 +76,51 @@ SuspBouquet→Bouquet A B north = inl tt
 SuspBouquet→Bouquet A B south = inl tt
 SuspBouquet→Bouquet A B (merid a i) = Bouquet→ΩBouquetSusp A B a i
 
+Bouquet→SuspBouquet : (A : Type) (B : A → Pointed₀)
+  → Bouquet A (λ a → Susp∙ (fst (B a))) .fst → Susp (Bouquet A B .fst)
+Bouquet→SuspBouquet A B (inl x) = north
+Bouquet→SuspBouquet A B (inr (a , north)) = north
+Bouquet→SuspBouquet A B (inr (a , south)) = south
+Bouquet→SuspBouquet A B (inr (a , merid b i)) = merid (inr (a , b)) i
+Bouquet→SuspBouquet A B (push a i) = north
+
+SuspBouquet-Bouquet-cancel : (A : Type) (B : A → Pointed₀)
+    → section (SuspBouquet→Bouquet A B) (Bouquet→SuspBouquet A B)
+     × retract (SuspBouquet→Bouquet A B) (Bouquet→SuspBouquet A B)
+SuspBouquet-Bouquet-cancel A B = sec , ret
+  where
+    sec : section (SuspBouquet→Bouquet A B) (Bouquet→SuspBouquet A B)
+    sec (inl tt) i = inl tt
+    sec (inr (a , north)) = push a
+    sec (inr (a , south)) = (push a) ∙∙ (λ i → inr (a , merid (pt (B a)) i)) ∙∙ (λ i → inr (a , south))
+    sec (inr (a , merid b j)) i =
+      hcomp (λ k → λ {(~ i ∧ j = i1) → push a (~ k)
+                     ; (i = i1) → inr (a , merid b j)
+                     ; (j = i0) → push a (i ∨ (~ k)) })
+            (inr (a , (hcomp (λ k → λ {(i = i1) → merid b j
+                            ; (j = i0) → north
+                            ; (j = i1) → merid (pt (B a)) (i ∨ (~ k))})
+                   (merid b j))))
+    sec (push a j) i = push a (i ∧ j)
+
+    ret : retract (SuspBouquet→Bouquet A B) (Bouquet→SuspBouquet A B)
+    ret north i = north
+    ret south = merid (inl tt)
+    ret (merid (inl tt) j) i = merid (inl tt) (i ∧ j)
+    ret (merid (inr (a , b)) j) i =
+      hcomp (λ k → λ {(j = i0) → north
+                     ; (j = i1) → merid (push a (~ k)) i
+                     ; (i = i0) → Bouquet→SuspBouquet A B (doubleCompPath-filler (push a)
+                          (λ i → inr (a , toSusp (B a) b i)) (sym (push a)) k j)
+                     ; (i = i1) → merid (inr (a , b)) j})
+            (hcomp (λ k → λ {(j = i0) → north
+                            ; (j = i1) → merid (inr (a , pt (B a))) ((~ k) ∨ i)
+                            ; (i = i0) → Bouquet→SuspBouquet A B (inr (a , compPath-filler (merid b)
+                                 (sym (merid (pt (B a)))) k j))
+                            ; (i = i1) → merid (inr (a , b)) j})
+                   (merid (inr (a , b)) j))
+    ret (merid (push a k) j) i = {!aaaa i dont wanna do this ;~;!}
+
 sphereBouquetSuspFun : {A : Type} {n : ℕ}
   → Susp (SphereBouquet n A .fst) → SphereBouquet (suc n) A .fst
 sphereBouquetSuspFun {A = A} {n = n} = {!!}
@@ -95,7 +140,7 @@ degree zero f = 0 -- just to get the indexing right
 degree (suc n) f = Iso.fun ((Hⁿ-Sⁿ≅ℤ n) .fst) ∣ (λ x → ∣ f x ∣) ∣₂
 
 chooseS : {n k : ℕ} (b : Fin k)
-  → fst (SphereBouquet n (Fin k)) → S₊ n 
+  → fst (SphereBouquet n (Fin k)) → S₊ n
 chooseS {n = n} b (inl x) = ptSn n
 chooseS {n = n} b (inr (b' , x)) with (Cubical.Data.Nat.Order._≟_ (fst b) (fst b'))
 ... | lt x₁ = ptSn n
