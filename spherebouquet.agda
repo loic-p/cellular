@@ -5,7 +5,7 @@ open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Pointed
 open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Equiv
-open import Cubical.Data.Bool hiding (_≤_)
+open import Cubical.Data.Bool hiding (_≤_ ;  _≟_)
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
 open import Cubical.Data.Nat.Order
 open import Cubical.Data.Fin
@@ -180,32 +180,84 @@ SuspBouquet-Bouquet-cancel A B = sec , ret
                      ; (j = i1) →  merid (inr (a , snd (B a))) (~ k ∨ i)})
                    (merid (inr (a , snd (B a))) j))
 
+Iso-SuspBouquet-Bouquet : (A : Type) (B : A → Pointed₀)
+  → Iso (Susp (Bouquet A B .fst)) (Bouquet A (λ a → Susp∙ (fst (B a))) .fst)
+Iso.fun (Iso-SuspBouquet-Bouquet A B) = SuspBouquet→Bouquet A B
+Iso.inv (Iso-SuspBouquet-Bouquet A B) = Bouquet→SuspBouquet A B
+Iso.rightInv (Iso-SuspBouquet-Bouquet A B) = SuspBouquet-Bouquet-cancel A B .fst
+Iso.leftInv (Iso-SuspBouquet-Bouquet A B) = SuspBouquet-Bouquet-cancel A B .snd
+
+SuspBouquet≃∙Bouquet : (A : Type) (B : A → Pointed₀)
+  → Susp∙ (Bouquet A B .fst) ≃∙ Bouquet A (λ a → Susp∙ (fst (B a)))
+fst (SuspBouquet≃∙Bouquet A B) = isoToEquiv (Iso-SuspBouquet-Bouquet A B)
+snd (SuspBouquet≃∙Bouquet A B) = refl
+
+sphereBouquetSuspIso : {A : Type} {n : ℕ}
+  → Iso (Susp (SphereBouquet n A .fst)) (SphereBouquet (suc n) A .fst)
+sphereBouquetSuspIso {A = A} {n = zero} =
+  compIso (Iso-SuspBouquet-Bouquet A λ _ → S₊∙ zero)
+    (subst (λ P → Iso (Bouquet A (λ a → P) .fst) (SphereBouquet 1 A .fst))
+      (ua∙ (isoToEquiv (IsoSucSphereSusp zero)) refl)
+      idIso) 
+sphereBouquetSuspIso {A = A} {n = suc n} = Iso-SuspBouquet-Bouquet A λ _ → S₊∙ (suc n)
+
+sphereBouquet≃∙Susp : {A : Type} {n : ℕ}
+  → Susp∙ (SphereBouquet n A .fst) ≃∙ SphereBouquet (suc n) A
+fst sphereBouquet≃∙Susp = isoToEquiv (sphereBouquetSuspIso)
+snd (sphereBouquet≃∙Susp {n = zero}) = refl
+snd (sphereBouquet≃∙Susp {n = suc n}) = refl
+
 sphereBouquetSuspFun : {A : Type} {n : ℕ}
   → Susp (SphereBouquet n A .fst) → SphereBouquet (suc n) A .fst
-sphereBouquetSuspFun {A = A} {n = n} = {!!}
+sphereBouquetSuspFun {A = A} {n = n} = sphereBouquetSuspIso .Iso.fun
+
+sphereBouquetSuspFun∙ : {A : Type} {n : ℕ}
+  → Susp∙ (SphereBouquet n A .fst) →∙ SphereBouquet (suc n) A
+sphereBouquetSuspFun∙ {A = A} {n = n} = ≃∙map (sphereBouquet≃∙Susp)
+
+sphereBouquetSuspInvFun∙ : {A : Type} {n : ℕ}
+  → SphereBouquet (suc n) A →∙ Susp∙ (SphereBouquet n A .fst)
+sphereBouquetSuspInvFun∙ {A = A} {n = n} = ≃∙map (invEquiv∙ (sphereBouquet≃∙Susp))
+
+suspFun∙ : ∀ {ℓ ℓ'} {A : Type ℓ} {B : Type ℓ'} (f : A → B)
+       → Susp∙ A →∙ Susp∙ B
+fst (suspFun∙ f) = suspFun f
+snd (suspFun∙ f) = refl
 
 --the suspension of a n-dimensional bouquet is a (n+1)-dimensional bouquet
 --here is the action of suspension on morphisms
-bouquetSusp→ : {n : ℕ} {A B : Type} → (SphereBouquet n A →∙ SphereBouquet n B)
-                                    → (SphereBouquet (suc n) A →∙ SphereBouquet (suc n) B)
-fst (bouquetSusp→ {n} {A} {B} f) (inl x) = inl x
-fst (bouquetSusp→ {n} {A} {B} f) (inr (x , a)) =
-  sphereBouquetSuspFun (suspFun (fst f ∘ inr ∘ (x ,_)) (Iso.fun (IsoSucSphereSusp n) a))
-fst (bouquetSusp→ {n} {A} {B} f) (push a i) = {!!}
-snd (bouquetSusp→ {n} {A} {B} f) = refl
+bouquetSusp→ : {n : ℕ} {A B : Type}
+  → (SphereBouquet n A →∙ SphereBouquet n B)
+  → (SphereBouquet (suc n) A →∙ SphereBouquet (suc n) B)
+bouquetSusp→ {n = n} {A} {B} f =
+     sphereBouquetSuspFun∙ ∘∙ (suspFun∙ (fst f) ∘∙ sphereBouquetSuspInvFun∙)
+
+-- bullshit
+private
+  bouquetSusp→' : {n : ℕ} {A B : Type}
+    → (SphereBouquet n A →∙ SphereBouquet n B)
+    → (SphereBouquet (suc n) A →∙ SphereBouquet (suc n) B)
+  fst (bouquetSusp→' {n} f) = sphereBouquetSuspFun ∘ suspFun (fst f) ∘ Iso.inv sphereBouquetSuspIso
+  snd (bouquetSusp→' {zero} f) = refl
+  snd (bouquetSusp→' {suc n} f) = refl
+
+  -- fill if need be
+  bouquetSusp→≡ : {n : ℕ} {A B : Type} (f : SphereBouquet n A →∙ SphereBouquet n B)
+    → bouquetSusp→ f ≡ bouquetSusp→' f
+  bouquetSusp→≡ {n = n} f = {!!}
 
 degree : (n : ℕ) → (S₊ n → S₊ n) → ℤ
-degree zero f = 0 -- just to get the indexing right
+degree zero f = 0
 degree (suc n) f = Iso.fun ((Hⁿ-Sⁿ≅ℤ n) .fst) ∣ (λ x → ∣ f x ∣) ∣₂
 
 chooseS : {n k : ℕ} (b : Fin k)
   → fst (SphereBouquet n (Fin k)) → S₊ n
 chooseS {n = n} b (inl x) = ptSn n
-chooseS {n = n} b (inr (b' , x)) with (Cubical.Data.Nat.Order._≟_ (fst b) (fst b'))
+chooseS {n = n} b (inr (b' , x)) with (fst b ≟ fst b')
 ... | lt x₁ = ptSn n
 ... | eq x₁ = x
 ... | gt x₁ = ptSn n
-chooseS {n = n} {k = k} b (push b' i) with (Cubical.Data.Nat.Order._≟_ (fst b) (fst b'))
+chooseS {n = n} {k = k} b (push b' i) with (fst b ≟ fst b')
 ... | lt x = ptSn n
 ... | eq x = ptSn n
 ... | gt x = ptSn n
@@ -213,7 +265,8 @@ chooseS {n = n} {k = k} b (push b' i) with (Cubical.Data.Nat.Order._≟_ (fst b)
 --a morphisms between bouquets gives a morphisms of free abelian groups by taking degrees
 bouquetDegree : {n m k : ℕ} → (SphereBouquet n (Fin m) →∙ SphereBouquet n (Fin k))
                              → (AbGroupHom (FreeAbGroup (Fin m)) (FreeAbGroup (Fin k)))
-fst (bouquetDegree {m = m} {k = k} f) r x = sumFin λ (a : Fin m) → r a ·ℤ (degree _ (chooseS x ∘ f .fst ∘ inr ∘ (a ,_)))
+fst (bouquetDegree {m = m} {k = k} f) r x =
+  sumFin λ (a : Fin m) → r a ·ℤ (degree _ (chooseS x ∘ f .fst ∘ inr ∘ (a ,_)))
 snd (bouquetDegree {n = n} f) =
   makeIsGroupHom λ x y
     → funExt λ a'

@@ -32,7 +32,7 @@ open import Cubical.Algebra.AbGroup
 
 open import prelude
 open import freeabgroup
-open import spherebouquet
+open import spherebouquet hiding (chooseS ; degree)
 
 module cw-alt2 where
 
@@ -109,7 +109,7 @@ pre-∂ n C = {!!}
 
 --and then we take the bouquetDegree of pre-∂
 ∂ : (n : ℕ) (C : CW) → AbGroupHom ℤ[ Fin (snd C .fst (suc (suc n))) ] ℤ[ Fin (snd C .fst (suc n)) ]
-∂ n C = bouquetDegree (pre-∂ n C)
+∂ n C = {!!} -- bouquetDegree (pre-∂ n C)
 
 --now we want to prove that ∂∂ = 0
 --to do that, we use the lemmas in spherebouquet to show that it suffices to show Susp(pre-∂) ∘ pre-∂ = 0
