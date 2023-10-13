@@ -93,6 +93,18 @@ generator {n = n} k s with (Cubical.Data.Nat.Order._≟_ (fst k) (fst s))
 ... | eq x = 1
 ... | gt x = 0
 
+generator-comm : {n : ℕ} (x y : Fin n) → generator x y ≡ generator y x
+generator-comm x y with (Cubical.Data.Nat.Order._≟_ (fst x) (fst y)) | (Cubical.Data.Nat.Order._≟_ (fst y) (fst x))
+... | lt x₁ | lt x₂ = refl
+... | lt x₁ | eq x₂ = ⊥.rec (¬m<m (subst (_< fst y) (sym x₂) x₁))
+... | lt x₁ | gt x₂ = refl
+... | eq x₁ | lt x₂ = ⊥.rec (¬m<m (subst (fst y <_) x₁ x₂))
+... | eq x₁ | eq x₂ = refl
+... | eq x₁ | gt x₂ = ⊥.rec (¬m<m (subst (_< fst y) x₁ x₂))
+... | gt x₁ | lt x₂ = refl
+... | gt x₁ | eq x₂ = ⊥.rec (¬m<m (subst (_< fst x) x₂ x₁))
+... | gt x₁ | gt x₂ = refl
+
 generator-is-generator : {n : ℕ} (f : ℤ[A n ] .fst) (a : _)
   → f a ≡ sumFin {n = n} λ s → f s ·ℤ (generator s a)
 generator-is-generator {n = zero} f a = ⊥.rec (¬Fin0 a)

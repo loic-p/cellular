@@ -250,6 +250,159 @@ degree : (n : ℕ) → (S₊ n → S₊ n) → ℤ
 degree zero f = 0
 degree (suc n) f = Iso.fun ((Hⁿ-Sⁿ≅ℤ n) .fst) ∣ (λ x → ∣ f x ∣) ∣₂
 
+open import Cubical.Foundations.HLevels
+open import Cubical.Homotopy.Group.Base
+open import Cubical.Homotopy.Group.PinSn
+
+HⁿSⁿ-gen : (n : ℕ) → Iso.fun (fst (Hⁿ-Sⁿ≅ℤ n)) ∣ ∣_∣ₕ ∣₂ ≡ 1
+HⁿSⁿ-gen zero = refl
+HⁿSⁿ-gen (suc n) = cong (Iso.fun (fst (Hⁿ-Sⁿ≅ℤ n))) h2 ∙ HⁿSⁿ-gen n
+  where
+  help : Iso.inv (fst (suspensionAx-Sn n n)) ∣ ∣_∣ₕ ∣₂ ≡ ∣ ∣_∣ₕ ∣₂
+  help = cong ∣_∣₂
+    (funExt λ { north → refl
+              ; south i → ∣ merid (ptSn (suc n)) i ∣ₕ
+              ; (merid a i) j → ∣ compPath-filler (merid a) (sym (merid (ptSn (suc n)))) (~ j) i ∣ₕ})
+
+  h2 : Iso.fun (fst (suspensionAx-Sn n n)) ∣ ∣_∣ₕ ∣₂ ≡ ∣ ∣_∣ₕ ∣₂
+  h2 = (sym (cong (Iso.fun (fst (suspensionAx-Sn n n))) help)
+     ∙ Iso.rightInv (fst (suspensionAx-Sn n n)) ∣ ∣_∣ₕ ∣₂)
+
+sphereMapF : (n : ℕ) → Iso ∥ (S₊ (suc n) → S₊ (suc n)) ∥₂ ∥ (S₊ (suc n) → hLevelTrunc (3 +ℕ n) (S₊ (suc n))) ∥₂
+sphereMapF zero = setTruncIso (codomainIso (invIso (truncIdempotentIso 3 isGroupoidS¹)))
+sphereMapF (suc n) = {! -- TR.rec2 ? ?!}
+  where
+  estp : (n : ℕ) (fn : S₊ (2 +ℕ n)) → ∥ fn ≡ north ∥₂
+  estp n fn =
+    TR.rec (isOfHLevelPlus' 2 squash₂) ∣_∣₂
+        (isConnectedPathSⁿ (suc n) fn north .fst)
+
+  estp-eq : (n : ℕ) (fn : S₊ (2 +ℕ n)) (p : fn ≡ north) → estp n fn ≡ ∣ p ∣₂
+  estp-eq n fn p j =
+    TR.rec (isOfHLevelPlus' 2 squash₂) ∣_∣₂ (isConnectedPathSⁿ (suc n) fn north .snd ∣ p ∣ j)
+
+  π-forget : (π'Gr (suc n) (S₊∙ (2 +ℕ n)) .fst) → ∥ (S₊ (2 +ℕ n) → S₊ (2 +ℕ n)) ∥₂
+  π-forget = ST.map fst
+
+  iso-homGr : Iso ∥ (S₊ (2 +ℕ n) → S₊ (2 +ℕ n)) ∥₂ (π'Gr (suc n) (S₊∙ (2 +ℕ n)) .fst)
+  Iso.fun iso-homGr = ST.rec squash₂ λ f → ST.map (λ p → f , p) (estp n (f north))
+  Iso.inv iso-homGr = π-forget
+  Iso.rightInv iso-homGr =
+    ST.elim (λ _ → isSetPathImplicit)
+      λ f i → ST.map (λ p → fst f , p) (estp-eq n _ (snd f) i)
+  Iso.leftInv iso-homGr = ST.elim (λ _ → isSetPathImplicit)
+    λ f → ST.rec isSetPathImplicit
+      (λ p j → π-forget (ST.map (λ p₁ → f , p₁) (estp-eq n (f north) p j)))
+           (estp n (f north))
+
+  open import Cubical.Algebra.Group.ZAction
+  open import Cubical.Algebra.Group.Morphisms
+  open import Cubical.Algebra.Group.Instances.Int
+  open import Cubical.Algebra.Group.GroupPath
+  open import Cubical.ZCohomology.Base
+  open import Cubical.ZCohomology.Properties
+  open import Cubical.ZCohomology.GroupStructure
+  open import Cubical.ZCohomology.Groups.Sn
+  
+  
+  
+  
+  
+  1∈Im→isEquiv' : ∀ (G : Group₀) (e : GroupEquiv ℤGroup G)
+            (H : Group₀) (e' : GroupEquiv ℤGroup H)
+         → (h₀ : fst H)
+         → 1 ≡ invEq (fst e') h₀
+         → (h : GroupHom G H)
+         → isInIm (_ , snd h) h₀
+         → isEquiv (fst h)
+  1∈Im→isEquiv' G e H =
+    GroupEquivJ (λ H e'
+      → (h₀ : fst H)
+         → 1 ≡ invEq (fst e') h₀
+         → (h : GroupHom G H)
+         → isInIm (_ , snd h) h₀
+         → isEquiv (fst h))
+       (J> 1∈Im→isEquiv G e)
+
+  GroupHom1 : (π'Gr (suc n) (S₊∙ (suc (suc n))) .fst) → coHom (2 +ℕ n) (S₊ (2 +ℕ n))
+  GroupHom1 = ST.map λ f x → ∣ fst f x ∣
+
+  makeSn-fun : ((f : S₊ (suc n) → Ω (S₊∙ (suc (suc n))) .fst) → S₊ (suc (suc n)) → S₊ (suc (suc n)))
+  makeSn-fun f north = north
+  makeSn-fun f south = north
+  makeSn-fun f (merid a i) = f a i
+
+  makeSn-fun-σ : (f : S₊∙ (suc n) →∙ Ω (S₊∙ (suc (suc n))))
+    → (x : _)
+    → cong (makeSn-fun (fst f)) (σ (suc n) x) ≡ fst f x
+  makeSn-fun-σ f x =
+      cong-∙ (makeSn-fun (fst f)) (merid x) (sym (merid _))
+    ∙ cong (λ z → fst f x ∙ sym z) (snd f)
+    ∙ sym (rUnit _)
+
+  open import Cubical.HITs.PropositionalTruncation as PT
+  open import Cubical.Homotopy.Connected
+  
+  makeSnEq : (f : _) → ∥ Σ[ g ∈ (S₊∙ (suc n) →∙ Ω (S₊∙ (suc (suc n)))) ] f ≡ makeSn-fun (fst g) ∥₂
+  makeSnEq f =
+    ST.map
+      (λ p → ((λ x → (sym p ∙ cong f (merid x) ∙ (cong f (sym (merid (ptSn _))) ∙ p)))
+              , (cong (sym p ∙_) (assoc _ _ _ ∙ cong (_∙ p) (rCancel (cong f (merid (ptSn _))))
+                               ∙ sym (lUnit p))
+               ∙ lCancel p))
+            , funExt (λ { north → p
+                        ; south → cong f (sym (merid (ptSn _))) ∙ p 
+                        ; (merid a i) j → compPath-filler' (sym p)
+                                           (compPath-filler (cong f (merid a))
+                                             (cong f (sym (merid (ptSn _))) ∙ p) j) j i}))
+      (estp n (f north))
+
+  makeSnEq∙ : (f : (S₊∙ (2 +ℕ n)) →∙ S₊∙ (2 +ℕ n))
+    → ∃[ g ∈ _ ] f ≡ (makeSn-fun (fst g) , refl)
+  makeSnEq∙ f =
+    ST.rec (isProp→isSet squash₁)
+      (uncurry (λ g q → TR.rec (isProp→isOfHLevelSuc n squash₁)
+        (λ r → ∣ g , ΣPathP (q , (sym r ◁ (λ i j → q (i ∨ j) north))) ∣₁)
+        (isConnectedPath _
+          (isConnectedPathSⁿ (suc n) (fst f north) north) (funExt⁻ q north) (snd f) .fst )))
+      (makeSnEq (fst f))  
+
+  πₙSⁿ→HⁿSⁿ : GroupHom (π'Gr (suc n) (S₊∙ (suc (suc n)))) (coHomGr (2 +ℕ n) (S₊ (2 +ℕ n)))
+  fst πₙSⁿ→HⁿSⁿ = GroupHom1
+  snd πₙSⁿ→HⁿSⁿ = makeIsGroupHom isGrHom
+    where
+    isGrHom : (f g : _) → GroupHom1 (·π' _ f g) ≡ GroupHom1 f +ₕ GroupHom1 g
+    isGrHom = ST.elim2 (λ _ _ → isSetPathImplicit)
+                λ f g → PT.rec2 (squash₂ _ _)
+                  (uncurry (λ g' gp → uncurry λ h hp
+                    → (λ i → GroupHom1 (·π' (suc n) ∣ gp i ∣₂ ∣ hp i ∣₂) )
+                    ∙∙ cong ∣_∣₂ (funExt
+                      (λ { north → refl
+                         ; south → refl
+                         ; (merid a i) j
+                         → hcomp (λ k → λ {(i = i0) → 0ₖ (2 +ℕ n)
+                                          ; (i = i1) → 0ₖ (2 +ℕ n)
+                                          ; (j = i0) → ∣ (rUnit (makeSn-fun-σ g' a (~ k)) k ∙ rUnit (makeSn-fun-σ h a (~ k)) k) i ∣ₕ
+                                          ; (j = i1) → ∙≡+₂ _ (cong ∣_∣ₕ (g' .fst a)) (cong ∣_∣ₕ (h .fst a)) k i})
+                                  (cong-∙ ∣_∣ₕ (g' .fst a) (h .fst a) j i)}))
+                    ∙∙ λ i → GroupHom1 ∣ gp (~ i) ∣₂ +ₕ GroupHom1 ∣ hp (~ i) ∣₂)) (makeSnEq∙ f) (makeSnEq∙ g)
+
+
+
+  πₙSⁿ≅HⁿSⁿ : GroupEquiv (π'Gr (suc n) (S₊∙ (suc (suc n)))) (coHomGr (2 +ℕ n) (S₊ (2 +ℕ n)))
+  fst πₙSⁿ≅HⁿSⁿ = _ ,
+                1∈Im→isEquiv' _ (GroupIso→GroupEquiv (invGroupIso (πₙ'Sⁿ≅ℤ (suc n)))) _
+                                 (GroupIso→GroupEquiv (invGroupIso (Hⁿ-Sⁿ≅ℤ (suc n))))
+                                 ∣ ∣_∣ₕ ∣₂
+                                 (sym (HⁿSⁿ-gen (suc n)))
+                                 πₙSⁿ→HⁿSⁿ
+                                 ∣ ∣ idfun∙ _ ∣₂ , refl ∣₁
+  snd πₙSⁿ≅HⁿSⁿ = snd πₙSⁿ→HⁿSⁿ
+
+degree· : (n : ℕ) (f g : S₊ n → S₊ n) → degree n f ·ℤ degree n g ≡ degree n (f ∘ g)   
+degree· zero f g = refl
+degree· (suc n) f g = {!!}
+
 chooseS : {n k : ℕ} (b : Fin k)
   → fst (SphereBouquet n (Fin k)) → S₊ n
 chooseS {n = n} b (inl x) = ptSn n
@@ -276,10 +429,47 @@ snd (bouquetDegree {n = n} f) =
 
 --degree is compatible with composition
 
--- degreeComp : {n : ℕ} {A B C : Type} → (f : SphereBouquet n ? →∙ SphereBouquet n C)
---                                     → (g : SphereBouquet n A →∙ SphereBouquet n B)
---                                     → bouquetDegree (f ∘∙ g) ≡ compGroupHom (bouquetDegree g) (bouquetDegree f)
--- degreeComp f g = {!!}
+open import Cubical.Foundations.HLevels
+open import Cubical.HITs.FreeAbGroup as FG hiding (FreeAbGroup)
+open import Cubical.Algebra.Group.Morphisms
+
+EqHoms : ∀ {n m : ℕ}
+  → {ϕ ψ : AbGroupHom (FreeAbGroup (Fin n)) (FreeAbGroup (Fin m))}
+  → ((x : _) → fst ϕ (generator x) ≡ fst ψ (generator x))
+  → ϕ ≡ ψ
+EqHoms {n} {m} {ϕ} {ψ} idr =
+  Σ≡Prop (λ _ → isPropIsGroupHom _ _)
+    (funExt (elimPropℤ[Fin] _ _ (λ _ → isOfHLevelPath' 1 (isSetΠ (λ _ → isSetℤ)) _ _)
+      (IsGroupHom.pres1 (snd ϕ) ∙ sym (IsGroupHom.pres1 (snd ψ)))
+      idr
+      (λ f g p q → IsGroupHom.pres· (snd ϕ) f g  ∙∙ (λ i x → p i x + q i x) ∙∙ sym (IsGroupHom.pres· (snd ψ) f g ))
+      λ f p → IsGroupHom.presinv (snd ϕ) f ∙∙ (λ i x → -ℤ (p i x)) ∙∙ sym (IsGroupHom.presinv (snd ψ) f)))
+
+degreeComp : {n m k l : ℕ}
+  → (f : SphereBouquet n (Fin m) →∙ SphereBouquet n (Fin k))
+  → (g : SphereBouquet n (Fin l) →∙ SphereBouquet n (Fin m))
+  → bouquetDegree (f ∘∙ g) ≡ compGroupHom (bouquetDegree g) (bouquetDegree f)
+degreeComp {n} {m} {k} {l} f g =
+  EqHoms
+    λ (x : Fin l) → funExt λ t
+      → ((λ i → sumFin (λ a → ·Comm (generator x a) (degree n (λ x₁ → chooseS t (fst f (fst g (inr (a , x₁)))))) i))
+      ∙ λ i → sumFin (λ a → degree n (λ x₁ → chooseS t (fst f (fst g (inr (a , x₁))))) ·ℤ generator-comm x a i))
+      ∙ sym (generator-is-generator (λ a → degree n (λ x₁ → chooseS t (fst f (fst g (inr (a , x₁)))))) x)
+      ∙ {!!}
+      ∙ λ j → sumFin (λ (a : Fin m) → help x a (~ j) ·ℤ degree n (λ x₁ → chooseS t (f .fst (inr (a , x₁)))))
+  where
+  sumFinId : {n : ℕ} (f g : Fin n → ℤ) → ((x : _) → f x ≡ g x) → sumFin f ≡ sumFin g
+  sumFinId f g t i = sumFin λ x → t x i
+
+  help : (x : Fin l) (a : Fin m)
+    → sumFin (λ a₁ → generator x a₁ ·ℤ degree n (λ x₁ → chooseS a (g .fst (inr (a₁ , x₁)))))
+     ≡ degree n (λ x₁ → chooseS a (g .fst (inr (x , x₁))))
+  help x a =
+       sumFinId (λ a₁ → generator x a₁ ·ℤ degree n (λ x₁ → chooseS a (g .fst (inr (a₁ , x₁)))))
+                _
+                (λ p → ·Comm (generator x p) (degree n (λ x₁ → chooseS a (g .fst (inr (p , x₁)))))
+              ∙ λ i → degree n (λ x₁ → chooseS a (g .fst (inr (p , x₁)))) ·ℤ generator-comm x p i)
+     ∙ sym (generator-is-generator (λ a₁ → degree n (λ x₁ → chooseS a (g .fst (inr (a₁ , x₁))))) x)
 
 --the degree of a suspension is the same as the original degree
 --in fact, ℤ[ A ] is basically the infinite suspension of a bouquet
