@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical --allow-unsolved-metas #-}
+{-# OPTIONS --cubical --allow-unsolved-metas --lossy-unification #-}
 {-
 Contains facts about the degree map Sⁿ → Sⁿ
 -}
@@ -28,6 +28,7 @@ open import Cubical.Algebra.Group.ZAction
 open import Cubical.Algebra.Group.Morphisms
 open import Cubical.Algebra.Group.Instances.Int
 open import Cubical.Algebra.Group.GroupPath
+open import Cubical.Algebra.Group.Properties
 
 open import Cubical.Homotopy.Group.Base
 open import Cubical.Homotopy.Group.PinSn
@@ -46,7 +47,33 @@ open import freeabgroup
 
 module degree where
 
+--- preliminaries: to be moved to main lib in relevant folders
+ℤ·-negsuc : ∀ {ℓ} (G : Group ℓ) (a : ℕ) (g : fst G)
+  → (negsuc a ℤ[ G ]· g) ≡ GroupStr.inv (snd G) ((pos (suc a)) ℤ[ G ]· g)
+ℤ·-negsuc G zero g = sym (cong (GroupStr.inv (snd G)) (GroupStr.·IdR (snd G) _))
+ℤ·-negsuc G (suc a) g =
+    (distrℤ· G g (negsuc a) (negsuc zero))
+  ∙ cong₂ (GroupStr._·_ (snd G)) (ℤ·-negsuc G a g) refl
+  ∙ sym (GroupTheory.invDistr G g ((pos (suc a)) ℤ[ G ]· g))
 
+gen∈Im→isEquiv : ∀ (G : Group₀) (e : GroupEquiv ℤGroup G)
+          (H : Group₀) (e' : GroupEquiv ℤGroup H)
+       → (h₀ : fst H)
+       → 1 ≡ invEq (fst e') h₀
+       → (h : GroupHom G H)
+       → isInIm (_ , snd h) h₀
+       → isEquiv (fst h)
+gen∈Im→isEquiv G e H =
+  GroupEquivJ (λ H e'
+    → (h₀ : fst H)
+       → 1 ≡ invEq (fst e') h₀
+       → (h : GroupHom G H)
+       → isInIm (_ , snd h) h₀
+       → isEquiv (fst h))
+     (J> 1∈Im→isEquiv G e)
+
+
+----------- main part ------------
 degree : (n : ℕ) → (S₊ n → S₊ n) → ℤ
 degree zero f = 0
 degree (suc n) f = Iso.fun ((Hⁿ-Sⁿ≅ℤ n) .fst) ∣ (λ x → ∣ f x ∣) ∣₂
@@ -54,7 +81,6 @@ degree (suc n) f = Iso.fun ((Hⁿ-Sⁿ≅ℤ n) .fst) ∣ (λ x → ∣ f x ∣)
 degree∙ : (n : ℕ) → (S₊∙ n →∙ S₊∙ n) → ℤ
 degree∙ zero f = 0
 degree∙ (suc n) f = Iso.fun ((Hⁿ-Sⁿ≅ℤ n) .fst) ∣ (λ x → ∣ fst f x ∣) ∣₂
-
 
 -- Generator of HⁿSⁿ
 HⁿSⁿ-gen : (n : ℕ) → Iso.fun (fst (Hⁿ-Sⁿ≅ℤ n)) ∣ ∣_∣ₕ ∣₂ ≡ 1
@@ -80,25 +106,7 @@ private
   makePted-eq n fn p j =
     TR.rec (isOfHLevelPlus' 2 squash₂) ∣_∣₂ (isConnectedPathSⁿ (suc n) fn north .snd ∣ p ∣ j)
 
-  -- move somewhere
-  gen∈Im→isEquiv : ∀ (G : Group₀) (e : GroupEquiv ℤGroup G)
-            (H : Group₀) (e' : GroupEquiv ℤGroup H)
-         → (h₀ : fst H)
-         → 1 ≡ invEq (fst e') h₀
-         → (h : GroupHom G H)
-         → isInIm (_ , snd h) h₀
-         → isEquiv (fst h)
-  gen∈Im→isEquiv G e H =
-    GroupEquivJ (λ H e'
-      → (h₀ : fst H)
-         → 1 ≡ invEq (fst e') h₀
-         → (h : GroupHom G H)
-         → isInIm (_ , snd h) h₀
-         → isEquiv (fst h))
-       (J> 1∈Im→isEquiv G e)
-
-
-
+-- Forgetting pointedness gives iso
 πₙSⁿ-unpoint : (n : ℕ) → (π'Gr n (S₊∙ (suc n)) .fst) → ∥ (S₊ (suc n) → S₊ (suc n)) ∥₂
 πₙSⁿ-unpoint n = ST.map fst
 
@@ -164,7 +172,7 @@ module suspensionLemmas (n : ℕ) where
                                ∙ sym (lUnit p))
                ∙ lCancel p))
             , funExt (λ { north → p
-                        ; south → cong f (sym (merid (ptSn _))) ∙ p 
+                        ; south → cong f (sym (merid (ptSn _))) ∙ p
                         ; (merid a i) j → compPath-filler' (sym p)
                                            (compPath-filler (cong f (merid a))
                                              (cong f (sym (merid (ptSn _))) ∙ p) j) j i}))
@@ -178,7 +186,7 @@ module suspensionLemmas (n : ℕ) where
         (λ r → ∣ g , ΣPathP (q , (sym r ◁ (λ i j → q (i ∨ j) north))) ∣₁)
         (isConnectedPath _
           (isConnectedPathSⁿ (suc n) (fst f north) north) (funExt⁻ q north) (snd f) .fst )))
-      (makeSnEq (fst f))  
+      (makeSnEq (fst f))
 
 πₙSⁿ→HⁿSⁿ : (n : ℕ) → GroupHom (π'Gr n (S₊∙ (suc n))) (coHomGr (suc n) (S₊ (suc n)))
 fst (πₙSⁿ→HⁿSⁿ n) = πₙSⁿ→HⁿSⁿ-fun n
@@ -258,6 +266,7 @@ snd (fst (πₙSⁿ≅HⁿSⁿ (suc n))) =
 snd (πₙSⁿ≅HⁿSⁿ n) = snd (πₙSⁿ→HⁿSⁿ n)
 
 
+-- degree can be stated as an iso
 module _ (n : ℕ) where
   degreeIso : Iso ∥ (S₊ (suc n) → S₊ (suc n)) ∥₂ ℤ
   degreeIso = compIso (invIso (πₙSⁿ-unpointIso n))
@@ -285,30 +294,33 @@ module _ (n : ℕ) where
   Iso.leftInv degree∥₂Iso p =
     cong (Iso.inv degreeIso) (funExt⁻ degree∥₂≡ p) ∙ Iso.leftInv degreeIso p
 
-multSⁿ↬ : (n : ℕ) (f g : ∥ (S₊ (suc n) → S₊ (suc n)) ∥₂)
- → ∥ (S₊ (suc n) → S₊ (suc n)) ∥₂ 
-multSⁿ↬ n = ST.rec2 squash₂ λ f g → ∣ f ∘ g ∣₂
-
 πₙSⁿ : (n : ℕ) → Group₀
 πₙSⁿ n = π'Gr n (S₊∙ (suc n))
 
-multπₙ : (n : ℕ) → (f g : πₙSⁿ n .fst) → πₙSⁿ n .fst
-multπₙ n = ST.rec2 squash₂ λ f g → ∣ f ∘∙ g ∣₂
+-- the multiplications
+module _ (n : ℕ) where
+  multSⁿ↬ : (f g : ∥ (S₊ (suc n) → S₊ (suc n)) ∥₂)
+   → ∥ (S₊ (suc n) → S₊ (suc n)) ∥₂
+  multSⁿ↬ = ST.rec2 squash₂ λ f g → ∣ f ∘ g ∣₂
 
-premultHⁿSⁿ : (n : ℕ) → (f g : S₊ (suc n) → coHomK (suc n)) → (S₊ (suc n) → coHomK (suc n)) 
-premultHⁿSⁿ n f g x = TR.rec (isOfHLevelTrunc (3 +ℕ n)) f (g x)
+  multπₙ : (f g : πₙSⁿ n .fst) → πₙSⁿ n .fst
+  multπₙ = ST.rec2 squash₂ λ f g → ∣ f ∘∙ g ∣₂
 
-multHⁿSⁿ : (n : ℕ) → (f g : coHom (suc n) (S₊ (suc n))) → coHom (suc n) (S₊ (suc n))
-multHⁿSⁿ n = ST.rec2 squash₂ (λ f g → ∣ premultHⁿSⁿ n f g ∣₂)
+  premultHⁿSⁿ : (f g : S₊ (suc n) → coHomK (suc n)) → (S₊ (suc n) → coHomK (suc n))
+  premultHⁿSⁿ f g x = TR.rec (isOfHLevelTrunc (3 +ℕ n)) f (g x)
 
+  multHⁿSⁿ : (f g : coHom (suc n) (S₊ (suc n))) → coHom (suc n) (S₊ (suc n))
+  multHⁿSⁿ = ST.rec2 squash₂ (λ f g → ∣ premultHⁿSⁿ f g ∣₂)
+
+-- preservation of multiplication under relevant isos
 multπₙ-pres : (n : ℕ) (f g : πₙSⁿ n .fst)
   → Iso.fun (πₙSⁿ-unpointIso n) (multπₙ n f g)
-   ≡ multSⁿ↬ n (Iso.fun (πₙSⁿ-unpointIso n) f) (Iso.fun (πₙSⁿ-unpointIso n) g) 
+   ≡ multSⁿ↬ n (Iso.fun (πₙSⁿ-unpointIso n) f) (Iso.fun (πₙSⁿ-unpointIso n) g)
 multπₙ-pres n = ST.elim2 (λ _ _ → isSetPathImplicit) λ f g → refl
 
 multπₙ-pres' : (n : ℕ) (f g : ∥ (S₊ (suc n) → S₊ (suc n)) ∥₂)
   → Iso.inv (πₙSⁿ-unpointIso n) (multSⁿ↬ n f g)
-   ≡ multπₙ n (Iso.inv (πₙSⁿ-unpointIso n) f) (Iso.inv (πₙSⁿ-unpointIso n) g) 
+   ≡ multπₙ n (Iso.inv (πₙSⁿ-unpointIso n) f) (Iso.inv (πₙSⁿ-unpointIso n) g)
 multπₙ-pres' n f g =
     (λ i → isIso-πₙSⁿ-unpointIso n .fst
              (multSⁿ↬ n (Iso.rightInv (πₙSⁿ-unpointIso n) f (~ i))
@@ -322,53 +334,24 @@ multHⁿSⁿ-pres : (n : ℕ) (f g : πₙSⁿ n .fst)
    ≡ multHⁿSⁿ n (πₙSⁿ→HⁿSⁿ-fun n f) (πₙSⁿ→HⁿSⁿ-fun n g)
 multHⁿSⁿ-pres n = ST.elim2 (λ _ _ → isSetPathImplicit) λ f g → refl
 
-grr' : (m : ℕ) (f g h : _) → multHⁿSⁿ m (f +ₕ g) h ≡ (multHⁿSⁿ m f h) +ₕ (multHⁿSⁿ m g h)
-grr' m = ST.elim3 (λ _ _ _ → isSetPathImplicit)
-  λ f g h → cong ∣_∣₂ (funExt λ t → lem f g h t _ refl)
-  where
-  lem : (f g h : S₊ (suc m) → coHomK (suc m))
-    → (t : _) (ht : _)
-    → h t ≡ ht
-    → premultHⁿSⁿ m (λ x → +ₖ-syntax (suc m) (f x) (g x)) h t ≡
-      +ₖ-syntax (suc m) (premultHⁿSⁿ m f h t) (premultHⁿSⁿ m g h t)
-  lem f g h t =
-    TR.elim (λ _ → isOfHLevelΠ (3 +ℕ m) λ _
-    → isOfHLevelPath (3 +ℕ m) (isOfHLevelTrunc (3 +ℕ m)) _ _)
-     λ ht q →
-          (λ i → TR.rec (isOfHLevelTrunc (3 +ℕ m)) (λ x → f x +ₖ g x) (q i))
-        ∙ cong₂ _+ₖ_ (λ i → TR.rec (isOfHLevelTrunc (3 +ℕ m)) f (q (~ i)))
-                     λ i → TR.rec (isOfHLevelTrunc (3 +ℕ m)) g (q (~ i))
-
-
-cohom-im-elim : ∀ {ℓ} (n : ℕ)
-     (P : coHomK (suc n) → Type ℓ)
-  → ((x : _) → isOfHLevel (3 +ℕ n) (P x))
-  → (f : S₊ (suc n) → coHomK (suc n))
-  → (t : S₊ (suc n))
-  → ((r : S₊ (suc n)) → f t ≡ ∣ r ∣ → P ∣ r ∣)
-  → P (f t)
-cohom-im-elim n P hlev f t ind = l (f t) refl
-  where
-  l : (x : _) → f t ≡ x → P x
-  l = TR.elim (λ x → isOfHLevelΠ (3 +ℕ n) λ _ → hlev _) ind
-
-coHomGenInd : ∀ {ℓ} (n : ℕ) (P : coHom (suc n) (S₊ (suc n)) → Type ℓ)
-            → ((a : ℤ) → P (a ℤ[ coHomGr (suc n) (S₊ (suc n)) ]· ∣ ∣_∣ₕ ∣₂))
-            → (x : _) → P x
-coHomGenInd = {!!}
-
-coHomGenInd2 : ∀ {ℓ} (n : ℕ) (P : coHom (suc n) (S₊ (suc n)) → Type ℓ)
-            → (P (∣ ∣_∣ₕ ∣₂))
-            → ((f : _) → P f → P (∣ ∣_∣ₕ ∣₂ +ₕ f))
-            → ((f : _) → P f → P (-ₕ f))
-            → (x : _) → P x
-coHomGenInd2 = {!!}
-
-
+-- properties of multiplication on Hⁿ(Sⁿ)
 module mult-props (m : ℕ) where
   private
     hlev-imp : ∀ {x y : coHomK (suc m)} → isOfHLevel (3 +ℕ m) (x ≡ y)
     hlev-imp = isOfHLevelPath (3 +ℕ m) (isOfHLevelTrunc (3 +ℕ m)) _ _
+
+    cohom-im-elim : ∀ {ℓ} (n : ℕ)
+         (P : coHomK (suc n) → Type ℓ)
+      → ((x : _) → isOfHLevel (3 +ℕ n) (P x))
+      → (f : S₊ (suc n) → coHomK (suc n))
+      → (t : S₊ (suc n))
+      → ((r : S₊ (suc n)) → f t ≡ ∣ r ∣ → P ∣ r ∣)
+      → P (f t)
+    cohom-im-elim n P hlev f t ind = l (f t) refl
+      where
+      l : (x : _) → f t ≡ x → P x
+      l = TR.elim (λ x → isOfHLevelΠ (3 +ℕ n) λ _ → hlev _) ind
+
 
   multHⁿSⁿ-0ₗ : (f : _) → multHⁿSⁿ m (0ₕ (suc m)) f ≡ 0ₕ (suc m)
   multHⁿSⁿ-0ₗ =
@@ -380,10 +363,15 @@ module mult-props (m : ℕ) where
         x
         λ _ _ → refl)
 
-  multHⁿSⁿ-0ᵣ : (f : _) → multHⁿSⁿ m f (0ₕ (suc m)) ≡ 0ₕ (suc m)
-  multHⁿSⁿ-0ᵣ = ST.elim (λ _ → isSetPathImplicit)
-    λ f → TR.rec (isProp→isOfHLevelSuc m (squash₂ _ _)) (λ p i → ∣ (λ _ → p i) ∣₂)
-      (isConnectedPath _ (isConnectedKn _) (f (ptSn _)) (0ₖ _) .fst)
+  multHⁿSⁿ-1ₗ : (f : _) → multHⁿSⁿ m (∣ ∣_∣ₕ ∣₂) f ≡ f
+  multHⁿSⁿ-1ₗ =
+    ST.elim (λ _ → isSetPathImplicit)
+      λ f → cong ∣_∣₂
+        (funExt λ x → cohom-im-elim m (λ s → rec₊ (isOfHLevelTrunc (3 +ℕ m)) ∣_∣ₕ s ≡ s)
+        (λ _ → hlev-imp)
+        f
+        x
+        λ _ _ → refl)
 
   multHⁿSⁿ-invₗ : (f g : _) → multHⁿSⁿ m (-ₕ f) g ≡ -ₕ (multHⁿSⁿ m f g)
   multHⁿSⁿ-invₗ = ST.elim2 (λ _ _ → isSetPathImplicit)
@@ -395,148 +383,84 @@ module mult-props (m : ℕ) where
         g x
         λ r s → refl)
 
-  multHⁿSⁿ-invᵣ : (g f : _) → multHⁿSⁿ m f (-ₕ g) ≡ -ₕ (multHⁿSⁿ m f g)
-  multHⁿSⁿ-invᵣ = ST.elim (λ _ → isSetΠ (λ _ → isSetPathImplicit))
-    λ g → coHomGenInd2 m _
-           (cong ∣_∣₂ (funExt λ x → {!!}))
-           {!!}
-           {!!}
-    {-
-    λ f → coHomGenInd m _ λ a → {!multHⁿSⁿ m ∣ f ∣₂
-      (-ₕ (a ℤ[ coHomGr (suc m) (S₊ (suc m)) ]· ∣ (λ a₁ → ∣ a₁ ∣) ∣₂))!}-}
-    {-
-      (funExt λ x → cohom-im-elim m
-        (λ gt → rec₊ (isOfHLevelTrunc (3 +ℕ m)) f (-ₖ gt)
-               ≡ -ₖ (rec₊ (isOfHLevelTrunc (3 +ℕ m)) f gt))
-        (λ _ → hlev-imp)
-        g x
-        λ r s → {!!} ∙∙ {!!} ∙∙ {!!})
--}
+  multHⁿSⁿ-distrₗ : (f g h : _) → multHⁿSⁿ m (f +ₕ g) h ≡ (multHⁿSⁿ m f h) +ₕ (multHⁿSⁿ m g h)
+  multHⁿSⁿ-distrₗ = ST.elim3 (λ _ _ _ → isSetPathImplicit)
+    λ f g h → cong ∣_∣₂ (funExt λ x → cohom-im-elim m
+      (λ ht → rec₊ (isOfHLevelTrunc (3 +ℕ m)) (λ x → f x +ₖ g x) ht
+            ≡ rec₊ (isOfHLevelTrunc (3 +ℕ m)) f ht +ₖ rec₊ (isOfHLevelTrunc (3 +ℕ m)) g ht)
+      (λ _ → hlev-imp) h x λ _ _ → refl)
 
-grr'-nice-pos : (n m : ℕ) (a : ℕ) (f g : _)
+open mult-props
+grr'-nice-pos : (m : ℕ) (a : ℕ) (f g : _)
   → multHⁿSⁿ m ((pos a) ℤ[ (coHomGr (suc m) (S₊ (suc m))) ]· f) g
   ≡ (pos a) ℤ[ (coHomGr (suc m) (S₊ (suc m))) ]· (multHⁿSⁿ m f g)
-grr'-nice-pos n m zero f g = mult-props.multHⁿSⁿ-0ₗ m g
-grr'-nice-pos n m (suc a) f g =
-     (λ _ → multHⁿSⁿ m (f +ₕ ((pos a) ℤ[ (coHomGr (suc m) (S₊ (suc m))) ]· f)) g)
-  ∙∙ grr' _ f (((pos a) ℤ[ (coHomGr (suc m) (S₊ (suc m))) ]· f)) g
-  ∙∙ cong (multHⁿSⁿ m f g +ₕ_) (grr'-nice-pos n m a f g)
+grr'-nice-pos m zero f g = multHⁿSⁿ-0ₗ m g
+grr'-nice-pos m (suc a) f g =
+    multHⁿSⁿ-distrₗ _ f (((pos a) ℤ[ (coHomGr (suc m) (S₊ (suc m))) ]· f)) g
+  ∙ cong (multHⁿSⁿ m f g +ₕ_) (grr'-nice-pos m a f g)
 
-grr'-nice : (n m : ℕ) (a : ℤ) (f g : _)
+
+distrleft : (m : ℕ) (a : ℤ) (f g : _)
   → multHⁿSⁿ m (a ℤ[ (coHomGr (suc m) (S₊ (suc m))) ]· f) g
   ≡ a ℤ[ (coHomGr (suc m) (S₊ (suc m))) ]· (multHⁿSⁿ m f g)
-grr'-nice n m (pos a) = grr'-nice-pos n m a
-grr'-nice n m (negsuc n₁) f g = {!!}
+distrleft m (pos a) = grr'-nice-pos m a
+distrleft m (negsuc nn) f g =
+     (λ i → multHⁿSⁿ m (ℤ·-negsuc (coHomGr (suc m) (S₊ (suc m))) nn f i) g)
+  ∙∙ multHⁿSⁿ-invₗ m (pos (suc nn) ℤ[ coHomGr (suc m) (S₊ (suc m)) ]· f) g
+  ∙ cong -ₕ_ (grr'-nice-pos m (suc nn) f g)
+  ∙∙ sym (ℤ·-negsuc (coHomGr (suc m) (S₊ (suc m)) ) nn (multHⁿSⁿ m f g))
 
--- deg-comp : (n : ℕ) (f g : ∥ (S₊ (suc n) → S₊ (suc n)) ∥₂)
---    → Iso.fun (degreeIso n) (multSⁿ↬ n f g)
---    ≡ (Iso.fun (degreeIso n) f) ·ℤ Iso.fun (degreeIso n) g
--- deg-comp n f g =
---   cong (Iso.fun (compIso (equivToIso (πₙSⁿ≅HⁿSⁿ n .fst)) (fst (Hⁿ-Sⁿ≅ℤ n))))
---         (multπₙ-pres' n f g)
---    ∙ cong (Iso.fun (fst (Hⁿ-Sⁿ≅ℤ n)))
---       (multHⁿSⁿ-pres n (isIso-πₙSⁿ-unpointIso n .fst f) (isIso-πₙSⁿ-unpointIso n .fst g))
---    ∙ ma (πₙSⁿ→HⁿSⁿ-fun n (isIso-πₙSⁿ-unpointIso n .fst f))
---         (πₙSⁿ→HⁿSⁿ-fun n (isIso-πₙSⁿ-unpointIso n .fst g))
---   where
---   ϕ = Iso.fun (fst (Hⁿ-Sⁿ≅ℤ n))
---   ϕ⁻ = Iso.inv (fst (Hⁿ-Sⁿ≅ℤ n))
+Hⁿ-Sⁿ≅ℤ-pres-mult : (n : ℕ) (f g : _)
+  → Iso.fun (fst (Hⁿ-Sⁿ≅ℤ n)) (multHⁿSⁿ n f g)
+   ≡ Iso.fun (fst (Hⁿ-Sⁿ≅ℤ n)) f ·ℤ Iso.fun (fst (Hⁿ-Sⁿ≅ℤ n)) g
+Hⁿ-Sⁿ≅ℤ-pres-mult n f g =
+    cong ϕ
+      (cong₂ (multHⁿSⁿ n) (sym (repl f)) (sym (repl g))
+      ∙ distrleft n (ϕ f) (∣ ∣_∣ₕ ∣₂) (ϕ g ℤ[ H ]· ∣ ∣_∣ₕ ∣₂))
+    ∙ (homPresℤ· (_ , snd (Hⁿ-Sⁿ≅ℤ n)) (multHⁿSⁿ n ∣ ∣_∣ₕ ∣₂ (ϕ g ℤ[ H ]· ∣ ∣_∣ₕ ∣₂)) (ϕ f)
+    ∙ sym (ℤ·≡· (ϕ f) _))
+    ∙ cong (ϕ f ·ℤ_)
+        (cong ϕ (multHⁿSⁿ-1ₗ n (ϕ g ℤ[ H ]· ∣ ∣_∣ₕ ∣₂))
+      ∙ homPresℤ· (_ , snd (Hⁿ-Sⁿ≅ℤ n)) ∣ ∣_∣ₕ ∣₂ (ϕ g)
+      ∙ sym (ℤ·≡· (ϕ g) _)
+      ∙ cong (ϕ g ·ℤ_) (HⁿSⁿ-gen n)
+      ∙ ·Comm (ϕ g) 1)
+  where
+  ϕ = Iso.fun (fst (Hⁿ-Sⁿ≅ℤ n))
+  ϕ⁻ = Iso.inv (fst (Hⁿ-Sⁿ≅ℤ n))
 
---   H = coHomGr (suc n) (S₊ (suc n))
+  H = coHomGr (suc n) (S₊ (suc n))
 
---   repl : (f : H .fst) → (ϕ f ℤ[ H ]· ∣ ∣_∣ₕ ∣₂) ≡ f
---   repl f = sym (Iso.leftInv (fst (Hⁿ-Sⁿ≅ℤ n)) _)
---         ∙∙ cong ϕ⁻ lem
---         ∙∙ Iso.leftInv (fst (Hⁿ-Sⁿ≅ℤ n)) f 
---     where
---     lem : ϕ (ϕ f ℤ[ H ]· ∣ ∣_∣ₕ ∣₂) ≡ ϕ f
---     lem = homPresℤ· (_ , snd (Hⁿ-Sⁿ≅ℤ n)) ∣ ∣_∣ₕ ∣₂ (ϕ f)
---         ∙ sym (ℤ·≡· (ϕ f) (fst (Hⁿ-Sⁿ≅ℤ n) .Iso.fun ∣ (λ a → ∣ a ∣) ∣₂))
---         ∙ cong (ϕ f ·ℤ_) (HⁿSⁿ-gen n)
---         ∙ ·Comm (ϕ f) 1
+  repl : (f : H .fst) → (ϕ f ℤ[ H ]· ∣ ∣_∣ₕ ∣₂) ≡ f
+  repl f = sym (Iso.leftInv (fst (Hⁿ-Sⁿ≅ℤ n)) _)
+        ∙∙ cong ϕ⁻ lem
+        ∙∙ Iso.leftInv (fst (Hⁿ-Sⁿ≅ℤ n)) f
+    where
+    lem : ϕ (ϕ f ℤ[ H ]· ∣ ∣_∣ₕ ∣₂) ≡ ϕ f
+    lem = homPresℤ· (_ , snd (Hⁿ-Sⁿ≅ℤ n)) ∣ ∣_∣ₕ ∣₂ (ϕ f)
+        ∙ sym (ℤ·≡· (ϕ f) (fst (Hⁿ-Sⁿ≅ℤ n) .Iso.fun ∣ (λ a → ∣ a ∣) ∣₂))
+        ∙ cong (ϕ f ·ℤ_) (HⁿSⁿ-gen n)
+        ∙ ·Comm (ϕ f) 1
 
---   ma : (f g : _) → Iso.fun (fst (Hⁿ-Sⁿ≅ℤ n)) (multHⁿSⁿ n f g)
---                   ≡ Iso.fun (fst (Hⁿ-Sⁿ≅ℤ n)) f ·ℤ Iso.fun (fst (Hⁿ-Sⁿ≅ℤ n)) g
---   ma f g = {!!}
-
--- multHⁿSⁿ-pres↑ : (n : ℕ)  (f g : coHom (suc n) (S₊ (suc n)))
---   → Iso.inv (fst (suspensionAx-Sn n n)) (multHⁿSⁿ n f g)
---   ≡ multHⁿSⁿ (suc n) (Iso.inv (fst (suspensionAx-Sn n n)) f)
---                     (Iso.inv (fst (suspensionAx-Sn n n)) g)
--- multHⁿSⁿ-pres↑ n = ST.elim2 (λ _ _ → isSetPathImplicit)
---   λ f g → TR.rec (isProp→isOfHLevelSuc n (squash₂ _ _))
---     (λ fp → cong ∣_∣₂ (funExt λ { north → refl
---                              ; south → refl
---                              ; (merid a i) j → help f g fp a _ refl j i}))
---                   (isConnectedPath _ (isConnectedKn n) (f (ptSn (suc n))) (0ₖ _) .fst)
---   where
---   T : (f : S₊ (suc n) → coHomK (suc n)) → Susp _ → _
---   T f = (Iso.fun funSpaceSuspIso) (0ₖ (2 +ℕ n) , 0ₖ (2 +ℕ n)
---       , λ x → Kn→ΩKn+1 (suc n) (f x))
-
---   help : (f g : S₊ (suc n) → coHomK (suc n)) (fpt : f (ptSn (suc n)) ≡ 0ₖ _)
---      (a : S₊ (suc n))
---     → (w : _)
---     → (g a ≡ w)
---       → Kn→ΩKn+1 (suc n) (premultHⁿSⁿ n f g a)
---        ≡ cong (premultHⁿSⁿ (suc n) (T f) (T g)) (merid a)
---   help f g fp a =
---     TR.elim (λ _ → isOfHLevelΠ (3 +ℕ n)
---       λ _ → isOfHLevelPath (3 +ℕ n) (isOfHLevelTrunc (4 +ℕ n) _ _) _ _)
---       λ ga' p
---       → (cong (Kn→ΩKn+1 (suc n)) (cong (TR.rec (isOfHLevelTrunc (3 +ℕ n)) f) p)
---     ∙ rUnit _
---     ∙ cong (cong (T f) (merid ga') ∙_) (sym (cong sym (Kn→ΩKn+10ₖ (suc n)))
---                                      ∙ λ i → sym (Kn→ΩKn+1 (suc n) (fp (~ i))))
---     ∙ sym (cong-∙ (T f) (merid ga') (sym (merid (ptSn (suc n))))))
---     ∙ λ j i → TR.rec (isOfHLevelTrunc (4 +ℕ n)) (T f) (Kn→ΩKn+1 (suc n) (p (~ j)) i)
-
--- test : {!!}
--- test = {!!}
-
--- multπₙSⁿ : (n : ℕ) (f g h : _)
---   → multπₙ n f (multπₙ n g h) ≡ multπₙ n (multπₙ n f g) h
--- multπₙSⁿ n =
---   ST.elim3 (λ _ _ _ → isSetPathImplicit)
---     λ f g h → cong ∣_∣₂ (sym (∘∙-assoc f g h))
-
-
--- open import Cubical.Foundations.Univalence
--- multHⁿSⁿassoc : (n : ℕ) (f g h : _)
---   → multHⁿSⁿ n f (multHⁿSⁿ n g h) ≡ multHⁿSⁿ n (multHⁿSⁿ n f g) h
--- multHⁿSⁿassoc n = transport (λ i → isAssoc (PP (~ i))) (multπₙSⁿ n)
---   where
---   PP : PathP (λ i → (f g : ua (πₙSⁿ≅HⁿSⁿ n .fst) (~ i)) → ua (πₙSⁿ≅HⁿSⁿ n .fst) (~ i)) (multHⁿSⁿ n) (multπₙ n)
---   PP = toPathP (funExt λ f → funExt λ g
---     → (λ i → (invEq (fst (πₙSⁿ≅HⁿSⁿ n)) (transportRefl
---                (multHⁿSⁿ n (transportRefl (fst (fst (πₙSⁿ≅HⁿSⁿ n)) f) i)
---                           (transportRefl (fst (fst (πₙSⁿ≅HⁿSⁿ n)) g) i)) i)))
---      ∙ sym (cong (invEq (πₙSⁿ≅HⁿSⁿ n .fst)) (multHⁿSⁿ-pres n f g))
---      ∙ retEq (πₙSⁿ≅HⁿSⁿ n .fst) (multπₙ n f g))
-
---   isAssoc : ∀ {ℓ} {A : Type ℓ} → (f : A → A → A) → Type ℓ
---   isAssoc f = (x y z : _) → f x (f y z) ≡ f (f x y) z
-
--- grr : (n m : ℕ) (f g : _) → multHⁿSⁿ m (∣ ∣_∣ ∣₂ +ₕ f) g ≡ g +ₕ multHⁿSⁿ m f g
--- grr n m = ST.elim2 (λ _ _ → isSetPathImplicit)
---   λ f g → cong ∣_∣₂ (funExt λ t → gt f g t _ refl)
---   where
---   gt : (f g : S₊ (suc m) → coHomK (suc m))
---     → (t : _) (gt : _)
---     → g t ≡ gt
---     → premultHⁿSⁿ m (λ x₁ → +ₖ-syntax (suc m) ∣ x₁ ∣ (f x₁)) g t ≡
---       +ₖ-syntax (suc m) (g t) (premultHⁿSⁿ m f g t)
---   gt f g t = TR.elim (λ _ → isOfHLevelΠ (3 +ℕ m) λ _
---     → isOfHLevelPath (3 +ℕ m) (isOfHLevelTrunc (3 +ℕ m)) _ _)
---        λ gt q
---     → (λ i → TR.rec (isOfHLevelTrunc (3 +ℕ m)) (λ x → ∣ x ∣ₕ +ₖ f x ) (q i))
---      ∙ cong₂ _+ₖ_ (sym q) λ i → rec₊ (isOfHLevelTrunc (3 +ℕ m)) f (q (~ i))
-
--- Sⁿ↬HⁿSⁿ : (x y : ℤ)
---   → Iso.inv (fst (Hⁿ-Sⁿ≅ℤ 0)) (x ·ℤ y)
---    ≡ multHⁿSⁿ 0  (Iso.inv (fst (Hⁿ-Sⁿ≅ℤ 0)) x) (Iso.inv (fst (Hⁿ-Sⁿ≅ℤ 0)) y)
--- Sⁿ↬HⁿSⁿ (pos zero) y = {!!}
--- Sⁿ↬HⁿSⁿ (pos (suc n)) y = IsGroupHom.pres· ((invGroupIso H¹-S¹≅ℤ) .snd) y (pos n ·ℤ y)
---                        ∙∙ cong₂ _+ₕ_ (λ _ → Iso.inv (fst (Hⁿ-Sⁿ≅ℤ 0)) y) (Sⁿ↬HⁿSⁿ (pos n) y)
---                        ∙∙ {!multHⁿSⁿassoc 0 (Iso.inv (fst (Hⁿ-Sⁿ≅ℤ 0)) y) (Iso.inv (fst (Hⁿ-Sⁿ≅ℤ 0)) (pos n)) (Iso.inv (fst (Hⁿ-Sⁿ≅ℤ 0)) y)!}
--- Sⁿ↬HⁿSⁿ (negsuc n) y = {!!}
+-- main result --
+degree-comp : (n : ℕ) (f g : (S₊ n → S₊ n))
+  → degree n (f ∘ g)
+   ≡ degree n f ·ℤ degree n g
+degree-comp zero f g = refl
+degree-comp (suc n) f g =
+     (λ i → degree∥₂≡ n i ∣ f ∘ g ∣₂)
+  ∙∙ deg-comp-help n ∣ f ∣₂ ∣ g ∣₂
+  ∙∙ cong₂ _·ℤ_ (sym (funExt⁻ (degree∥₂≡ n) ∣ f ∣₂))
+                (sym (funExt⁻ (degree∥₂≡ n) ∣ g ∣₂))
+  where
+  deg-comp-help : (n : ℕ) (f g : ∥ (S₊ (suc n) → S₊ (suc n)) ∥₂)
+     → Iso.fun (degreeIso n) (multSⁿ↬ n f g)
+     ≡ (Iso.fun (degreeIso n) f) ·ℤ Iso.fun (degreeIso n) g
+  deg-comp-help n f g =
+    cong (Iso.fun (compIso (equivToIso (πₙSⁿ≅HⁿSⁿ n .fst)) (fst (Hⁿ-Sⁿ≅ℤ n))))
+          (multπₙ-pres' n f g)
+     ∙ cong (Iso.fun (fst (Hⁿ-Sⁿ≅ℤ n)))
+        (multHⁿSⁿ-pres n (isIso-πₙSⁿ-unpointIso n .fst f) (isIso-πₙSⁿ-unpointIso n .fst g))
+     ∙ Hⁿ-Sⁿ≅ℤ-pres-mult
+          n (πₙSⁿ→HⁿSⁿ-fun n (isIso-πₙSⁿ-unpointIso n .fst f))
+            (πₙSⁿ→HⁿSⁿ-fun n (isIso-πₙSⁿ-unpointIso n .fst g))
