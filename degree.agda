@@ -13,6 +13,7 @@ open import Cubical.Foundations.Function
 
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
 open import Cubical.Data.Sigma
+open import Cubical.Data.Bool
 open import Cubical.Data.Int renaming (_·_ to _·ℤ_ ; -_ to -ℤ_)
 
 open import Cubical.HITs.Sn
@@ -81,6 +82,10 @@ degree (suc n) f = Iso.fun ((Hⁿ-Sⁿ≅ℤ n) .fst) ∣ (λ x → ∣ f x ∣)
 degree∙ : (n : ℕ) → (S₊∙ n →∙ S₊∙ n) → ℤ
 degree∙ zero f = 0
 degree∙ (suc n) f = Iso.fun ((Hⁿ-Sⁿ≅ℤ n) .fst) ∣ (λ x → ∣ fst f x ∣) ∣₂
+
+degree-const : (n : ℕ) → degree n (λ _ → ptSn n) ≡ 0
+degree-const zero = refl
+degree-const (suc n) = IsGroupHom.pres1 (Hⁿ-Sⁿ≅ℤ n .snd) 
 
 -- Generator of HⁿSⁿ
 HⁿSⁿ-gen : (n : ℕ) → Iso.fun (fst (Hⁿ-Sⁿ≅ℤ n)) ∣ ∣_∣ₕ ∣₂ ≡ 1
@@ -464,3 +469,36 @@ degree-comp (suc n) f g =
      ∙ Hⁿ-Sⁿ≅ℤ-pres-mult
           n (πₙSⁿ→HⁿSⁿ-fun n (isIso-πₙSⁿ-unpointIso n .fst f))
             (πₙSⁿ→HⁿSⁿ-fun n (isIso-πₙSⁿ-unpointIso n .fst g))
+
+degree-comp' : (n : ℕ) (f g : (S₊ n → S₊ n))
+  → degree n (f ∘ g)
+   ≡ degree n g ·ℤ degree n f
+degree-comp' n f g = degree-comp n f g ∙ ·Comm _ _
+
+comp-comm : (n : ℕ) (f g : (S₊ (suc n) → S₊ (suc n))) → ∥ f ∘ g ≡ g ∘ f ∥₁
+comp-comm n f g = PT.map (idfun _) (Iso.fun PathIdTrunc₀Iso
+  (sym (Iso.leftInv (degree∥₂Iso n) (∣ f ∘ g ∣₂))
+  ∙ cong (Iso.inv (degreeIso n))
+     (degree-comp (suc n) f g ∙ ·Comm _ _ ∙ sym (degree-comp (suc n) g f))
+  ∙ Iso.leftInv (degree∥₂Iso n) (∣ g ∘ f ∣₂)))
+
+suspFunS∙ : {n : ℕ} → (S₊ n → S₊ n) → S₊∙ (suc n) →∙ S₊∙ (suc n)
+suspFunS∙ {n = zero} f with (f true)
+... | false = invLooper , refl
+... | true = idfun S¹ , refl
+suspFunS∙ {n = suc n} f = suspFun f , refl
+
+degree-susp : (n : ℕ) (f : (S₊ (suc n) → S₊ (suc n)))
+            → degree (suc n) f ≡ degree (suc (suc n)) (suspFun f)
+degree-susp n f =
+  cong (Iso.fun (Hⁿ-Sⁿ≅ℤ n .fst))
+    (sym (Iso.rightInv (fst (suspensionAx-Sn n n)) _)
+    ∙ cong (Iso.fun (suspensionAx-Sn n n .fst)) lem)
+  where
+  lem : Iso.inv (suspensionAx-Sn n n .fst) ∣ ∣_∣ₕ ∘ f ∣₂
+       ≡ ∣ ∣_∣ₕ ∘ suspFun f ∣₂
+  lem = cong ∣_∣₂ (funExt
+    λ { north → refl
+      ; south → cong ∣_∣ₕ (merid (ptSn (suc n)))
+      ; (merid a i) j →
+        ∣ compPath-filler (merid (f a)) (sym (merid (ptSn (suc n)))) (~ j) i ∣ₕ})
