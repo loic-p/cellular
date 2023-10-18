@@ -34,7 +34,7 @@ open import Cubical.Algebra.AbGroup
 
 open import prelude
 open import freeabgroup
-open import spherebouquet hiding (chooseS ; degree)
+open import spherebouquet hiding (chooseS)
 
 module cw-alt2 where
 
