@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical --allow-unsolved-metas #-}
+{-# OPTIONS --cubical --allow-unsolved-metas --lossy-unification #-}
 
 open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude
@@ -34,6 +34,7 @@ open import Cubical.Algebra.AbGroup
 
 open import prelude
 open import freeabgroup
+open import degree
 open import spherebouquet hiding (chooseS)
 
 module cw-alt2 where
@@ -44,8 +45,8 @@ chooseS n a b x with (discreteℕ a b)
 ... | yes p = x
 ... | no ¬p = ptSn n
 
-degree : (n : ℕ) → (S₊ (suc n) → S₊ (suc n)) → ℤ
-degree n f = Iso.fun ((Hⁿ-Sⁿ≅ℤ n) .fst) ∣ (λ x → ∣ f x ∣) ∣₂
+-- degree : (n : ℕ) → (S₊ (suc n) → S₊ (suc n)) → ℤ
+-- degree n f = Iso.fun ((Hⁿ-Sⁿ≅ℤ n) .fst) ∣ (λ x → ∣ f x ∣) ∣₂
 
 --- CW complexes ---
 
@@ -238,13 +239,35 @@ module preboundary-cancellation (n : ℕ) (C : CW) where
                                 (congS (λ X → X ∘ (fst (pre∂ (suc n) C)))
                                        (susp-pre∂-pre∂↑ n C) ∙ pre∂↑pre∂≡0)
 
-module boundary (n : ℕ) (C : CW) where
-  Xn+1 = (fst C (suc n))
-  An+1 = (snd C .fst (suc n))
-  An+2 = (snd C .fst (suc (suc n)))
+ℤ[A_] : (n : ℕ) (C : CW) → AbGroup (ℓ-zero)
+ℤ[A n ] C = FreeAbGroup (Fin (snd C .fst n))
 
-  --and then ∂ is defined as the bouquetDegree of pre∂
-  ∂ : AbGroupHom (FreeAbGroup (Fin An+2)) (FreeAbGroup (Fin An+1))
-  ∂ = bouquetDegree pre∂
-    where
-      open preboundary n C
+--and then ∂ is defined as the bouquetDegree of pre∂
+∂ : (n : ℕ) (C : CW) → AbGroupHom (ℤ[A (suc (suc n)) ] C) (ℤ[A (suc n) ] C)
+∂ n C = bouquetDegree pre∂
+  where
+    open preboundary n C
+
+constAbGroupHom : ∀ {ℓA} {ℓB} → (A : AbGroup ℓA) → (B : AbGroup ℓB) → AbGroupHom A B
+fst (constAbGroupHom A B) = λ _ → B .snd .AbGroupStr.0g
+snd (constAbGroupHom A B) = makeIsGroupHom λ a b → sym (B .snd .AbGroupStr.+IdL (B .snd .AbGroupStr.0g))
+
+bouquetDegreeConst : (n a b : ℕ) → bouquetDegree {n} {a} {b} ((λ _ → inl tt) , refl) ≡ constAbGroupHom ℤ[Fin a ] ℤ[Fin b ]
+bouquetDegreeConst n a b = GroupHom≡ ((λ i r x → sumFin (λ a → r a ·ℤ (degree.degree-const n i)))
+                                     ∙∙ (λ i r x → sumFin (λ a → ·Comm (r a) (pos 0) i))
+                                     ∙∙ λ i r x → sumFin0 a i)
+
+∂∂≡0 : (n : ℕ) (C : CW) → compGroupHom (∂ (suc n) C) (∂ n C)
+                        ≡ constAbGroupHom (ℤ[A (suc (suc (suc n))) ] C) (ℤ[A (suc n) ] C)
+∂∂≡0 n C = congS (compGroupHom (∂ (suc n) C)) ∂≡∂↑
+           ∙∙ sym (degreeComp (bouquetSusp→ (pre∂ n C)) (pre∂ (suc n) C))
+           ∙∙ (congS bouquetDegree (preboundary-cancellation.pre∂pre∂≡0 n C)
+           ∙ bouquetDegreeConst _ _ _)
+  where
+    open preboundary
+
+    ∂↑ : AbGroupHom (ℤ[A (suc (suc n)) ] C) (ℤ[A (suc n) ] C)
+    ∂↑ = bouquetDegree (bouquetSusp→ (pre∂ n C))
+
+    ∂≡∂↑ : ∂ n C ≡ ∂↑
+    ∂≡∂↑ = degreeSusp (pre∂ n C)
