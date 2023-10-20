@@ -5,6 +5,9 @@ open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Pointed
 open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Equiv
+open import Cubical.Foundations.Function
+open import Cubical.Foundations.GroupoidLaws
+
 open import Cubical.Data.Bool hiding (_≤_)
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
 open import Cubical.Data.Nat.Order
@@ -23,7 +26,6 @@ open import Cubical.Relation.Nullary
 open import Cubical.Homotopy.Loopspace
 open import Cubical.ZCohomology.Groups.Sn
 
-
 open import Cubical.Algebra.Group.MorphismProperties
 open import Cubical.Algebra.Group.QuotientGroup renaming (_/_ to _//_)
 open import Cubical.Algebra.Group.Base
@@ -32,18 +34,10 @@ open import Cubical.Algebra.AbGroup
 
 open import prelude
 open import freeabgroup
-open import spherebouquet hiding (chooseS ; degree)
+open import degree
+open import spherebouquet hiding (chooseS)
 
-module cw-alt2 where
-
--- defn of the degree map
-chooseS : (n : ℕ) (a b : ℕ) → S₊ n → S₊ n
-chooseS n a b x with (discreteℕ a b)
-... | yes p = x
-... | no ¬p = ptSn n
-
-degree : (n : ℕ) → (S₊ (suc n) → S₊ (suc n)) → ℤ
-degree n f = Iso.fun ((Hⁿ-Sⁿ≅ℤ n) .fst) ∣ (λ x → ∣ f x ∣) ∣₂
+module cw-complex where
 
 --- CW complexes ---
 
@@ -96,44 +90,3 @@ to_cofiber n C x = inr x
 --pointed version
 δ∙ : (n : ℕ) (C : CW) → cofiber n C →∙ Susp∙ (fst C n)
 δ∙ n C = (δ n C) , refl
-
---now we define the boundary map as essentially Susp(to_cofiber) ∘ δ
-pre-∂-aux : (n : ℕ) (C : CW) → cofiber (suc n) C →∙ Susp∙ (fst (cofiber n C))
-pre-∂-aux n C = (suspFun (to_cofiber n C) , refl) ∘∙ δ∙ (suc n) C
-
---we need to compose with the isomorphism with the sphere bouquet...
---...and the fact that the suspension of a bouquet is a bouquet
-pre-∂ : (n : ℕ) (C : CW) → (SphereBouquet (suc (suc n)) (Fin (snd C .fst (suc (suc n))))
-                          →∙ SphereBouquet (suc (suc n)) (Fin (snd C .fst (suc n))))
-pre-∂ n C = (≃∙map sphereBouquet≃∙Susp
-          ∘∙ (fst (congSuspEquiv (cofiber≃bouquet n C .fst)) , refl))
-          ∘∙ (pre-∂-aux n C
-          ∘∙ (≃∙map (invEquiv∙ (cofiber≃bouquet (suc n) C))))
-
---and then we take the bouquetDegree of pre-∂
-∂ : (n : ℕ) (C : CW)
-  → AbGroupHom (FreeAbGroup (Fin (snd C .fst (suc (suc n)))))
-                (FreeAbGroup (Fin (snd C .fst (suc n))))
-∂ n C = bouquetDegree (pre-∂ n C) -- bouquetDegree (pre-∂ n C)
-
-open import Cubical.Algebra.Group.Morphisms
-constGroupHom : (G H : Group₀) → GroupHom G H
-fst (constGroupHom G H) _ = GroupStr.1g (snd H)
-snd (constGroupHom G H) = makeIsGroupHom λ _ _ → sym (GroupStr.·IdR (snd H) _)
-
-∂² : (n : ℕ) (C : CW)
-  → compGroupHom (∂ (suc n) C) (∂ n C) ≡ constGroupHom _ _
-∂² n C =
-     cong₂ compGroupHom refl (degreeSusp (pre-∂ n C))
-   ∙ sym (degreeComp (bouquetSusp→ (pre-∂ n C)) (pre-∂ (suc n) C))
-   ∙ {!!}
-  where
-  br : (n : ℕ) (a : _) → (bouquetSusp→ (pre-∂ n C) ∘∙ pre-∂ (suc n) C) .fst a ≡ const∙ _ _ .fst a
-  br n = {!!}
-  help : bouquetDegree {!!} ≡ constGroupHom _ _
-  help = {!!}
-
---now we want to prove that ∂∂ = 0
---to do that, we use the lemmas in spherebouquet to show that it suffices to show Susp(pre-∂) ∘ pre-∂ = 0
---and this comes from the fact that δ ∘ to_cofiber = 0 (super easy to prove)
---plus some manipulations of the the isomosphisms (ugh)

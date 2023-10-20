@@ -326,17 +326,17 @@ bouquetSusp→ {n = n} {A} {B} f =
      sphereBouquetSuspFun∙ ∘∙ (suspFun∙ (fst f) ∘∙ sphereBouquetSuspInvFun∙)
 
 -- probably not needed
-private
-  bouquetSusp→' : {n : ℕ} {A B : Type}
-    → (SphereBouquet n A →∙ SphereBouquet n B)
-    → (SphereBouquet (suc n) A →∙ SphereBouquet (suc n) B)
-  fst (bouquetSusp→' {n} f) = sphereBouquetSuspFun ∘ suspFun (fst f) ∘ Iso.inv sphereBouquetSuspIso
-  snd (bouquetSusp→' {zero} f) = refl
-  snd (bouquetSusp→' {suc n} f) = refl
+-- private
+--   bouquetSusp→' : {n : ℕ} {A B : Type}
+--     → (SphereBouquet n A →∙ SphereBouquet n B)
+--     → (SphereBouquet (suc n) A →∙ SphereBouquet (suc n) B)
+--   fst (bouquetSusp→' {n} f) = sphereBouquetSuspFun ∘ suspFun (fst f) ∘ Iso.inv sphereBouquetSuspIso
+--   snd (bouquetSusp→' {zero} f) = refl
+--   snd (bouquetSusp→' {suc n} f) = refl
 
-  bouquetSusp→≡ : {n : ℕ} {A B : Type} (f : SphereBouquet n A →∙ SphereBouquet n B)
-    → bouquetSusp→ f ≡ bouquetSusp→' f
-  bouquetSusp→≡ {n = n} f = {!!}
+--   bouquetSusp→≡ : {n : ℕ} {A B : Type} (f : SphereBouquet n A →∙ SphereBouquet n B)
+--     → bouquetSusp→ f ≡ bouquetSusp→' f
+--   bouquetSusp→≡ {n = n} f = {!!}
 
 chooseS : {n k : ℕ} (b : Fin k)
   → fst (SphereBouquet n (Fin k)) → S₊ n
@@ -537,6 +537,11 @@ degreeSusp {n = n} {m = m} {k = k} f =
                         (λ i → ∣ chooseS b (bouquetSusp→ f .fst
                                   (inr (z , merid a i))) ∣)) r i})
           (Kn→ΩKn+1 (suc n) ∣ chooseS b (f .fst (inr (z , a))) ∣ i)
+
+degreeConst : (n a b : ℕ) → bouquetDegree {n} {a} {b} ((λ _ → inl tt) , refl) ≡ constAbGroupHom ℤ[Fin a ] ℤ[Fin b ]
+degreeConst n a b = GroupHom≡ ((λ i r x → sumFin (λ a → r a ·ℤ (degree.degree-const n i)))
+                              ∙∙ (λ i r x → sumFin (λ a → ·Comm (r a) (pos 0) i))
+                              ∙∙ λ i r x → sumFin0 a i)
 
 ------------------
 -- Equivalence between Bouquet of spheres and the cofibre

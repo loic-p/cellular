@@ -77,8 +77,8 @@ open import Cubical.ZCohomology.Base
 open import Cubical.ZCohomology.GroupStructure
 
 
-ℤ[A_] : (n : ℕ) → AbGroup ℓ-zero
-ℤ[A n ] = FreeAbGroup (Fin n)
+ℤ[Fin_] : (n : ℕ) → AbGroup ℓ-zero
+ℤ[Fin n ] = FreeAbGroup (Fin n)
 
 Fin↑ : {n : ℕ} → Fin n → Fin (suc n)
 Fin↑ {n = n} p = fst p , <-trans (snd p) (0 , refl)
@@ -96,7 +96,7 @@ sumFinG G f = sumFinGen (GroupStr._·_ (snd G)) (GroupStr.1g (snd G)) f
 sumFinK : {n m : ℕ} (f : Fin n → coHomK m) → coHomK m
 sumFinK {n = n} {m = m} = sumFinGen (λ x y → x +[ m ]ₖ y) (0ₖ m)
 
--- For ℤ[A_]
+-- For ℤ[Fin_]
 sumFin : {n : ℕ} (f : Fin n → ℤ) → ℤ
 sumFin f = sumFinGen _+_ 0 f
 
@@ -123,7 +123,7 @@ module _ {ℓ} {A : Type ℓ} (_+A_ : A → A → A) (0A : A)
       lUnitA : (x : _) → 0A +A x ≡ x
       lUnitA x = comm _ _ ∙ rUnit x
 
-    sumFin-choose : 
+    sumFin-choose :
       {n : ℕ} (f : Fin n → A)
       → (a : A) (x : Fin n)
       → (f x ≡ a)
@@ -157,7 +157,7 @@ module _ {ℓ} {A : Type ℓ} (_+A_ : A → A → A) (0A : A)
     module _ (assocA : (x y z : A) → x +A (y +A z) ≡ (x +A y) +A z) where
       sumFinGen-hom : (n : ℕ) (f g : Fin n → A)
         → sumFinGen _+A_ 0A (λ x → f x +A g x)
-         ≡ (sumFinGen _+A_ 0A f +A sumFinGen _+A_ 0A g) 
+         ≡ (sumFinGen _+A_ 0A f +A sumFinGen _+A_ 0A g)
       sumFinGen-hom zero f g = sym (rUnit 0A)
       sumFinGen-hom (suc n) f g =
           cong ((f flast +A g flast) +A_) (sumFinGen-hom n (f ∘ Fin↑) (g ∘ Fin↑))
@@ -188,7 +188,7 @@ sumFin-hom : {n : ℕ} (f g : Fin n → ℤ)
   → sumFin (λ x → f x + g x) ≡ sumFin f + sumFin g
 sumFin-hom {n = n} = sumFinGen-hom _+_ 0 (λ _ → refl) +Comm +Assoc n
 
-generator : {n : ℕ} (k : Fin n) → ℤ[A n ] .fst
+generator : {n : ℕ} (k : Fin n) → ℤ[Fin n ] .fst
 generator {n = n} k s with (fst k ≟ fst s)
 ... | lt x = 0
 ... | eq x = 1
@@ -206,7 +206,7 @@ generator-comm x y with (fst x ≟ fst y) | (fst y ≟ fst x)
 ... | gt x₁ | eq x₂ = ⊥.rec (¬m<m (subst (_< fst x) x₂ x₁))
 ... | gt x₁ | gt x₂ = refl
 
-generator-is-generator : {n : ℕ} (f : ℤ[A n ] .fst) (a : _)
+generator-is-generator : {n : ℕ} (f : ℤ[Fin n ] .fst) (a : _)
   → f a ≡ sumFin {n = n} λ s → f s ·ℤ (generator s a)
 generator-is-generator {n = zero} f a = ⊥.rec (¬Fin0 a)
 generator-is-generator {n = suc n} f (a , zero , p) with (n ≟ a)
@@ -258,13 +258,13 @@ generator-is-generator {n = suc n} f (a , suc diff , p) =
            ∙ n∸n a))
   ... | gt _ = refl
 
-module _ {ℓ} (n : ℕ) (P : ℤ[A (suc n) ] .fst → Type ℓ)
+module _ {ℓ} (n : ℕ) (P : ℤ[Fin (suc n) ] .fst → Type ℓ)
          (gens : (x : _) → P (generator x))
          (ind- : ((f : _) → P f → P (λ x → -ℤ (f x))))
          (ind+ : (f g : _) → P f → P g → P (λ x → f x + g x)) where
 
   private
-    P-resp·pos : (x : ℕ) (f : ℤ[A (suc n) ] .fst) → P f → P (λ x₁ → pos x ·ℤ f x₁)
+    P-resp·pos : (x : ℕ) (f : ℤ[Fin (suc n) ] .fst) → P f → P (λ x₁ → pos x ·ℤ f x₁)
     P-resp·pos zero f d =
       subst P  (funExt (λ x → -Cancel (generator fzero x)))
       (ind+ (generator fzero)
@@ -274,7 +274,7 @@ module _ {ℓ} (n : ℕ) (P : ℤ[A (suc n) ] .fst → Type ℓ)
     P-resp·pos (suc (suc x)) f d =
       ind+ f (λ a → pos (suc x) ·ℤ f a) d (P-resp·pos (suc x) f d)
 
-  P-resp· : (x : _) (f : ℤ[A (suc n) ] .fst) → P f → P (λ x₁ → x ·ℤ f x₁)
+  P-resp· : (x : _) (f : ℤ[Fin (suc n) ] .fst) → P f → P (λ x₁ → x ·ℤ f x₁)
   P-resp· (pos n) f d = P-resp·pos n f d
   P-resp· (negsuc n) f d =
     subst P (funExt (λ r → -DistL· (pos (suc n)) (f r)))
@@ -291,7 +291,7 @@ module _ {ℓ} (n : ℕ) (P : ℤ[A (suc n) ] .fst → Type ℓ)
 
 private
   preElimFreeAbGroup : ∀ {ℓ} {n : ℕ}
-    → (P : ℤ[A (suc n) ] .fst → Type ℓ)
+    → (P : ℤ[Fin (suc n) ] .fst → Type ℓ)
     → ((x : _) → P (generator x))
     → ((f : _) → P f → P (λ x → -ℤ (f x)))
     → ((f g : _) → P f → P g → P (λ x → f x + g x))
@@ -377,8 +377,8 @@ sumFinG-neg (suc n) {A} f =
   help = cong (negsuc n +_) (sym (-Involutive b))
        ∙ sym (-Dist+ (pos (suc n)) (-ℤ b))
 
-toHIT : (n : ℕ) → ℤ[A n ] .fst → Free (Fin n)
-toHIT n f = sumFinGen {A = Free (Fin n)} _⋄_ ε (λ x → ·Free (f x) x) 
+toHIT : (n : ℕ) → ℤ[Fin n ] .fst → Free (Fin n)
+toHIT n f = sumFinGen {A = Free (Fin n)} _⋄_ ε (λ x → ·Free (f x) x)
 
 isContr-Free⊥ : isContr (Free ⊥)
 fst isContr-Free⊥ = ε
@@ -463,7 +463,7 @@ toHIT-generator : (n : ℕ) (x : _) → toHIT n (generator x) ≡ ⟦ x ⟧
 toHIT-generator zero x = isContr→isProp isContr-FreeFin0 _ _
 toHIT-generator (suc n) f = sum-fin-generator≡1 _ f
 
-fromHIT : (n : ℕ) → Free (Fin n) → ℤ[A n ] .fst
+fromHIT : (n : ℕ) → Free (Fin n) → ℤ[Fin n ] .fst
 fromHIT n ⟦ x ⟧ = generator x
 fromHIT n ε _ = pos 0
 fromHIT n (a Free.· a₁) x = fromHIT n a x + fromHIT n a₁ x
@@ -477,12 +477,12 @@ fromHIT n (trunc a a₁ x y i j) k =
     (λ _ → fromHIT n a k) (λ _ → fromHIT n a₁ k)
     (λ j → fromHIT n (x j) k) (λ j → fromHIT n (y j) k) j i
 
-toHIT+ : (n : ℕ) → (f g : ℤ[A n ] .fst) → toHIT n (λ x → f x + g x) ≡ toHIT n f ⋄ toHIT n g
+toHIT+ : (n : ℕ) → (f g : ℤ[Fin n ] .fst) → toHIT n (λ x → f x + g x) ≡ toHIT n f ⋄ toHIT n g
 toHIT+ n f g = (λ i → sumFinGen _⋄_ ε (λ x → ·Free-hom  (f x) (g x) x (~ i)))
   ∙ sumFinGen-hom _⋄_ ε identityᵣ comm assoc n
       (λ x → ·Free (f x) x) λ x → ·Free (g x) x
 
-toHIT-inv : (n : ℕ) → (f : ℤ[A n ] .fst) → toHIT n (λ x → -ℤ (f x)) ≡ (toHIT n f) ⁻¹
+toHIT-inv : (n : ℕ) → (f : ℤ[Fin n ] .fst) → toHIT n (λ x → -ℤ (f x)) ≡ (toHIT n f) ⁻¹
 toHIT-inv n f =
     (λ i → sumFinGen _⋄_ ε (λ x → ·Free-neg (f x) x i))
   ∙ sumFinG-neg n {A = FAGAbGroup} (λ x → ·Free (f x) x)
@@ -510,18 +510,18 @@ toFrom (suc n) =
    (λ f p → cong (fromHIT (suc n)) (toHIT-inv (suc n) f) ∙ λ i r → -ℤ (p i r))
    λ f g p q → cong (fromHIT (suc n)) (toHIT+ (suc n) f g) ∙ λ i r → p i r + q i r
 
-Iso-ℤ[Fin]-FreeAbGroup : (n : ℕ) → Iso (ℤ[A n ] .fst) (FAGAbGroup {A = Fin n} .fst)
+Iso-ℤ[Fin]-FreeAbGroup : (n : ℕ) → Iso (ℤ[Fin n ] .fst) (FAGAbGroup {A = Fin n} .fst)
 Iso.fun (Iso-ℤ[Fin]-FreeAbGroup n) = toHIT n
 Iso.inv (Iso-ℤ[Fin]-FreeAbGroup n) = fromHIT n
 Iso.rightInv (Iso-ℤ[Fin]-FreeAbGroup n) = fromTo n
 Iso.leftInv (Iso-ℤ[Fin]-FreeAbGroup n) = toFrom n
 
-ℤ[Fin]≅FreeAbGroup : (n : ℕ) → AbGroupIso (ℤ[A n ]) (FAGAbGroup {A = Fin n})
+ℤ[Fin]≅FreeAbGroup : (n : ℕ) → AbGroupIso (ℤ[Fin n ]) (FAGAbGroup {A = Fin n})
 fst (ℤ[Fin]≅FreeAbGroup n) = Iso-ℤ[Fin]-FreeAbGroup n
 snd (ℤ[Fin]≅FreeAbGroup n) = makeIsGroupHom (toHIT+ n)
 
 elimPropℤ[Fin] : ∀ {ℓ} (n : ℕ)
-  (A : ℤ[A n ] .fst → Type ℓ)
+  (A : ℤ[Fin n ] .fst → Type ℓ)
   → ((x : _) → isProp (A x))
   → (A (λ _ → 0))
   → ((x : _) → A (generator x))
