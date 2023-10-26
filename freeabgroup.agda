@@ -1,6 +1,5 @@
-{-# OPTIONS --cubical --allow-unsolved-metas #-}
+{-# OPTIONS --cubical --safe #-}
 
-open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.HLevels
@@ -15,16 +14,22 @@ open import Cubical.Data.Sigma
 open import Cubical.Data.Empty as ⊥
 
 open import Cubical.HITs.FreeAbGroup as FG renaming (FreeAbGroup to Free ; _·_ to _⋄_)
+open import Cubical.HITs.Sn
+open import Cubical.HITs.SetTruncation as ST
 
-open import Cubical.Algebra.Group
 open import Cubical.Algebra.Monoid
 open import Cubical.Algebra.Semigroup
-open import Cubical.Algebra.AbGroup
-open import Cubical.Algebra.Group.Instances.Int
+open import Cubical.Algebra.Group
+open import Cubical.Algebra.Group.Morphisms
 open import Cubical.Algebra.Group.MorphismProperties
+open import Cubical.Algebra.Group.Instances.Int
+open import Cubical.Algebra.AbGroup
 open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup
 
-open import prelude
+open import Cubical.Relation.Nullary
+
+open import Cubical.ZCohomology.Base
+open import Cubical.ZCohomology.GroupStructure
 
 module freeabgroup where
 
@@ -35,6 +40,7 @@ open IsSemigroup
 
 module _ {ℓ ℓ' : Level} {X : Type ℓ} (G : X → Group ℓ') where
 
+  -- TODO: upstream
   ΠGroup : Group (ℓ-max ℓ ℓ')
   fst ΠGroup = (x : X) → fst (G x)
   1g (snd ΠGroup) x = 1g (G x .snd)
@@ -64,18 +70,6 @@ module _ {ℓ ℓ' : Level} {X : Type ℓ} (G : X → AbGroup ℓ') where
 -- Ok yes this is a lie but it happens to be FreeAbGroup for A = Fin n...
 FreeAbGroup : ∀ {ℓ} (A : Type ℓ) → AbGroup ℓ
 FreeAbGroup A = ΠAbGroup {X = A} λ _ → ℤAbGroup
-
-open import Cubical.Relation.Nullary
-
-open import Cubical.HITs.Sn
-open import Cubical.HITs.SetTruncation as ST
-open import Cubical.HITs.Truncation as TR
-
-open import Cubical.Algebra.Group.Morphisms
-
-open import Cubical.ZCohomology.Base
-open import Cubical.ZCohomology.GroupStructure
-
 
 ℤ[Fin_] : (n : ℕ) → AbGroup ℓ-zero
 ℤ[Fin n ] = FreeAbGroup (Fin n)

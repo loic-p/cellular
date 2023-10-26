@@ -1,28 +1,32 @@
 {-# OPTIONS --cubical --safe #-}
 
-open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.GroupoidLaws
 open import Cubical.Foundations.Function
+open import Cubical.Foundations.Pointed
+
 open import Cubical.Data.Nat
 open import Cubical.Data.Bool
 open import Cubical.Data.Fin
-open import Cubical.Data.Sigma
+
 open import Cubical.HITs.S1
 open import Cubical.HITs.Sn
 open import Cubical.HITs.Pushout
 open import Cubical.HITs.Susp
-open import Cubical.Relation.Nullary
+open import Cubical.HITs.FreeAbGroup.Base
+
 open import Cubical.Homotopy.Loopspace
-open import Cubical.Foundations.Pointed
 
 open import Cubical.Algebra.AbGroup
 open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup
-open import Cubical.HITs.FreeAbGroup.Base
 
 open import Cubical.Algebra.Group.MorphismProperties
 
 -- all that stuff should probably go in the library somewhere
+
+-- terminal map from any type to Unit
+terminal : (A : Type) → A → Unit
+terminal A x = tt
 
 σ : (n : ℕ) → S₊ n → typ (Ω (S₊∙ (suc n)))
 σ zero false = loop

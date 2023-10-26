@@ -1,8 +1,7 @@
-{-# OPTIONS --cubical --allow-unsolved-metas --lossy-unification #-}
+{-# OPTIONS --cubical --safe --lossy-unification #-}
 {-
 Contains facts about the degree map Sⁿ → Sⁿ
 -}
-open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Pointed
 open import Cubical.Foundations.Isomorphism
@@ -41,10 +40,7 @@ open import Cubical.ZCohomology.Properties
 open import Cubical.ZCohomology.GroupStructure
 open import Cubical.ZCohomology.Groups.Sn
 
-
 open import prelude
-open import freeabgroup
-
 
 module degree where
 

@@ -1,6 +1,5 @@
-{-# OPTIONS --cubical --allow-unsolved-metas #-}
+{-# OPTIONS --cubical --safe #-}
 
-open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Path
 open import Cubical.Foundations.Pointed
@@ -18,7 +17,6 @@ open import Cubical.Data.Fin
 open import Cubical.Data.Sigma
 open import Cubical.Data.Int renaming (_·_ to _·ℤ_ ; -_ to -ℤ_)
 open import Cubical.Data.Empty as ⊥
-open import Cubical.Data.Unit
 
 open import Cubical.HITs.S1
 open import Cubical.HITs.Sn
@@ -26,21 +24,15 @@ open import Cubical.HITs.Pushout
 open import Cubical.HITs.Susp
 open import Cubical.HITs.Truncation as TR
 open import Cubical.HITs.SetTruncation as ST
-open import Cubical.HITs.FreeAbGroup as FG hiding (FreeAbGroup)
 
-open import Cubical.Homotopy.Group.Base
-open import Cubical.Homotopy.Group.PinSn
 open import Cubical.Homotopy.Loopspace
 
 open import Cubical.Relation.Nullary
 
-open import Cubical.Algebra.Group.MorphismProperties
-open import Cubical.Algebra.Group.QuotientGroup renaming (_/_ to _//_)
-open import Cubical.Algebra.Group.Base
-open import Cubical.Algebra.Group.Subgroup
+open import Cubical.Algebra.Group
 open import Cubical.Algebra.AbGroup
 open import Cubical.Algebra.Group.Morphisms
-open import Cubical.Algebra.Group.Instances.Int
+open import Cubical.Algebra.Group.MorphismProperties
 
 open import Cubical.ZCohomology.Base
 open import Cubical.ZCohomology.GroupStructure
@@ -52,10 +44,6 @@ open import freeabgroup
 open import degree
 
 module spherebouquet where
-
---terminal map from any type to Unit
-terminal : (A : Type) → A → Unit
-terminal A x = tt
 
 -- Move
 suspFun∙ : {A B : Type} (f : A → B)

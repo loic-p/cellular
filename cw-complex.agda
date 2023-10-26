@@ -1,41 +1,19 @@
-{-# OPTIONS --cubical --allow-unsolved-metas --lossy-unification #-}
+{-# OPTIONS --cubical --safe --lossy-unification #-}
 
-open import Cubical.Core.Everything
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Pointed
-open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Equiv
-open import Cubical.Foundations.Function
-open import Cubical.Foundations.GroupoidLaws
 
-open import Cubical.Data.Bool hiding (_≤_)
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
-open import Cubical.Data.Nat.Order
 open import Cubical.Data.Fin
 open import Cubical.Data.Sigma
-open import Cubical.Data.Int renaming (_·_ to _·ℤ_ ; -_ to -ℤ_)
-open import Cubical.Data.Empty as ⊥
-open import Cubical.Data.Unit
+
 open import Cubical.HITs.Sn
 open import Cubical.HITs.Pushout
 open import Cubical.HITs.Susp
-open import Cubical.HITs.Truncation as TR
-open import Cubical.HITs.SetTruncation as ST
-
-open import Cubical.Relation.Nullary
-open import Cubical.Homotopy.Loopspace
-open import Cubical.ZCohomology.Groups.Sn
-
-open import Cubical.Algebra.Group.MorphismProperties
-open import Cubical.Algebra.Group.QuotientGroup renaming (_/_ to _//_)
-open import Cubical.Algebra.Group.Base
-open import Cubical.Algebra.Group.Subgroup
-open import Cubical.Algebra.AbGroup
 
 open import prelude
-open import freeabgroup
-open import degree
-open import spherebouquet hiding (chooseS)
+open import spherebouquet
 
 module cw-complex where
 
