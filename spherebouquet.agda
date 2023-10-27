@@ -526,7 +526,7 @@ degreeSusp {n = n} {m = m} {k = k} f =
                                   (inr (z , merid a i))) ∣)) r i})
           (Kn→ΩKn+1 (suc n) ∣ chooseS b (f .fst (inr (z , a))) ∣ i)
 
-degreeConst : (n a b : ℕ) → bouquetDegree {n} {a} {b} ((λ _ → inl tt) , refl) ≡ constAbGroupHom ℤ[Fin a ] ℤ[Fin b ]
+degreeConst : (n a b : ℕ) → bouquetDegree {n} {a} {b} ((λ _ → inl tt) , refl) ≡ 0hom {G = ℤ[Fin a ]} {H = ℤ[Fin b ]}
 degreeConst n a b = GroupHom≡ ((λ i r x → sumFin (λ a → r a ·ℤ (degree.degree-const n i)))
                               ∙∙ (λ i r x → sumFin (λ a → ·Comm (r a) (pos 0) i))
                               ∙∙ λ i r x → sumFin0 a i)

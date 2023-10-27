@@ -5,8 +5,7 @@ open import Cubical.Foundations.Pointed
 open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Function
 
-open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
-open import Cubical.Data.Nat.Order
+open import Cubical.Data.Nat
 open import Cubical.Data.Fin
 open import Cubical.Data.Sigma
 open import Cubical.HITs.Sn
@@ -22,13 +21,14 @@ open import freeabgroup
 open import degree
 open import spherebouquet hiding (chooseS)
 open import cw-complex
-
-module cw-chain-complex (C : CW) where
+open import ChainComplex
 
 -- In this file, we associate to every CW complex its cellular chain complex
 -- The group in dimension n is Z[A_n] where A_n is the number of n-cells
 -- The boundary map is defined through a bit of homotopical manipulation.
 -- The definition loosely follows May's Concise Course in Alg. Top.
+
+module cw-chain-complex (C : CW) where
 
 -- the groups of the chain complex associated to a CW-complex C
 ℤ[A_] : (n : ℕ) → AbGroup ℓ-zero
@@ -165,13 +165,10 @@ module preboundary-cancellation (n : ℕ) where
 
 -- the boundary map of the chain complex associated to C
 ∂ : (n : ℕ) → AbGroupHom (ℤ[A (suc (suc n)) ]) (ℤ[A (suc n) ])
-∂ n = bouquetDegree pre∂
-  where
-    open preboundary n
+∂ n = bouquetDegree (preboundary.pre∂ n)
 
 -- ∂ ∘ ∂ = 0, the fundamental equation of chain complexes
-∂∂≡0 : (n : ℕ) → compGroupHom (∂ (suc n)) (∂ n)
-               ≡ constAbGroupHom (ℤ[A (suc (suc (suc n))) ]) (ℤ[A (suc n) ])
+∂∂≡0 : (n : ℕ) → compGroupHom (∂ (suc n)) (∂ n) ≡ 0hom
 ∂∂≡0 n = congS (compGroupHom (∂ (suc n))) ∂≡∂↑
            ∙∙ sym (degreeComp (bouquetSusp→ (pre∂ n)) (pre∂ (suc n)))
            ∙∙ (congS bouquetDegree (preboundary-cancellation.pre∂pre∂≡0 n)
@@ -184,3 +181,11 @@ module preboundary-cancellation (n : ℕ) where
 
     ∂≡∂↑ : ∂ n ≡ ∂↑
     ∂≡∂↑ = degreeSusp (pre∂ n)
+
+
+open ChainComplex.ChainComplex
+
+CW-ChainComplex : ChainComplex ℓ-zero
+chain CW-ChainComplex n = ℤ[A (suc n) ] -- TODO: why should this be suc n?
+bdry CW-ChainComplex = ∂
+bdry²=0 CW-ChainComplex = ∂∂≡0
