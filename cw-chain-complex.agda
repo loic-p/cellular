@@ -189,3 +189,7 @@ CW-ChainComplex : ChainComplex ℓ-zero
 chain CW-ChainComplex n = ℤ[A (suc n) ] -- TODO: why should this be suc n?
 bdry CW-ChainComplex = ∂
 bdry²=0 CW-ChainComplex = ∂∂≡0
+
+-- Cellular homology
+Hᶜʷ : (n : ℕ) → Group₀
+Hᶜʷ n = homology n CW-ChainComplex
