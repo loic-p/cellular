@@ -32,7 +32,7 @@ CW = Σ[ X ∈ (ℕ → Type) ] (yieldsCW X)
 
 -- Technically, a CW complex should be the sequential colimit over the following maps
 CW↪ : (T : CW) → (n : ℕ) → fst T n → fst T (suc n)
-CW↪ (X , α , e₀ , e₊) n x = invEq (e₊ .snd n) (inl x)
+CW↪ (X , f , α , e₀ , e₊) n x = invEq (e₊ n) (inl x)
 
 -- But if it stabilises, no need for colimits.
 yieldsFinCW : (n : ℕ) (X : ℕ → Type) → Type
