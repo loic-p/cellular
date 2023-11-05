@@ -4,6 +4,9 @@ open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.GroupoidLaws
 open import Cubical.Foundations.Function
 open import Cubical.Foundations.Pointed
+open import Cubical.Foundations.HLevels
+open import Cubical.Foundations.Equiv
+open import Cubical.Foundations.Transport
 
 open import Cubical.Data.Nat
 open import Cubical.Data.Bool
@@ -16,6 +19,7 @@ open import Cubical.HITs.Susp
 open import Cubical.HITs.FreeAbGroup.Base
 
 open import Cubical.Homotopy.Loopspace
+open import Cubical.Homotopy.Connected
 
 open import Cubical.Algebra.AbGroup
 open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup
@@ -82,3 +86,33 @@ constant-pointed {A = A} {B = B , b} f Hf i =
 -- constAbGroupHom : ∀ {ℓA} {ℓB} → (A : AbGroup ℓA) → (B : AbGroup ℓB) → AbGroupHom A B
 -- fst (constAbGroupHom A B) = λ _ → B .snd .AbGroupStr.0g
 -- snd (constAbGroupHom A B) = makeIsGroupHom λ a b → sym (B .snd .AbGroupStr.+IdL (B .snd .AbGroupStr.0g))
+
+
+-- A pushout of a n-connected map is n-connected
+-- The symmetric version of this is in Cubical.Homotopy.Connected
+inlConnected : ∀ {ℓ ℓ' ℓ''} {A : Type ℓ} {B : Type ℓ'} {C : Type ℓ''} (n : ℕ)
+            → (f : C → A) (g : C → B)
+            → isConnectedFun n g
+            → isConnectedFun n {A = A} {B = Pushout f g} inl
+inlConnected {A = A} {B = B} {C = C} n f g iscon =
+  elim.isConnectedPrecompose inl n λ P → (k P) , λ a → refl
+  where
+  module _ {ℓ : Level} (P : (Pushout f g) → TypeOfHLevel ℓ n)
+                   (h : (a : A) → typ (P (inl a)))
+    where
+    Q : B → TypeOfHLevel _ n
+    Q b = (P (inr b))
+
+    fun : (c : C) → typ (Q (g c))
+    fun c = transport (λ i → typ (P (push c (i)))) (h (f c))
+
+    k : (d : Pushout f g) → typ (P d)
+    k (inl x) = h x
+    k (inr x) = equiv-proof (elim.isEquivPrecompose g n Q iscon) fun .fst .fst x
+    k (push a i) =
+      hcomp (λ k → λ { (i = i1) → equiv-proof (elim.isEquivPrecompose g n Q iscon) fun .fst .snd i0 a
+                     ; (i = i0) → transportTransport⁻ (λ j → typ (P (push a (~ j)))) (h (f a)) k })
+            (transp (λ j → typ (P (push a (i ∨ (~ j)))))
+                    (i)
+                    (equiv-proof (elim.isEquivPrecompose g n Q iscon)
+                                 fun .fst .snd (~ i) a))

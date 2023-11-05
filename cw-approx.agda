@@ -13,7 +13,9 @@ open import Cubical.HITs.Pushout
 open import Cubical.HITs.PropositionalTruncation as PT
 
 open import Cubical.HITs.SequentialColimit
+open import Cubical.Homotopy.Connected
 
+open import prelude
 open import cw-complex
 open import choice
 
@@ -30,6 +32,10 @@ Sequence.map (realiseSeq C) = CW↪ C _
 -- realisation of CW complex from skeleton
 realise : CW → Type
 realise C = SeqColim (realiseSeq C)
+
+-- send the stage n to the realization (the same as incl, but with explicit args and type)
+CW↪∞ : (C : CW) → (n : ℕ) → fst C n → realise C
+CW↪∞ C n x = incl x
 
 -- elimination from colimit into prop (move to lib)
 Lim→Prop : ∀ {ℓ ℓ'} {C : Sequence ℓ} {B : SeqColim C → Type ℓ'}
@@ -77,6 +83,35 @@ isSet-CW₀ : (C : CW) → isSet (fst C 0)
 isSet-CW₀ C =
   isOfHLevelRetractFromIso 2 (equivToIso (snd C .snd .snd .fst))
     isSetFin
+
+-- The embedding of stage n into stage n+1 is (n+1)-connected
+-- 2 calls to univalence in there
+isConnected-CW↪ : (n : ℕ) (C : CW) → isConnectedFun (suc n) (CW↪ C n)
+isConnected-CW↪ n C = EquivJ (λ X E → isConnectedFun (suc n) (λ x → invEq E (inl x)))
+                             inPushoutConnected (e₊ n)
+  where
+    A = snd C .fst
+    α = snd C .snd .fst
+    e₊ = snd C .snd .snd .snd
+
+    inPushout : fst C n → Pushout (α n) fst
+    inPushout x = inl x
+
+    fstProjPath : (b : Fin (A (suc n))) → S₊ n ≡ fiber fst b
+    fstProjPath b = ua (fiberProjEquiv (Fin (A (suc n))) (λ _ → S₊ n) b)
+
+    inPushoutConnected : isConnectedFun (suc n) inPushout
+    inPushoutConnected = inlConnected (suc n) (α n) fst
+      (λ b → subst (isConnected (suc n)) (fstProjPath b) (sphereConnected n))
+
+-- The embedding of stage n into the colimit is (n+1)-connected
+isConnected-CW↪∞ : (n : ℕ) (C : CW) → isConnectedFun (suc n) (CW↪∞ C n)
+isConnected-CW↪∞ n C = isConnectedIncl∞ (realiseSeq C) (suc n) n subtr
+  where
+    subtr : (k : ℕ) → isConnectedFun (suc n) (CW↪ C (k +ℕ n))
+    subtr k = isConnectedFunSubtr (suc n) k (CW↪ C (k +ℕ n))
+                                  (subst (λ X → isConnectedFun X (CW↪ C (k +ℕ n)))
+                                         (sym (+-suc k n)) (isConnected-CW↪ (k +ℕ n) C))
 
 -- Cellular approximation
 module _ (C D : CW) (f : realise C → realise D) where
