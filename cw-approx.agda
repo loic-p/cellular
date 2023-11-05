@@ -24,19 +24,19 @@ open Sequence
 -- todo: clean up imports
 
 realiseSeq : CW → Sequence ℓ-zero
-space (realiseSeq (C , p)) = C
+Sequence.obj (realiseSeq (C , p)) = C
 Sequence.map (realiseSeq C) = CW↪ C _
 
 -- realisation of CW complex from skeleton
 realise : CW → Type
-realise C = Lim→ (realiseSeq C)
+realise C = SeqColim (realiseSeq C)
 
 -- elimination from colimit into prop (move to lib)
-Lim→Prop : ∀ {ℓ ℓ'} {C : Sequence ℓ} {B : Lim→ C → Type ℓ'}
+Lim→Prop : ∀ {ℓ ℓ'} {C : Sequence ℓ} {B : SeqColim C → Type ℓ'}
   → ((x : _) → isProp (B x))
-  → (s : (n : ℕ) (x : space C n) → B (inl x))
+  → (s : (n : ℕ) (x : obj C n) → B (incl x))
   → (x : _) → B x
-Lim→Prop {C = C} pr ind (inl x) = ind _ x
+Lim→Prop {C = C} pr ind (incl x) = ind _ x
 Lim→Prop {C = C} {B = B} pr ind (push x i) =
   isProp→PathP {B = λ i → B (push x i)}
     (λ i → pr _)
@@ -66,7 +66,7 @@ CWskel→Prop C {A = A} pr b eqs (suc n) c =
 -- eliminating from CW complex into prop
 CW→Prop : (C : CW) {A : realise C → Type}
   → ((x : _) → isProp (A x))
-  → ((a : _) → A (inl {n = zero} a))
+  → ((a : _) → A (incl {n = zero} a))
   → (a : _) → A a
 CW→Prop C {A = A} pr ind  =
   Lim→Prop pr (CWskel→Prop C (λ _ _ → pr _)
@@ -80,19 +80,19 @@ isSet-CW₀ C =
 
 -- Cellular approximation
 module _ (C D : CW) (f : realise C → realise D) where
-  find-connected-component : (d : realise D) → ∃[ d0 ∈ fst D 0 ] inl d0 ≡ d
+  find-connected-component : (d : realise D) → ∃[ d0 ∈ fst D 0 ] incl d0 ≡ d
   find-connected-component = CW→Prop D (λ _ → squash₁) λ a → ∣ a , refl ∣₁
 
-  find-connected-component-C₀ : (c : fst C 0) → ∃[ d0 ∈ fst D 0 ] inl d0 ≡ f (inl c)
-  find-connected-component-C₀ c = find-connected-component (f (inl c))
+  find-connected-component-C₀ : (c : fst C 0) → ∃[ d0 ∈ fst D 0 ] incl d0 ≡ f (incl c)
+  find-connected-component-C₀ c = find-connected-component (f (incl c))
 
   satAC∃Fin-C0 : ∀ {ℓ ℓ'} → satAC∃ ℓ ℓ' (fst C 0)
   satAC∃Fin-C0 {ℓ} {ℓ'} = subst (satAC∃ ℓ ℓ') ( sym (ua (snd C .snd .snd .fst))) (satAC∃Fin _)
 
   -- existence of f₀ : C₀ → D₀
-  approx₀ : ∃[ f₀ ∈ (fst C 0 → fst D 0) ] ((c : _) → inl (f₀ c) ≡ f (inl c) )
+  approx₀ : ∃[ f₀ ∈ (fst C 0 → fst D 0) ] ((c : _) → incl (f₀ c) ≡ f (incl c) )
   approx₀ =
-    invEq (_ , satAC∃Fin-C0 (λ _ → fst D 0) (λ c d0 → inl d0 ≡ f (inl c)))
+    invEq (_ , satAC∃Fin-C0 (λ _ → fst D 0) (λ c d0 → incl d0 ≡ f (incl c)))
       find-connected-component-C₀
 
   -- todo: higher dims...

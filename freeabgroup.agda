@@ -50,10 +50,10 @@ module _ {ℓ ℓ' : Level} {X : Type ℓ} (G : X → Group ℓ') where
     isSetΠ λ x → is-set (G x .snd)
   IsSemigroup.·Assoc (isSemigroup (isMonoid (isGroup (snd ΠGroup)))) f g h =
     funExt λ x → IsSemigroup.·Assoc (isSemigroup (isMonoid (G x .snd))) (f x) (g x) (h x)
-  ·IdR (isMonoid (isGroup (snd ΠGroup))) f =
-    funExt λ x → ·IdR (isMonoid (isGroup (snd (G x)))) (f x)
-  ·IdL (isMonoid (isGroup (snd ΠGroup))) f =
-    funExt λ x → ·IdL (isMonoid (isGroup (snd (G x)))) (f x)
+  IsMonoid.·IdR (isMonoid (isGroup (snd ΠGroup))) f =
+    funExt λ x → IsMonoid.·IdR (isMonoid (isGroup (snd (G x)))) (f x)
+  IsMonoid.·IdL (isMonoid (isGroup (snd ΠGroup))) f =
+    funExt λ x → IsMonoid.·IdL (isMonoid (isGroup (snd (G x)))) (f x)
   ·InvR (isGroup (snd ΠGroup)) f =
     funExt λ x → ·InvR (isGroup (snd (G x))) (f x)
   ·InvL (isGroup (snd ΠGroup)) f =
