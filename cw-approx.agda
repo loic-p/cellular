@@ -4,6 +4,7 @@ open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.HLevels
 open import Cubical.Foundations.Univalence
+open import Cubical.Foundations.GroupoidLaws
 
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
 open import Cubical.Data.Fin
@@ -112,6 +113,108 @@ isConnected-CW↪∞ n C = isConnectedIncl∞ (realiseSeq C) (suc n) n subtr
     subtr k = isConnectedFunSubtr (suc n) k (CW↪ C (k +ℕ n))
                                   (subst (λ X → isConnectedFun X (CW↪ C (k +ℕ n)))
                                          (sym (+-suc k n)) (isConnected-CW↪ (k +ℕ n) C))
+
+-- We can merely fill n-spheres in (n+2)-connected spaces
+module connectedSpace {A : Type} (n : ℕ) (HA : isConnected (suc (suc n)) A) where
+  contractSphere : (f : S₊ n → A) →  ∃[ a ∈ A ] ((s : S₊ n) → f s ≡ a)
+  contractSphere f = {!!}
+
+-- Now we are going to prove that connectedness is enough to lift a map from
+-- stage n of the CW approximation to stage n+1
+module connectedFunLifts {A B : Type}
+  (f : A → B) (n : ℕ) (Hf : isConnectedFun (suc (suc n)) f) where
+
+  -- contractions of spheres can be (merely) lifted along connected maps
+  contractSphere : (g : S₊ n → A) (b : B)
+    → (diskB : (s : S₊ n) → f (g s) ≡ b)
+    → ∥ Σ[ a ∈ A ] (Σ[ Ha ∈ f a ≡ b ] (Σ[ diskA ∈ ((s : S₊ n) → g s ≡ a) ]
+           ((s : S₊ n) → diskB s ≡ (cong f (diskA s) ∙ Ha)))) ∥₁
+  contractSphere g b diskB = PT.map aux (connectedSpace.contractSphere n (Hf b) (λ s → (g s , diskB s)))
+    where
+      aux : (Σ[ a ∈ fiber f b ] ((s : S₊ n) → (g s , diskB s) ≡ a)) →
+            Σ[ a ∈ A ] (Σ[ Ha ∈ f a ≡ b ] (Σ[ diskA ∈ ((s : S₊ n) → g s ≡ a) ]
+              ((s : S₊ n) → diskB s ≡ (cong f (diskA s) ∙ Ha))))
+      aux ((a , Ha) , c) = a , Ha , (λ s → fst (pathFiber f b (c s)))
+                         , (λ s → snd (pathFiber f b (c s)))
+
+  -- this also works for a finite amount of sphere contractions by Finite Choice
+  contractSpheres : (m : ℕ) (g : Fin m → S₊ n → A)
+    → (b : (k : Fin m) → B)
+    → (diskB : (k : Fin m) → (s : S₊ n) → f (g k s) ≡ b k)
+    → ∥ (Σ[ a ∈ (Fin m → A) ] ((k : Fin m) → Σ[ Ha ∈ f (a k) ≡ b k ]
+            (Σ[ diskA ∈ ((s : S₊ n) → g k s ≡ a k) ]
+            ((s : S₊ n) → diskB k s ≡ (cong f (diskA s) ∙ Ha))))) ∥₁
+  contractSpheres m g b diskB = invEq (_ , satAC∃Fin m (λ _ → A)
+    (λ k a → (Σ[ Ha ∈ f a ≡ b k ] (Σ[ diskA ∈ ((s : S₊ n) → g k s ≡ a) ]
+      ((s : S₊ n) → diskB k s ≡ (cong f (diskA s) ∙ Ha))))))
+    (λ k → contractSphere (g k) (b k) (diskB k))
+
+  -- this allows us to lift a map out of a pushout with spheres
+  module _ (X : Type) (g : X → A) (m : ℕ) (α : Fin m × S₊ n → X)
+    (h : Pushout α fst → B) (comm : (x : X) → f (g x) ≡ h (inl x)) where
+
+    module _ (spheresContr : (Σ[ a ∈ (Fin m → A) ] ((k : Fin m) → Σ[ Ha ∈ f (a k) ≡ h (inr k) ]
+      (Σ[ diskA ∈ ((s : S₊ n) → g (α (k , s)) ≡ a k) ]
+      ((s : S₊ n) → comm (α (k , s)) ∙ (cong h (push (k , s))) ≡ (cong f (diskA s) ∙ Ha)))))) where
+
+      centerA : Fin m → A
+      centerA = fst spheresContr
+
+      HcenterA : (k : Fin m) → f (centerA k) ≡ h (inr k)
+      HcenterA = λ k → fst (snd spheresContr k)
+
+      diskA : (k : Fin m) → (s : S₊ n) → g (α (k , s)) ≡ centerA k
+      diskA = λ k → fst (snd (snd spheresContr k))
+
+      HdiskA : (k : Fin m) → (s : S₊ n) → comm (α (k , s)) ∙ (cong h (push (k , s))) ≡ (cong f (diskA k s) ∙' (HcenterA k))
+      HdiskA = λ k s → (snd (snd (snd spheresContr k)) s) ∙ (compPath≡compPath' (cong f (diskA k s)) (HcenterA k))
+
+      liftPushout-fun : Pushout α fst → A
+      liftPushout-fun (inl x) = g x
+      liftPushout-fun (inr a) = centerA a
+      liftPushout-fun (push (a , s) i) = diskA a s i
+
+      liftPushout-H1 : (x : X) → (g x ≡ liftPushout-fun (inl x))
+      liftPushout-H1 x = refl
+
+      liftPushout-H2 : (x : Pushout α fst) → f (liftPushout-fun x) ≡ h x
+      liftPushout-H2 (inl x) = comm x
+      liftPushout-H2 (inr a) = HcenterA a
+      liftPushout-H2 (push (a , s) i) j =
+        hcomp (λ k → λ { (i = i0) → compPath-filler (comm (α (a , s))) (cong h (push (a , s))) (~ k) j
+                       ; (i = i1) → compPath'-filler (cong f (diskA a s)) (HcenterA a) (~ k) j
+                       ; (j = i0) → f (diskA a s (i ∧ k))
+                       ; (j = i1) → h (push (a , s) (i ∨ (~ k))) })
+              (HdiskA a s i j)
+
+      liftPushout-aux : Σ[ lift ∈ (Pushout α fst → A) ]
+        ((x : X) → g x ≡ lift (inl x)) × ((x : Pushout α fst) → f (lift x) ≡ h x)
+      liftPushout-aux = liftPushout-fun , liftPushout-H1 , liftPushout-H2
+
+    liftPushout : ∃[ lift ∈ (Pushout α fst → A) ]
+      ((x : X) → g x ≡ lift (inl x)) × ((x : Pushout α fst) → f (lift x) ≡ h x)
+    liftPushout = PT.map liftPushout-aux
+      (contractSpheres m (λ a s → g (α (a , s)))
+                         (λ k → h (inr k))
+                         (λ k s → comm (α (k , s)) ∙ cong h (push (k , s))))
+
+  -- which in turn, allows us to lift maps from a CW stage to the next one
+  module _ (C : CW) (g : fst C n → A) where
+    An = snd C .fst
+    α = snd C .snd .fst
+    e₊ = snd C .snd .snd .snd
+
+    lifting-prop : (Y : Type) (E : Y ≃ Pushout (α n) fst) → Type
+    lifting-prop Y E = (h : Y → B) (comm : (x : fst C n) → f (g x) ≡ h (invEq E (inl x)))
+      → ∃[ lift ∈ (Y → A) ] ((x : fst C n) → g x ≡ lift (invEq E (inl x)))
+                            × ((x : Y) → f (lift x) ≡ h x)
+
+    liftCW : (h : fst C (suc n) → B)
+      (comm : (x : fst C n) → f (g x) ≡ h (CW↪ C n x))
+      → ∃[ lift ∈ (fst C (suc n) → A) ] ((x : fst C n) → g x ≡ lift (CW↪ C n x))
+                                        × ((x : fst C (suc n)) → f (lift x) ≡ h x)
+    liftCW = EquivJ lifting-prop
+      (liftPushout (fst C n) g (An (suc n)) (α n)) (e₊ n)
 
 -- Cellular approximation
 module _ (C D : CW) (f : realise C → realise D) where

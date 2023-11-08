@@ -87,6 +87,11 @@ constant-pointed {A = A} {B = B , b} f Hf i =
 -- fst (constAbGroupHom A B) = λ _ → B .snd .AbGroupStr.0g
 -- snd (constAbGroupHom A B) = makeIsGroupHom λ a b → sym (B .snd .AbGroupStr.+IdL (B .snd .AbGroupStr.0g))
 
+-- Characterizing equality in a fiber of some function f
+pathFiber : {A B : Type} (f : A → B) (b : B) {a a' : A} {t : f a ≡ b} {t' : f a' ≡ b} →
+  ((a , t) ≡ (a' , t' )) → Σ[ e ∈ a ≡ a' ] (t ≡ cong f e ∙ t')
+pathFiber {A} {B} f b {a} {a'} {t} {t'} e =
+  J (λ X _ → Σ[ e ∈ a ≡ fst X ] (t ≡ cong f e ∙ (snd X))) (refl , lUnit t) e
 
 -- A pushout of a n-connected map is n-connected
 -- The symmetric version of this is in Cubical.Homotopy.Connected
