@@ -187,6 +187,11 @@ module connectedFunLifts {A B : Type}
                        ; (j = i1) → h (push (a , s) (i ∨ (~ k))) })
               (HdiskA a s i j)
 
+      -- pasting the two commutativity triangles gives the commutativity of the outer square
+      -- unused for now, probably useful later
+      liftPushout-H12 : (x : X) → comm x ≡ (cong f (liftPushout-H1 x) ∙ liftPushout-H2 (inl x))
+      liftPushout-H12 x = lUnit (comm x)
+
       liftPushout-aux : Σ[ lift ∈ (Pushout α fst → A) ]
         ((x : X) → g x ≡ lift (inl x)) × ((x : Pushout α fst) → f (lift x) ≡ h x)
       liftPushout-aux = liftPushout-fun , liftPushout-H1 , liftPushout-H2
