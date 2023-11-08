@@ -3,18 +3,26 @@
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.HLevels
+open import Cubical.Foundations.Pointed
 open import Cubical.Foundations.Univalence
 open import Cubical.Foundations.GroupoidLaws
+open import Cubical.Foundations.Isomorphism
 
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
 open import Cubical.Data.Fin
 open import Cubical.Data.Sigma
-open import Cubical.HITs.Sn
-open import Cubical.HITs.Pushout
-open import Cubical.HITs.PropositionalTruncation as PT
+open import Cubical.Data.Bool
+open import Cubical.Data.Unit
 
 open import Cubical.HITs.SequentialColimit
+open import Cubical.HITs.PropositionalTruncation as PT
+open import Cubical.HITs.SetTruncation as ST
+open import Cubical.HITs.Truncation as TR
+open import Cubical.HITs.Sn
+open import Cubical.HITs.Pushout
+
 open import Cubical.Homotopy.Connected
+open import Cubical.Homotopy.Group.Base
 
 open import prelude
 open import cw-complex
@@ -115,9 +123,38 @@ isConnected-CW↪∞ n C = isConnectedIncl∞ (realiseSeq C) (suc n) n subtr
                                          (sym (+-suc k n)) (isConnected-CW↪ (k +ℕ n) C))
 
 -- We can merely fill n-spheres in (n+2)-connected spaces
-module connectedSpace {A : Type} (n : ℕ) (HA : isConnected (suc (suc n)) A) where
-  contractSphere : (f : S₊ n → A) →  ∃[ a ∈ A ] ((s : S₊ n) → f s ≡ a)
-  contractSphere f = {!!}
+module connectedSpace {A : Type} where
+  contractSphere : (n : ℕ) (HA : isConnected (suc (suc n)) A)
+    → (f : S₊ n → A)
+    →  ∃[ a ∈ A ] ((s : S₊ n) → f s ≡ a)
+  contractSphere zero HA f =
+    TR.rec squash₁
+      (λ p → ∣ (f true) , (λ { false → sym p ; true → refl}) ∣₁)
+      (Iso.fun (PathIdTruncIso _) (isContr→isProp HA ∣ f true ∣ₕ ∣ f false ∣ₕ))
+  contractSphere (suc n) HA f =
+    PT.map (λ p → (f (ptSn (suc n))) , funExt⁻ p) main-path
+    where
+    A⋆ : Pointed₀
+    A⋆ = A , f (ptSn (suc n))
+
+    π-iso : Iso (π' (suc n) A⋆) (π' (suc n) (Unit , tt))
+    π-iso =
+       compIso (fst (π'Gr≅πGr n A⋆))
+      (compIso (πTruncIso (suc n))
+      (compIso (invIso (fst (π'Gr≅πGr n (hLevelTrunc∙ (3 +ℕ n) A⋆))))
+               (equivToIso (π'Iso n (isoToEquiv (isContr→Iso HA isContrUnit) , refl) .fst))))
+
+    contr-π : isContr (π' (suc n) A⋆)
+    contr-π = isOfHLevelRetractFromIso 0 π-iso
+             (∣ const∙ (S₊∙ (suc n)) _ ∣₂
+             , ST.elim (λ _ → isSetPathImplicit) λ f → refl)
+
+    main-path : ∥ f ≡ (λ _ → f (ptSn (suc n))) ∥₁
+    main-path =
+      PT.map (cong fst)
+      (Iso.fun PathIdTrunc₀Iso
+                 (isContr→isProp contr-π
+                   ∣ f , refl ∣₂ ∣ (λ _ → f (ptSn (suc n))) , refl ∣₂))
 
 -- Now we are going to prove that connectedness is enough to lift a map from
 -- stage n of the CW approximation to stage n+1
@@ -238,4 +275,13 @@ module _ (C D : CW) (f : realise C → realise D) where
     invEq (_ , satAC∃Fin-C0 (λ _ → fst D 0) (λ c d0 → incl d0 ≡ f (incl c)))
       find-connected-component-C₀
 
-  -- todo: higher dims...
+  approx : (n : ℕ)
+    → ∃[ fₙ ∈ (fst C n → fst D n) ] ((c : _) → incl (fₙ c) ≡ f (incl c))
+  approx zero = approx₀
+  approx (suc n) = PT.rec squash₁ (λ {(f' , p) → PT.rec squash₁
+    (λ F → ∣ (fst F) , (snd F .snd) ∣₁)
+    (connectedFunLifts.liftCW {A = fst D (suc n)} {B = realise D} incl n
+      (isConnected-CW↪∞ (suc n) D) C (λ x → CW↪ D n (f' x))
+        (λ x → f (incl x))
+        λ x → sym (push (f' x)) ∙ p x ∙ cong f (push x))})
+      (approx n)
