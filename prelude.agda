@@ -11,6 +11,7 @@ open import Cubical.Foundations.Transport
 open import Cubical.Data.Nat
 open import Cubical.Data.Bool
 open import Cubical.Data.Fin
+open import Cubical.Data.Empty
 
 open import Cubical.HITs.S1
 open import Cubical.HITs.Sn
@@ -40,6 +41,10 @@ terminal A x = tt
 σ zero false = loop
 σ zero true = refl
 σ (suc n) x = toSusp (S₊∙ (suc n)) x
+
+S⁻ : ℕ → Type
+S⁻ zero = ⊥
+S⁻ (suc n) = S₊ n
 
 σ∙ : (n : ℕ) → S₊∙ n →∙ (Ω (S₊∙ (suc n)))
 fst (σ∙ n) = σ n

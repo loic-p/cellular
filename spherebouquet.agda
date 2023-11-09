@@ -536,67 +536,84 @@ degreeConst n a b = GroupHom≡ ((λ i r x → sumFin (λ a → r a ·ℤ (degre
 -- Dunno where to place this.
 
 preBTC : {Cₙ Cₙ₊₁ : Type} (n mₙ : ℕ)
-    (αₙ : Fin mₙ × S₊ n → Cₙ)
+    (αₙ : Fin mₙ × S⁻ n → Cₙ)
     (e : Cₙ₊₁ ≃ Pushout αₙ fst)
     → (x : Fin mₙ)
-    → S₊∙ (suc n) →∙ (Pushout (terminal Cₙ) (invEq e ∘ inl) , inl tt)
-fst (preBTC zero mₙ αₙ e x) base = inl tt
-fst (preBTC zero mₙ αₙ e x) (loop i) =
-  (push (αₙ (x , false))
+    → S₊∙ n →∙ (Pushout (terminal Cₙ) (invEq e ∘ inl) , inl tt)
+fst (preBTC zero mₙ αₙ e x) false = inr (invEq e (inr x))
+fst (preBTC zero mₙ αₙ e x) true = inl tt
+fst (preBTC (suc zero) mₙ αₙ e x) base = inl tt
+fst (preBTC (suc zero) mₙ αₙ e x) (loop i) =
+    (push (αₙ (x , false))
   ∙∙ (λ j → inr (invEq e ((push (x , false) ∙ sym (push (x , true))) j)))
   ∙∙ sym (push (αₙ (x , true)))) i
-fst (preBTC (suc n) mₙ αₙ e x) north = inl tt
-fst (preBTC (suc n) mₙ αₙ e x) south = inl tt
-fst (preBTC (suc n) mₙ αₙ e x) (merid a i) =
+fst (preBTC (suc (suc n)) mₙ αₙ e x) north = inl tt
+fst (preBTC (suc (suc n)) mₙ αₙ e x) south = inl tt
+fst (preBTC (suc (suc n)) mₙ αₙ e x) (merid a i) =
   (push (αₙ (x , a))
   ∙∙ (λ j → inr (invEq e ((push (x , a) ∙ sym (push (x , ptSn (suc n)))) j )))
   ∙∙ sym (push (αₙ (x , ptSn (suc n))))) i
 snd (preBTC zero mₙ αₙ e x) = refl
-snd (preBTC (suc n) mₙ αₙ e x) = refl
+snd (preBTC (suc zero) mₙ αₙ e x) = refl
+snd (preBTC (suc (suc n)) mₙ αₙ e x) = refl
+
+ptSnInv : (n : ℕ) → S₊ n
+ptSnInv zero = false
+ptSnInv (suc n) = ptSn (suc n)
+
+σ⁻ : (n : ℕ) → S⁻ n → typ (Ω (S₊ n , ptSnInv n))
+σ⁻ (suc n) = σ n
+
+module _  where
+  Pushout→Bouquet : {Cₙ Cₙ₊₁ : Type} (n mₙ : ℕ)
+    (αₙ : Fin mₙ × S⁻ n → Cₙ)
+    (e : Cₙ₊₁ ≃ Pushout αₙ fst)
+    → Pushout αₙ fst → SphereBouquet n (Fin mₙ) .fst
+  Pushout→Bouquet n mₙ αₙ e (inl x) = inl tt
+  Pushout→Bouquet zero mₙ αₙ e (inr x) = inr (x , false)
+  Pushout→Bouquet (suc n) mₙ αₙ e (inr x) = inr (x , ptSn (suc n))
+  Pushout→Bouquet (suc n) mₙ αₙ e (push a i) = (push (a .fst) ∙ λ i → inr (a .fst , σ n (a .snd) i)) i
 
 module BouquetFuns {Cₙ Cₙ₊₁ : Type} (n mₙ : ℕ)
-    (αₙ : Fin mₙ × S₊ n → Cₙ)
+    (αₙ : Fin mₙ × S⁻ n → Cₙ)
     (e : Cₙ₊₁ ≃ Pushout αₙ fst) where
-  Pushout→Bouquet : Pushout αₙ fst → SphereBouquet (suc n) (Fin mₙ) .fst
-  Pushout→Bouquet (inl x) = inl tt
-  Pushout→Bouquet (inr x) = inr (x , ptSn (suc n))
-  Pushout→Bouquet (push a i) = (push (a .fst) ∙ λ i → inr (a .fst , σ n (a .snd) i)) i
-
-  CTB : Pushout (terminal Cₙ) (invEq e ∘ inl) → SphereBouquet (suc n) (Fin mₙ) .fst
+  CTB : Pushout (terminal Cₙ) (invEq e ∘ inl) → SphereBouquet n (Fin mₙ) .fst
   CTB (inl x) = inl tt
-  CTB (inr x) = Pushout→Bouquet (fst e x)
-  CTB (push a i) = Pushout→Bouquet (secEq e (inl a) (~ i))
+  CTB (inr x) = Pushout→Bouquet n mₙ αₙ e (fst e x)
+  CTB (push a i) = Pushout→Bouquet n mₙ αₙ e (secEq e (inl a) (~ i))
 
-  BTC : SphereBouquet (suc n) (Fin mₙ) .fst → Pushout (terminal Cₙ) (invEq e ∘ inl)
+  BTC : SphereBouquet n (Fin mₙ) .fst → Pushout (terminal Cₙ) (invEq e ∘ inl)
   BTC (inl x) = inl tt
   BTC (inr x) = preBTC n mₙ αₙ e (fst x) .fst (snd x)
   BTC (push a i) = preBTC n mₙ αₙ e a .snd (~ i)
 
 CTB-BTC-cancel : {Cₙ Cₙ₊₁ : Type} (n mₙ : ℕ)
-    (αₙ : Fin mₙ × S₊ n → Cₙ)
+    (αₙ : Fin mₙ × S⁻ n → Cₙ)
     (e : Cₙ₊₁ ≃ Pushout αₙ fst)
     → section (BouquetFuns.CTB n mₙ αₙ e) (BouquetFuns.BTC n mₙ αₙ e)
      × retract (BouquetFuns.CTB n mₙ αₙ e) (BouquetFuns.BTC n mₙ αₙ e)
 CTB-BTC-cancel {Cₙ = Cₙ} n mₙ αₙ =
-  EquivJ (λ C₊ e →
+    EquivJ (λ C₊ e →
       section (BouquetFuns.CTB n mₙ αₙ e)
       (BouquetFuns.BTC n mₙ αₙ e)
       ×
       retract (BouquetFuns.CTB n mₙ αₙ e)
       (BouquetFuns.BTC n mₙ αₙ e))
-      (retr-main n αₙ , section-main n αₙ)
+     (retr-main n αₙ , section-main n αₙ)
   where
-  module S (n : ℕ) (αₙ : Fin mₙ × S₊ n → Cₙ) where
+  module S (n : ℕ) (αₙ : Fin mₙ × S⁻ n → Cₙ) where
     module T = BouquetFuns n mₙ αₙ (idEquiv _)
     open T public
 
-  retr-inr : (n : _) (αₙ : _) (a : _) (b : _)
+  retr-inr : (n : ℕ) (αₙ : Fin mₙ × S⁻ n → Cₙ) (a : _) (b : _)
     → S.CTB n αₙ (S.BTC n αₙ (inr (a , b))) ≡ inr (a , b)
-  retr-inr zero αₙ a base = push a
-  retr-inr zero αₙ  a (loop i) j =
+  retr-inr zero aₙ a false = refl
+  retr-inr zero aₙ a true = push a
+  retr-inr (suc zero) αₙ a base = push a
+  retr-inr (suc zero) αₙ  a (loop i) j =
     hcomp (λ r → λ {(i = i0) → push a j
                    ; (i = i1) → push a j
-                   ; (j = i0) → S.CTB zero αₙ
+                   ; (j = i0) → S.CTB (suc zero) αₙ
                                   (doubleCompPath-filler
                                     (push (αₙ (a , false)))
                                     (λ j → inr ((push (a , false)
@@ -605,7 +622,7 @@ CTB-BTC-cancel {Cₙ = Cₙ} n mₙ αₙ =
                    ; (j = i1) → inr (a , loop i)})
      (hcomp (λ r → λ {(i = i0) → push a j
                    ; (i = i1) → compPath-filler' (push a) refl (~ j) (~ r)
-                   ; (j = i0) → S.CTB zero αₙ
+                   ; (j = i0) → S.CTB (suc zero) αₙ
                                   (inr (compPath-filler
                                           (push (a , false))
                                           (sym (push (a , true))) r i))
@@ -615,14 +632,14 @@ CTB-BTC-cancel {Cₙ = Cₙ} n mₙ αₙ =
               ; (j = i0) → compPath-filler' (push a) (λ j → inr (a , loop j)) r i
               ; (j = i1) → inr (a , loop i)})
                   (inr (a , loop i))))
-  retr-inr (suc n) αₙ a north = push a
-  retr-inr (suc n) αₙ a south = push a ∙ λ j → inr (a , merid (ptSn (suc n)) j)
-  retr-inr (suc n) αₙ a (merid a₁ i) j =
+  retr-inr (suc (suc n)) αₙ a north = push a
+  retr-inr (suc (suc n)) αₙ a south = push a ∙ λ j → inr (a , merid (ptSn (suc n)) j)
+  retr-inr (suc (suc n)) αₙ a (merid a₁ i) j =
     hcomp (λ r → λ {(i = i0) → push a j
                    ; (i = i1) → compPath-filler
                                   (push a)
                                   (λ j₁ → inr (a , merid (ptSn (suc n)) j₁)) r j
-                   ; (j = i0) → S.CTB (suc n) αₙ
+                   ; (j = i0) → S.CTB (suc (suc n)) αₙ
                                    (doubleCompPath-filler
                                     (push (αₙ (a , a₁)))
                                     (λ i → inr ((push (a , a₁)
@@ -633,7 +650,7 @@ CTB-BTC-cancel {Cₙ = Cₙ} n mₙ αₙ =
     (hcomp (λ r → λ {(i = i0) → push a j
                     ; (i = i1) → compPath-filler' (push a)
                                    (λ i → inr (a , σ _ (ptSn (suc n)) i)) (~ j) (~ r)
-                    ; (j = i0) → S.CTB (suc n) αₙ
+                    ; (j = i0) → S.CTB (suc (suc n)) αₙ
                                     (inr (compPath-filler (push (a , a₁))
                                           (sym (push (a , ptSn (suc n)))) r i) )
                     ; (j = i1) → inr (a , help r i)})
@@ -650,24 +667,25 @@ CTB-BTC-cancel {Cₙ = Cₙ} n mₙ αₙ =
 
   retr-main : (n : _) (αₙ : _) → section (S.CTB n αₙ) (S.BTC n αₙ)
   retr-main n αₙ (inl x) = refl
-  retr-main n αₙ (inr (a , b)) i = retr-inr n αₙ a b i
+  retr-main n αₙ (inr (a , b)) = retr-inr n αₙ a b
   retr-main zero αₙ (push a i) j = push a (i ∧ j)
-  retr-main (suc n) αₙ (push a i) j = push a (i ∧ j)
-
+  retr-main (suc zero) αₙ (push a i) j = push a (i ∧ j)
+  retr-main (suc (suc n)) αₙ (push a i) j = push a (i ∧ j)
 
   section-main : (n : _) (αₙ : _) → retract (S.CTB n αₙ) (S.BTC n αₙ)
   section-main n αₙ (inl x) = refl
   section-main n αₙ (inr (inl x)) = push x
-  section-main zero αₙ (inr (inr x)) =
+  section-main zero αₙ (inr (inr x)) = refl
+  section-main (suc zero) αₙ (inr (inr x)) =
     push (αₙ (x , true)) ∙ λ i → inr (push (x , true) i)
-  section-main (suc n) αₙ (inr (inr x)) =
+  section-main (suc (suc n)) αₙ (inr (inr x)) =
     push (αₙ (x , ptSn (suc n))) ∙ λ i → inr (push (x , ptSn (suc n)) i)
-  section-main zero αₙ (inr (push (a , false) i)) j =
+  section-main (suc zero) αₙ (inr (push (a , false) i)) j =
     hcomp (λ r → λ {(i = i0) → push (αₙ (a , false)) j
                    ; (i = i1) → compPath-filler (push (αₙ (a , true)))
                                   (λ i₁ → inr (push (a , true) i₁)) i1 j
                    ; (j = i0) →
-                      S.BTC zero αₙ
+                      S.BTC (suc zero) αₙ
                          (compPath-filler'
                            (push a)
                            (λ i → inr (a , σ zero false i)) r i)
@@ -681,21 +699,21 @@ CTB-BTC-cancel {Cₙ = Cₙ} n mₙ αₙ =
               (inr (compPath-filler
                      (push (a , false))
                      (sym (push (a , true))) (~ j) i)))
-  section-main zero αₙ (inr (push (a , true) i)) j =
+  section-main (suc zero) αₙ (inr (push (a , true) i)) j =
     hcomp (λ r → λ {(i = i0) → push (αₙ (a , true)) j
                    ; (i = i1) → compPath-filler (push (αₙ (a , true)))
                                   (λ i₁ → inr (push (a , true) i₁)) r j
-                   ; (j = i0) → S.BTC zero αₙ
+                   ; (j = i0) → S.BTC (suc zero) αₙ
                                   (compPath-filler'
                                    (push a)
                                    (λ i → inr (a , σ zero true i)) r i)
                    ; (j = i1) → inr (push (a , true) (i ∧ r))})
             (push (αₙ (a , true)) j)
-  section-main (suc n) αₙ (inr (push a i)) j =
+  section-main (suc (suc n)) αₙ (inr (push a i)) j =
     hcomp (λ r → λ {(i = i0) → push (αₙ a) j
                    ; (i = i1) → compPath-filler (push (αₙ (fst a , ptSn (suc n))))
                                   (λ i₁ → inr (push (fst a , ptSn (suc n)) i₁)) i1 j
-                   ; (j = i0) → S.BTC (suc n) αₙ
+                   ; (j = i0) → S.BTC (suc (suc n)) αₙ
                                   (compPath-filler' (push (fst a))
                                     (λ i → inr (fst a , σ (suc n) (snd a) i)) r i)
                    ; (j = i1) → inr (push a i)})
@@ -704,7 +722,7 @@ CTB-BTC-cancel {Cₙ = Cₙ} n mₙ αₙ =
                                    (sym (push (αₙ (fst a , ptSn (suc n))))) (~ j) (~ r)
                  ; (i = i1) → compPath-filler (push (αₙ (fst a , ptSn (suc n))))
                                                (λ i → inr (push (fst a , ptSn (suc n)) i)) r j
-                 ; (j = i0) → S.BTC (suc n) αₙ (inr (fst a
+                 ; (j = i0) → S.BTC (suc (suc n)) αₙ (inr (fst a
                              , compPath-filler' (merid (snd a)) (sym (merid (ptSn (suc n)))) r i ))
                  ; (j = i1) → inr (compPath-filler'
                                     (push a)
@@ -718,20 +736,19 @@ CTB-BTC-cancel {Cₙ = Cₙ} n mₙ αₙ =
     ugh p = sym (compPath≡compPath' p (sym p)) ∙ rCancel p
   section-main n αₙ (push a i) j = push a (i ∧ j)
 
-
 module _ {Cₙ Cₙ₊₁ : Type} (n mₙ : ℕ)
-    (αₙ : Fin mₙ × S₊ n → Cₙ)
+    (αₙ : Fin mₙ × S⁻ n → Cₙ)
     (e : Cₙ₊₁ ≃ Pushout αₙ fst) where
 
   open BouquetFuns n mₙ αₙ e
 
-  BouquetIso-gen : Iso (Pushout (terminal Cₙ) (invEq e ∘ inl)) (SphereBouquet (suc n) (Fin mₙ) .fst)
+  BouquetIso-gen : Iso (Pushout (terminal Cₙ) (invEq e ∘ inl)) (SphereBouquet n (Fin mₙ) .fst)
   Iso.fun BouquetIso-gen = CTB
   Iso.inv BouquetIso-gen = BTC
   Iso.rightInv BouquetIso-gen = CTB-BTC-cancel n mₙ αₙ e .fst
   Iso.leftInv BouquetIso-gen = CTB-BTC-cancel n mₙ αₙ e .snd
 
   Bouquet≃∙-gen : Pushout (terminal Cₙ) (invEq e ∘ inl) , inl tt
-               ≃∙ SphereBouquet (suc n) (Fin mₙ)
+               ≃∙ SphereBouquet n (Fin mₙ)
   fst Bouquet≃∙-gen = isoToEquiv BouquetIso-gen
   snd Bouquet≃∙-gen = refl

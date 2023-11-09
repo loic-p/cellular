@@ -13,6 +13,7 @@ open import Cubical.Data.Fin
 open import Cubical.Data.Sigma
 open import Cubical.Data.Bool
 open import Cubical.Data.Unit
+open import Cubical.Data.Empty as ⊥
 
 open import Cubical.HITs.SequentialColimit
 open import Cubical.HITs.PropositionalTruncation as PT
@@ -60,67 +61,69 @@ Lim→Prop {C = C} {B = B} pr ind (push x i) =
 -- elimination from Cₙ into prop
 CWskel→Prop : (C : CW) {A : (n : ℕ) → fst C n → Type}
   → ((n : ℕ) (x : _) → isProp (A n x))
-  → ((a : _) → A zero a)
-  → ((n : ℕ) (a : _) → (A n a → A (suc n) (CW↪ C n a)))
+  → ((a : _) → A (suc zero) a)
+  → ((n : ℕ) (a : _) → (A (suc n) a → A (suc (suc n)) (CW↪ C (suc n) a)))
   → (n : _) (c : fst C n) → A n c
-CWskel→Prop C {A = A} pr b eqs zero c = b c
-CWskel→Prop C {A = A} pr b eqs (suc n) c =
-  subst (A (suc n))
-        (retEq (snd C .snd .snd .snd n) c)
-        (help (CWskel→Prop C pr b eqs n) _)
+CWskel→Prop C {A = A} pr b eqs zero c = ⊥.rec (CW₀-empty C c)
+CWskel→Prop C {A = A} pr b eqs (suc zero) = b
+CWskel→Prop C {A = A} pr b eqs (suc (suc n)) c =
+  subst (A (suc (suc n)))
+        (retEq (snd C .snd .snd .snd (suc n)) c)
+        (help (CWskel→Prop C pr b eqs (suc n)) _)
   where
-  help : (inder : (c₁ : fst C n) → A n c₁)
+  help : (inder : (c₁ : fst C (suc n)) → A (suc n) c₁)
        → (a : Pushout _ fst)
-       → A (suc n) (invEq (snd C .snd .snd .snd n) a)
+       → A (suc (suc n)) (invEq (snd C .snd .snd .snd (suc n)) a)
   help inder =
     elimProp _ (λ _ → pr _ _) (λ b → eqs n _ (inder b))
-     λ c → subst (A (suc n))
-                  (cong (invEq (snd C .snd .snd .snd n)) (push (c , ptSn n)))
+     λ c → subst (A (suc (suc n)))
+                  (cong (invEq (snd C .snd .snd .snd (suc n))) (push (c , ptSn n)))
                   (eqs n _ (inder _))
 
 -- eliminating from CW complex into prop
 CW→Prop : (C : CW) {A : realise C → Type}
   → ((x : _) → isProp (A x))
-  → ((a : _) → A (incl {n = zero} a))
+  → ((a : _) → A (incl {n = suc zero} a))
   → (a : _) → A a
 CW→Prop C {A = A} pr ind  =
   Lim→Prop pr (CWskel→Prop C (λ _ _ → pr _)
     ind
     λ n a → subst A (push a))
 
-isSet-CW₀ : (C : CW) → isSet (fst C 0)
+isSet-CW₀ : (C : CW) → isSet (fst C (suc zero))
 isSet-CW₀ C =
-  isOfHLevelRetractFromIso 2 (equivToIso (snd C .snd .snd .fst))
+  isOfHLevelRetractFromIso 2 (equivToIso (CW₁-discrete C))
     isSetFin
 
 -- The embedding of stage n into stage n+1 is (n+1)-connected
 -- 2 calls to univalence in there
-isConnected-CW↪ : (n : ℕ) (C : CW) → isConnectedFun (suc n) (CW↪ C n)
-isConnected-CW↪ n C = EquivJ (λ X E → isConnectedFun (suc n) (λ x → invEq E (inl x)))
-                             inPushoutConnected (e₊ n)
+isConnected-CW↪ : (n : ℕ) (C : CW) → isConnectedFun n (CW↪ C n)
+isConnected-CW↪ zero C x = isContrUnit*
+isConnected-CW↪ (suc n) C = EquivJ (λ X E → isConnectedFun (suc n) (λ x → invEq E (inl x)))
+                             inPushoutConnected (e₊ (suc n))
   where
     A = snd C .fst
     α = snd C .snd .fst
     e₊ = snd C .snd .snd .snd
 
-    inPushout : fst C n → Pushout (α n) fst
+    inPushout : fst C (suc n) → Pushout (α (suc n)) fst
     inPushout x = inl x
 
     fstProjPath : (b : Fin (A (suc n))) → S₊ n ≡ fiber fst b
     fstProjPath b = ua (fiberProjEquiv (Fin (A (suc n))) (λ _ → S₊ n) b)
 
     inPushoutConnected : isConnectedFun (suc n) inPushout
-    inPushoutConnected = inlConnected (suc n) (α n) fst
-      (λ b → subst (isConnected (suc n)) (fstProjPath b) (sphereConnected n))
+    inPushoutConnected = inlConnected (suc n) (α (suc n)) fst
+      λ b → subst (isConnected (suc n)) (fstProjPath b) (sphereConnected n)
 
 -- The embedding of stage n into the colimit is (n+1)-connected
-isConnected-CW↪∞ : (n : ℕ) (C : CW) → isConnectedFun (suc n) (CW↪∞ C n)
-isConnected-CW↪∞ n C = isConnectedIncl∞ (realiseSeq C) (suc n) n subtr
+isConnected-CW↪∞ : (n : ℕ) (C : CW) → isConnectedFun n (CW↪∞ C n)
+isConnected-CW↪∞ zero C b = isContrUnit*
+isConnected-CW↪∞ (suc n) C = isConnectedIncl∞ (realiseSeq C) (suc n) (suc n) subtr
   where
-    subtr : (k : ℕ) → isConnectedFun (suc n) (CW↪ C (k +ℕ n))
-    subtr k = isConnectedFunSubtr (suc n) k (CW↪ C (k +ℕ n))
-                                  (subst (λ X → isConnectedFun X (CW↪ C (k +ℕ n)))
-                                         (sym (+-suc k n)) (isConnected-CW↪ (k +ℕ n) C))
+    subtr : (k : ℕ) → isConnectedFun (suc n) (CW↪ C (k +ℕ (suc n)))
+    subtr k = isConnectedFunSubtr (suc n) k (CW↪ C (k +ℕ (suc n)))
+                                   (isConnected-CW↪ (k +ℕ (suc n)) C)
 
 -- We can merely fill n-spheres in (n+2)-connected spaces
 module connectedSpace {A : Type} where
@@ -241,47 +244,47 @@ module connectedFunLifts {A B : Type}
                          (λ k s → comm (α (k , s)) ∙ cong h (push (k , s))))
 
   -- which in turn, allows us to lift maps from a CW stage to the next one
-  module _ (C : CW) (g : fst C n → A) where
+  module _ (C : CW) (g : fst C (suc n) → A) where
     An = snd C .fst
     α = snd C .snd .fst
     e₊ = snd C .snd .snd .snd
 
-    lifting-prop : (Y : Type) (E : Y ≃ Pushout (α n) fst) → Type
-    lifting-prop Y E = (h : Y → B) (comm : (x : fst C n) → f (g x) ≡ h (invEq E (inl x)))
-      → ∃[ lift ∈ (Y → A) ] ((x : fst C n) → g x ≡ lift (invEq E (inl x)))
+    lifting-prop : (Y : Type) (E : Y ≃ Pushout (α (suc n)) fst) → Type
+    lifting-prop Y E = (h : Y → B) (comm : (x : fst C (suc n)) → f (g x) ≡ h (invEq E (inl x)))
+      → ∃[ lift ∈ (Y → A) ] ((x : fst C (suc n)) → g x ≡ lift (invEq E (inl x)))
                             × ((x : Y) → f (lift x) ≡ h x)
 
-    liftCW : (h : fst C (suc n) → B)
-      (comm : (x : fst C n) → f (g x) ≡ h (CW↪ C n x))
-      → ∃[ lift ∈ (fst C (suc n) → A) ] ((x : fst C n) → g x ≡ lift (CW↪ C n x))
-                                        × ((x : fst C (suc n)) → f (lift x) ≡ h x)
-    liftCW = EquivJ lifting-prop
-      (liftPushout (fst C n) g (An (suc n)) (α n)) (e₊ n)
+    liftCW : (h : fst C (suc (suc n)) → B)
+      (comm : (x : fst C (suc n)) → f (g x) ≡ h (CW↪ C (suc n) x))
+      → ∃[ lift ∈ (fst C (suc (suc n)) → A) ] ((x : fst C (suc n)) → g x ≡ lift (CW↪ C (suc n) x))
+                                        × ((x : fst C (suc (suc n))) → f (lift x) ≡ h x)
+    liftCW = EquivJ lifting-prop (liftPushout (fst C (suc n)) g (An (suc n)) (α (suc n))) (e₊ (suc n))
 
 -- Cellular approximation
 module _ (C D : CW) (f : realise C → realise D) where
-  find-connected-component : (d : realise D) → ∃[ d0 ∈ fst D 0 ] incl d0 ≡ d
+  find-connected-component : (d : realise D) → ∃[ d0 ∈ fst D 1 ] incl d0 ≡ d
   find-connected-component = CW→Prop D (λ _ → squash₁) λ a → ∣ a , refl ∣₁
 
-  find-connected-component-C₀ : (c : fst C 0) → ∃[ d0 ∈ fst D 0 ] incl d0 ≡ f (incl c)
+  find-connected-component-C₀ : (c : fst C 1) → ∃[ d0 ∈ fst D 1 ] incl d0 ≡ f (incl c)
   find-connected-component-C₀ c = find-connected-component (f (incl c))
 
-  satAC∃Fin-C0 : ∀ {ℓ ℓ'} → satAC∃ ℓ ℓ' (fst C 0)
-  satAC∃Fin-C0 {ℓ} {ℓ'} = subst (satAC∃ ℓ ℓ') ( sym (ua (snd C .snd .snd .fst))) (satAC∃Fin _)
+  satAC∃Fin-C0 : ∀ {ℓ ℓ'} → satAC∃ ℓ ℓ' (fst C 1)
+  satAC∃Fin-C0 {ℓ} {ℓ'} = subst (satAC∃ ℓ ℓ') (sym (ua (CW₁-discrete C))) (satAC∃Fin _)
 
-  -- existence of f₀ : C₀ → D₀
-  approx₀ : ∃[ f₀ ∈ (fst C 0 → fst D 0) ] ((c : _) → incl (f₀ c) ≡ f (incl c) )
-  approx₀ =
-    invEq (_ , satAC∃Fin-C0 (λ _ → fst D 0) (λ c d0 → incl d0 ≡ f (incl c)))
+  -- existence of f₁ : C₁ → D₁
+  approx₁ : ∃[ f₁ ∈ (fst C 1 → fst D 1) ] ((c : _) → incl (f₁ c) ≡ f (incl c) )
+  approx₁ =
+    invEq (_ , satAC∃Fin-C0 (λ _ → fst D 1) (λ c d0 → incl d0 ≡ f (incl c)))
       find-connected-component-C₀
 
   approx : (n : ℕ)
     → ∃[ fₙ ∈ (fst C n → fst D n) ] ((c : _) → incl (fₙ c) ≡ f (incl c))
-  approx zero = approx₀
-  approx (suc n) = PT.rec squash₁ (λ {(f' , p) → PT.rec squash₁
+  approx zero = ∣ (λ x → ⊥.rec (CW₀-empty C x)) , (λ x → ⊥.rec (CW₀-empty C x)) ∣₁
+  approx (suc zero) = approx₁
+  approx (suc (suc n)) = PT.rec squash₁ (λ {(f' , p) → PT.rec squash₁
     (λ F → ∣ (fst F) , (snd F .snd) ∣₁)
-    (connectedFunLifts.liftCW {A = fst D (suc n)} {B = realise D} incl n
-      (isConnected-CW↪∞ (suc n) D) C (λ x → CW↪ D n (f' x))
+    (connectedFunLifts.liftCW {A = fst D (suc (suc n))} {B = realise D} incl n
+      (isConnected-CW↪∞ (suc (suc n)) D) C (λ x → CW↪ D (suc n) (f' x))
         (λ x → f (incl x))
         λ x → sym (push (f' x)) ∙ p x ∙ cong f (push x))})
-      (approx n)
+      (approx (suc n))

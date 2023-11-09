@@ -37,38 +37,38 @@ module cw-chain-complex (C : CW) where
 -- in this module we define pre∂, a homotopical version of the boundary map
 -- it goes from V_(A_n+2) S^(n+2) to V_(A_n+1) S^(n+2)
 module preboundary (n : ℕ) where
+  Xn = (fst C n)
   Xn+1 = (fst C (suc n))
+  An = (snd C .fst n)
   An+1 = (snd C .fst (suc n))
-  αn+1 = (snd C .snd .fst n)
-  An+2 = (snd C .fst (suc (suc n)))
-  αn+2 = (snd C .snd .fst (suc n))
+  αn = (snd C .snd .fst n)
+  αn+1 = (snd C .snd .fst (suc n))
 
-  isoSuspBouquet : Susp∙ (fst (SphereBouquet (suc n) (Fin An+1)))
-                   →∙ SphereBouquet (suc (suc n)) (Fin An+1)
-  isoSuspBouquet = Iso.fun sphereBouquetSuspIso , refl
+  isoSuspBouquet : Susp∙ (fst (SphereBouquet n (Fin An)))
+                   →∙ SphereBouquet (suc n) (Fin An)
+  isoSuspBouquet = ≃∙map sphereBouquet≃∙Susp
 
-  isoSuspBouquet↑ : Susp∙ (fst (SphereBouquet (suc (suc n)) (Fin An+1)))
-                    →∙ SphereBouquet (suc (suc (suc n))) (Fin An+1)
+  isoSuspBouquet↑ : Susp∙ (fst (SphereBouquet (suc n) (Fin An)))
+                    →∙ SphereBouquet (suc (suc n)) (Fin An)
   isoSuspBouquet↑ = Iso.fun sphereBouquetSuspIso , refl
 
-  isoSuspBouquetInv↑ : SphereBouquet (suc (suc (suc n))) (Fin An+2)
-                       →∙ Susp∙ (fst (SphereBouquet (suc (suc n)) (Fin An+2)))
+  isoSuspBouquetInv↑ : SphereBouquet (suc (suc n)) (Fin An+1)
+                       →∙ Susp∙ (fst (SphereBouquet (suc n) (Fin An+1)))
   isoSuspBouquetInv↑ = Iso.inv sphereBouquetSuspIso , refl
 
-  isoCofBouquet : cofiber n C →∙ SphereBouquet (suc n) (Fin An+1)
-  isoCofBouquet = Iso.fun (BouquetIso-gen n An+1 αn+1 (snd C .snd .snd .snd n))
-                  , refl
+  isoCofBouquet : cofiber n C →∙ SphereBouquet n (Fin An)
+  isoCofBouquet = Iso.fun (BouquetIso-gen n An αn (snd C .snd .snd .snd n)) , refl
 
-  isoCofBouquetInv↑ : SphereBouquet (suc (suc n)) (Fin An+2) →∙ cofiber (suc n) C
-  isoCofBouquetInv↑ = (Iso.inv (BouquetIso-gen (suc n) An+2 αn+2 (snd C .snd .snd .snd (suc n))))
+  isoCofBouquetInv↑ : SphereBouquet (suc n) (Fin An+1) →∙ cofiber (suc n) C
+  isoCofBouquetInv↑ = (Iso.inv (BouquetIso-gen (suc n) An+1 αn+1 (snd C .snd .snd .snd (suc n))))
                      , refl
 
   connecting : cofiber (suc n) C →∙ Susp∙ Xn+1
   connecting = δ∙ (suc n) C
 
   -- our homotopical boundary map
-  pre∂ : (SphereBouquet (suc (suc n)) (Fin An+2)
-         →∙ SphereBouquet (suc (suc n)) (Fin An+1))
+  pre∂ : (SphereBouquet (suc n) (Fin An+1)
+         →∙ SphereBouquet (suc n) (Fin An))
   pre∂ = isoSuspBouquet ∘∙ (suspFun∙ (fst isoCofBouquet)
          ∘∙ ((suspFun∙ (to_cofiber n C) ∘∙ connecting) ∘∙ isoCofBouquetInv↑))
 
@@ -80,8 +80,8 @@ module preboundary (n : ℕ) where
               ∘∙ (suspFun∙ (fst isoCofBouquetInv↑))))
 
   -- variant of susp-pre∂ where all the suspensions are collected
-  pre∂↑ : (SphereBouquet (suc (suc (suc n))) (Fin An+2)
-          →∙ SphereBouquet (suc (suc (suc n))) (Fin An+1))
+  pre∂↑ : (SphereBouquet (suc (suc n)) (Fin An+1)
+          →∙ SphereBouquet (suc (suc n)) (Fin An))
   pre∂↑ = isoSuspBouquet↑ ∘∙ (susp-pre∂ ∘∙ isoSuspBouquetInv↑)
 
   -- susp is distributive, so susp-pre∂ ≡ pre∂↑
@@ -105,17 +105,17 @@ module preboundary-cancellation (n : ℕ) where
   cofiber-exactness : (connecting n .fst) ∘ (to_cofiber (suc n) C) ≡ λ x → north
   cofiber-exactness i x = merid (choose-point x) (~ i)
     where
-      choose-aux : (card : ℕ) (α : Fin card × S₊ (suc n) → Xn+1 n)
+      choose-aux : (card : ℕ) (α : Fin card × S₊ n → Xn+1 n)
                    → Pushout α (λ r → fst r) → Xn+1 n
       choose-aux zero α (inl x) = x
       choose-aux zero α (inr x) with (¬Fin0 x)
       choose-aux zero α (inr x) | ()
       choose-aux zero α (push (x , _) i) with (¬Fin0 x)
       choose-aux zero α (push (x , _) i) | ()
-      choose-aux (suc card') α x = α (fzero , ptSn (suc n))
+      choose-aux (suc card') α x = α (fzero , ptSn n)
 
       choose-point : Xn+1 (suc n) → Xn+1 n
-      choose-point x = choose-aux (An+2 n) (αn+2 n) (snd C .snd .snd .snd (suc n) .fst x)
+      choose-point x = choose-aux (An+1 n) (αn (suc n)) (snd C .snd .snd .snd (suc n) .fst x)
 
   -- combining the previous result with some isomorphism cancellations
   cancellation : suspFun (connecting n .fst) ∘ suspFun (isoCofBouquetInv↑ n .fst)
@@ -140,10 +140,9 @@ module preboundary-cancellation (n : ℕ) where
                      ≡ λ x → x
       iso-cancel-1 = sym (suspFun-comp _ _)
                      ∙∙ congS suspFun (λ i x → Iso.leftInv
-                          (BouquetIso-gen (suc n) (An+2 n) (αn+2 n)
+                          (BouquetIso-gen (suc n) (An+1 n) (αn+1 n)
                                           (snd C .snd .snd .snd (suc n))) x i)
                      ∙∙ suspFun-id
-
       iso-cancel-2 : (isoSuspBouquetInv↑ n .fst) ∘ (isoSuspBouquet (suc n) .fst) ≡ λ x → x
       iso-cancel-2 i x = Iso.leftInv sphereBouquetSuspIso x i
 
@@ -164,7 +163,7 @@ module preboundary-cancellation (n : ℕ) where
                                        (susp-pre∂-pre∂↑ n) ∙ pre∂↑pre∂≡0)
 
 -- the boundary map of the chain complex associated to C
-∂ : (n : ℕ) → AbGroupHom (ℤ[A (suc (suc n)) ]) (ℤ[A (suc n) ])
+∂ : (n : ℕ) → AbGroupHom (ℤ[A (suc n) ]) (ℤ[A n ])
 ∂ n = bouquetDegree (preboundary.pre∂ n)
 
 -- ∂ ∘ ∂ = 0, the fundamental equation of chain complexes
@@ -176,7 +175,7 @@ module preboundary-cancellation (n : ℕ) where
   where
     open preboundary
 
-    ∂↑ : AbGroupHom (ℤ[A (suc (suc n)) ]) (ℤ[A (suc n) ])
+    ∂↑ : AbGroupHom (ℤ[A (suc n) ]) (ℤ[A n ])
     ∂↑ = bouquetDegree (bouquetSusp→ (pre∂ n))
 
     ∂≡∂↑ : ∂ n ≡ ∂↑
@@ -186,7 +185,7 @@ module preboundary-cancellation (n : ℕ) where
 open ChainComplex.ChainComplex
 
 CW-ChainComplex : ChainComplex ℓ-zero
-chain CW-ChainComplex n = ℤ[A (suc n) ] -- TODO: why should this be suc n?
+chain CW-ChainComplex n = ℤ[A n ]
 bdry CW-ChainComplex = ∂
 bdry²=0 CW-ChainComplex = ∂∂≡0
 
