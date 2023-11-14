@@ -48,6 +48,10 @@ module preboundary (n : ℕ) where
                    →∙ SphereBouquet (suc n) (Fin An)
   isoSuspBouquet = ≃∙map sphereBouquet≃∙Susp
 
+  isoSuspBouquetInv : SphereBouquet (suc n) (Fin An)
+                   →∙ Susp∙ (fst (SphereBouquet n (Fin An)))
+  isoSuspBouquetInv = ≃∙map (invEquiv∙ sphereBouquet≃∙Susp)
+
   isoSuspBouquet↑ : Susp∙ (fst (SphereBouquet (suc n) (Fin An)))
                     →∙ SphereBouquet (suc (suc n)) (Fin An)
   isoSuspBouquet↑ = Iso.fun sphereBouquetSuspIso , refl

@@ -28,6 +28,11 @@ record ChainComplex (ℓ : Level) : Type (ℓ-suc ℓ) where
     bdry    : (n : ℕ) → AbGroupHom (chain (suc n)) (chain n)
     bdry²=0 : (n : ℕ) → compGroupHom (bdry (suc n)) (bdry n) ≡ 0hom
 
+record ChainComplexMap {ℓ ℓ' : Level} (A : ChainComplex ℓ) (B : ChainComplex ℓ') : Type (ℓ-max ℓ ℓ') where
+  open ChainComplex
+  field
+    map : (n : ℕ) → AbGroupHom (chain A n) (chain B n)
+    comm : (n : ℕ) → compGroupHom (map (suc n)) (bdry B n) ≡ compGroupHom (bdry A n) (map n)
 
 record CoChainComplex (ℓ : Level) : Type (ℓ-suc ℓ) where
   field
