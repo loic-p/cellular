@@ -44,58 +44,53 @@ module preboundary (n : ℕ) where
   αn = (snd C .snd .fst n)
   αn+1 = (snd C .snd .fst (suc n))
 
-  isoSuspBouquet : Susp∙ (fst (SphereBouquet n (Fin An)))
-                   →∙ SphereBouquet (suc n) (Fin An)
-  isoSuspBouquet = ≃∙map sphereBouquet≃∙Susp
+  isoSuspBouquet : Susp (SphereBouquet n (Fin An))
+                   → SphereBouquet (suc n) (Fin An)
+  isoSuspBouquet = Iso.fun sphereBouquetSuspIso
 
   isoSuspBouquetInv : SphereBouquet (suc n) (Fin An)
-                   →∙ Susp∙ (fst (SphereBouquet n (Fin An)))
-  isoSuspBouquetInv = ≃∙map (invEquiv∙ sphereBouquet≃∙Susp)
+                   → Susp (SphereBouquet n (Fin An))
+  isoSuspBouquetInv = Iso.inv sphereBouquetSuspIso
 
-  isoSuspBouquet↑ : Susp∙ (fst (SphereBouquet (suc n) (Fin An)))
-                    →∙ SphereBouquet (suc (suc n)) (Fin An)
-  isoSuspBouquet↑ = Iso.fun sphereBouquetSuspIso , refl
+  isoSuspBouquet↑ : Susp (SphereBouquet (suc n) (Fin An))
+                    → SphereBouquet (suc (suc n)) (Fin An)
+  isoSuspBouquet↑ = Iso.fun sphereBouquetSuspIso
 
   isoSuspBouquetInv↑ : SphereBouquet (suc (suc n)) (Fin An+1)
-                       →∙ Susp∙ (fst (SphereBouquet (suc n) (Fin An+1)))
-  isoSuspBouquetInv↑ = Iso.inv sphereBouquetSuspIso , refl
+                       → Susp (SphereBouquet (suc n) (Fin An+1))
+  isoSuspBouquetInv↑ = Iso.inv sphereBouquetSuspIso
 
-  isoCofBouquet : cofiber n C →∙ SphereBouquet n (Fin An)
-  isoCofBouquet = Iso.fun (BouquetIso-gen n An αn (snd C .snd .snd .snd n)) , refl
+  isoCofBouquet : cofiber n C → SphereBouquet n (Fin An)
+  isoCofBouquet = Iso.fun (BouquetIso-gen n An αn (snd C .snd .snd .snd n))
 
-  isoCofBouquetInv↑ : SphereBouquet (suc n) (Fin An+1) →∙ cofiber (suc n) C
-  isoCofBouquetInv↑ = (Iso.inv (BouquetIso-gen (suc n) An+1 αn+1 (snd C .snd .snd .snd (suc n))))
-                     , refl
-
-  connecting : cofiber (suc n) C →∙ Susp∙ Xn+1
-  connecting = δ∙ (suc n) C
+  isoCofBouquetInv↑ : SphereBouquet (suc n) (Fin An+1) → cofiber (suc n) C
+  isoCofBouquetInv↑ = Iso.inv (BouquetIso-gen (suc n) An+1 αn+1 (snd C .snd .snd .snd (suc n)))
 
   -- our homotopical boundary map
-  pre∂ : (SphereBouquet (suc n) (Fin An+1)
-         →∙ SphereBouquet (suc n) (Fin An))
-  pre∂ = isoSuspBouquet ∘∙ (suspFun∙ (fst isoCofBouquet)
-         ∘∙ ((suspFun∙ (to_cofiber n C) ∘∙ connecting) ∘∙ isoCofBouquetInv↑))
+  pre∂ : SphereBouquet (suc n) (Fin An+1) → SphereBouquet (suc n) (Fin An)
+  pre∂ = isoSuspBouquet ∘ (suspFun isoCofBouquet)
+         ∘ (suspFun (to_cofiber n C)) ∘ (δ (suc n) C) ∘ isoCofBouquetInv↑
 
   -- we define a suspended version
   -- we cannot prove that pre∂ ∘ pre∂ ≡ 0, because the dimensions do not match
   -- instead, we will prove susp-pre∂ ∘ pre∂ ≡ 0
-  susp-pre∂ = suspFun∙ (fst isoSuspBouquet) ∘∙ (suspFun∙ (suspFun (fst isoCofBouquet))
-              ∘∙ ((suspFun∙ (suspFun (to_cofiber n C)) ∘∙ suspFun∙ (fst connecting))
-              ∘∙ (suspFun∙ (fst isoCofBouquetInv↑))))
+  susp-pre∂ = (suspFun isoSuspBouquet) ∘ (suspFun (suspFun isoCofBouquet))
+              ∘ (suspFun (suspFun (to_cofiber n C))) ∘ (suspFun (δ (suc n) C))
+              ∘ (suspFun isoCofBouquetInv↑)
 
   -- variant of susp-pre∂ where all the suspensions are collected
   pre∂↑ : (SphereBouquet (suc (suc n)) (Fin An+1)
-          →∙ SphereBouquet (suc (suc n)) (Fin An))
-  pre∂↑ = isoSuspBouquet↑ ∘∙ (susp-pre∂ ∘∙ isoSuspBouquetInv↑)
+          → SphereBouquet (suc (suc n)) (Fin An))
+  pre∂↑ = isoSuspBouquet↑ ∘ susp-pre∂ ∘ isoSuspBouquetInv↑
 
   -- susp is distributive, so susp-pre∂ ≡ pre∂↑
-  susp-pre∂-pre∂↑ : fst (bouquetSusp→ pre∂) ≡ fst pre∂↑
-  susp-pre∂-pre∂↑ = congS (λ X → (fst isoSuspBouquet↑) ∘ X ∘ (fst isoSuspBouquetInv↑)) susp-distrib
+  susp-pre∂-pre∂↑ : bouquetSusp→ pre∂ ≡ pre∂↑
+  susp-pre∂-pre∂↑ = congS (λ X → isoSuspBouquet↑ ∘ X ∘ isoSuspBouquetInv↑) susp-distrib
     where
-      susp-distrib : fst (suspFun∙ (fst pre∂)) ≡ fst susp-pre∂
+      susp-distrib : suspFun pre∂ ≡ susp-pre∂
       susp-distrib i north = north
       susp-distrib i south = south
-      susp-distrib i (merid a i₁) = fst susp-pre∂ (merid a i₁)
+      susp-distrib i (merid a i₁) = susp-pre∂ (merid a i₁)
 
 
 -- In this module we prove that (susp pre∂) ∘ pre∂ ≡ 0
@@ -106,7 +101,7 @@ module preboundary-cancellation (n : ℕ) where
   -- the desired equation comes from exactness of the (Baratt-Puppe) long cofiber sequence
   -- we need some choice to prove this lemma -- which is fine, because we use finite sets
   -- this is because the spaces we are dealing with are not pointed
-  cofiber-exactness : (connecting n .fst) ∘ (to_cofiber (suc n) C) ≡ λ x → north
+  cofiber-exactness : (δ (suc n) C) ∘ (to_cofiber (suc n) C) ≡ λ x → north
   cofiber-exactness i x = merid (choose-point x) (~ i)
     where
       choose-aux : (card : ℕ) (α : Fin card × S₊ n → Xn+1 n)
@@ -122,49 +117,47 @@ module preboundary-cancellation (n : ℕ) where
       choose-point x = choose-aux (An+1 n) (αn (suc n)) (snd C .snd .snd .snd (suc n) .fst x)
 
   -- combining the previous result with some isomorphism cancellations
-  cancellation : suspFun (connecting n .fst) ∘ suspFun (isoCofBouquetInv↑ n .fst)
-                 ∘ (isoSuspBouquetInv↑ n .fst) ∘ (isoSuspBouquet (suc n) .fst)
-                 ∘ (suspFun (isoCofBouquet (suc n) .fst)) ∘ suspFun (to_cofiber (suc n) C)
+  cancellation : suspFun (δ (suc n) C) ∘ suspFun (isoCofBouquetInv↑ n)
+                 ∘ (isoSuspBouquetInv↑ n) ∘ (isoSuspBouquet (suc n))
+                 ∘ (suspFun (isoCofBouquet (suc n))) ∘ suspFun (to_cofiber (suc n) C)
                  ≡ λ x → north
-  cancellation = congS (λ X → suspFun (connecting n .fst) ∘ suspFun (isoCofBouquetInv↑ n .fst)
-                              ∘ X ∘ (suspFun (isoCofBouquet (suc n) .fst))
+  cancellation = congS (λ X → suspFun (δ (suc n) C) ∘ suspFun (isoCofBouquetInv↑ n)
+                              ∘ X ∘ (suspFun (isoCofBouquet (suc n)))
                               ∘ suspFun (to_cofiber (suc n) C))
                        iso-cancel-2
-                 ∙∙ congS (λ X → suspFun (connecting n .fst) ∘ X ∘ suspFun (to_cofiber (suc n) C))
+                 ∙∙ congS (λ X → suspFun (δ (suc n) C) ∘ X ∘ suspFun (to_cofiber (suc n) C))
                           iso-cancel-1
                  ∙∙ cofiber-exactness↑
     where
-      cofiber-exactness↑ : suspFun (connecting n .fst) ∘ suspFun (to_cofiber (suc n) C)
+      cofiber-exactness↑ : suspFun (δ (suc n) C) ∘ suspFun (to_cofiber (suc n) C)
                            ≡ λ x → north
       cofiber-exactness↑ = sym (suspFun-comp _ _)
                            ∙∙ congS suspFun cofiber-exactness
                            ∙∙ suspFun-const north
 
-      iso-cancel-1 : suspFun (isoCofBouquetInv↑ n .fst) ∘ suspFun (isoCofBouquet (suc n) .fst)
+      iso-cancel-1 : suspFun (isoCofBouquetInv↑ n) ∘ suspFun (isoCofBouquet (suc n))
                      ≡ λ x → x
       iso-cancel-1 = sym (suspFun-comp _ _)
                      ∙∙ congS suspFun (λ i x → Iso.leftInv
                           (BouquetIso-gen (suc n) (An+1 n) (αn+1 n)
                                           (snd C .snd .snd .snd (suc n))) x i)
                      ∙∙ suspFun-id
-      iso-cancel-2 : (isoSuspBouquetInv↑ n .fst) ∘ (isoSuspBouquet (suc n) .fst) ≡ λ x → x
+      iso-cancel-2 : (isoSuspBouquetInv↑ n) ∘ (isoSuspBouquet (suc n)) ≡ λ x → x
       iso-cancel-2 i x = Iso.leftInv sphereBouquetSuspIso x i
 
-  left-maps = (isoSuspBouquet↑ n .fst) ∘ (suspFun (isoSuspBouquet n .fst))
-              ∘ (suspFun (suspFun (isoCofBouquet n .fst))) ∘ (suspFun (suspFun (to_cofiber n C)))
+  left-maps = (isoSuspBouquet↑ n) ∘ (suspFun (isoSuspBouquet n))
+              ∘ (suspFun (suspFun (isoCofBouquet n))) ∘ (suspFun (suspFun (to_cofiber n C)))
 
-  right-maps = (connecting (suc n) .fst) ∘ (isoCofBouquetInv↑ (suc n) .fst)
+  right-maps = (δ (suc (suc n)) C) ∘ (isoCofBouquetInv↑ (suc n))
 
   -- the cancellation result but suspension has been distributed on every map
-  pre∂↑pre∂≡0 : fst (pre∂↑ n) ∘ fst (pre∂ (suc n)) ≡ λ _ → inl tt
+  pre∂↑pre∂≡0 : (pre∂↑ n) ∘ (pre∂ (suc n)) ≡ λ _ → inl tt
   pre∂↑pre∂≡0 = congS (λ X → left-maps ∘ X ∘ right-maps) cancellation
 
   -- we factorise the suspensions
   -- and use the fact that a pointed map is constant iff its nonpointed part is constant
-  pre∂pre∂≡0 : (bouquetSusp→ (pre∂ n)) ∘∙ (pre∂ (suc n)) ≡ ((λ _ → inl tt) , refl)
-  pre∂pre∂≡0 = constant-pointed ((bouquetSusp→ (pre∂ n)) ∘∙ (pre∂ (suc n)))
-                                (congS (λ X → X ∘ (fst (pre∂ (suc n))))
-                                       (susp-pre∂-pre∂↑ n) ∙ pre∂↑pre∂≡0)
+  pre∂pre∂≡0 : (bouquetSusp→ (pre∂ n)) ∘ (pre∂ (suc n)) ≡ (λ _ → inl tt)
+  pre∂pre∂≡0 = (congS (λ X → X ∘ (pre∂ (suc n))) (susp-pre∂-pre∂↑ n) ∙ pre∂↑pre∂≡0)
 
 -- the boundary map of the chain complex associated to C
 ∂ : (n : ℕ) → AbGroupHom (ℤ[A (suc n) ]) (ℤ[A n ])

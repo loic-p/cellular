@@ -133,11 +133,11 @@ inlConnected {A = A} {B = B} {C = C} n f g iscon =
                     (equiv-proof (elim.isEquivPrecompose g n Q iscon)
                                  fun .fst .snd (~ i) a))
 
-PushoutEmptyFam : ∀ {ℓ ℓ' ℓ''} {A : Type ℓ} {B : Type ℓ'} {C : Type ℓ''}
+PushoutEmptyFam : ∀ {ℓ} {A : Type ℓ} {B : Type ℓ} {C : Type ℓ}
   → ¬ A → ¬ C
   → {f : A → B} {g : A → C}
   → Iso B (Pushout {A = A} {B = B} {C = C} f g)
-PushoutEmptyFam {ℓ = ℓ} {ℓ'' = ℓ''} {A = A} {B = B} {C = C} ¬A ¬C =
+PushoutEmptyFam {ℓ = ℓ} {A = A} {B = B} {C = C} ¬A ¬C =
   compIso iso1
     (pushoutIso _ _ _ _
       (uninhabEquiv (λ {()}) ¬A)

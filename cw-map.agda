@@ -4,6 +4,7 @@ open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Pointed
 open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.Isomorphism
+open import Cubical.Foundations.Function
 
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
 open import Cubical.Data.Int renaming (_·_ to _·ℤ_ ; -_ to -ℤ_)
@@ -56,16 +57,13 @@ module prefunctoriality {C D : CW} (f : cellMap C D) (n : ℕ) where
   βn = (snd D .snd .fst n)
   isoDn = (snd D .snd .snd .snd n)
 
-  fn+1/fn : cofiber n C .fst → cofiber n D .fst
+  fn+1/fn : cofiber n C → cofiber n D
   fn+1/fn (inl tt) = inl tt
   fn+1/fn (inr x) = inr (f .map (suc n) x)
   fn+1/fn (push x i) = (push (f .map n x) ∙ (cong inr (f .comm n x))) i
 
-  fn+1/fn∙ : cofiber n C →∙ cofiber n D
-  fn+1/fn∙ = fn+1/fn , refl
-
-  bouquetFunct : SphereBouquet n (Fin An) →∙ SphereBouquet n (Fin Bn)
-  bouquetFunct = (λ x → Iso.fun (BouquetIso-gen n Bn βn isoDn) (fn+1/fn (Iso.inv (BouquetIso-gen n An αn isoCn) x))) , refl
+  bouquetFunct : SphereBouquet n (Fin An) → SphereBouquet n (Fin Bn)
+  bouquetFunct = λ x → Iso.fun (BouquetIso-gen n Bn βn isoDn) (fn+1/fn (Iso.inv (BouquetIso-gen n An αn isoCn) x))
 
   chainFunct : AbGroupHom (ℤ[A C ] n) (ℤ[A D ] n)
   chainFunct = bouquetDegree bouquetFunct
@@ -75,7 +73,7 @@ module functoriality {C D : CW} (f : cellMap C D) where
   open cellMap
   open prefunctoriality f
 
-  commδ : (n : ℕ) (x : cofiber n C .fst) → δ n D (fn+1/fn n x) ≡ suspFun (f .map n) (δ n C x)
+  commδ : (n : ℕ) (x : cofiber n C) → δ n D (fn+1/fn n x) ≡ suspFun (f .map n) (δ n C x)
   commδ n (inl x) = refl
   commδ n (inr x) = refl
   commδ n (push a i) j = -- that would be refl if function application commuted with hcomp
@@ -93,16 +91,16 @@ module functoriality {C D : CW} (f : cellMap C D) where
   commToCofiberSusp n (merid a i) = refl
 
   -- now we can get that pre∂ is a pre-chain map by pasting commδ and commToCofiberSusp
-  funct∘pre∂ : (n : ℕ) → (SphereBouquet (suc n) (Fin (An (suc n)))) →∙ SphereBouquet (suc n) (Fin (Bn n))
-  funct∘pre∂ n = (bouquetSusp→ (bouquetFunct n)) ∘∙ (preboundary.pre∂ C n)
+  funct∘pre∂ : (n : ℕ) → (SphereBouquet (suc n) (Fin (An (suc n)))) → SphereBouquet (suc n) (Fin (Bn n))
+  funct∘pre∂ n = (bouquetSusp→ (bouquetFunct n)) ∘ (preboundary.pre∂ C n)
 
   degree-funct∘pre∂ : (n : ℕ) → bouquetDegree (funct∘pre∂ n) ≡ compGroupHom (∂ C n) (chainFunct n)
   degree-funct∘pre∂ zero = {!!}
   degree-funct∘pre∂ (suc n) = degreeComp (bouquetSusp→ (bouquetFunct (suc n))) (preboundary.pre∂ C (suc n))
                             ∙ cong (λ X → compGroupHom (∂ C (suc n)) X) (sym (degreeSusp (bouquetFunct (suc n))))
 
-  pre∂∘funct : (n : ℕ) → (SphereBouquet (suc n) (Fin (An (suc n)))) →∙ SphereBouquet (suc n) (Fin (Bn n))
-  pre∂∘funct n = (preboundary.pre∂ D n) ∘∙ (bouquetFunct (suc n))
+  pre∂∘funct : (n : ℕ) → (SphereBouquet (suc n) (Fin (An (suc n)))) → SphereBouquet (suc n) (Fin (Bn n))
+  pre∂∘funct n = (preboundary.pre∂ D n) ∘ (bouquetFunct (suc n))
 
   degree-pre∂∘funct : (n : ℕ) → bouquetDegree (pre∂∘funct n) ≡ compGroupHom (chainFunct (suc n)) (∂ D n)
   degree-pre∂∘funct n = degreeComp (preboundary.pre∂ D n) (bouquetFunct (suc n))
@@ -115,5 +113,5 @@ module functoriality {C D : CW} (f : cellMap C D) where
 
 cellMap-to-ChainComplexMap : {C D : CW} (f : cellMap C D)
                            → ChainComplexMap (CW-ChainComplex C) (CW-ChainComplex D)
-cellMap-to-ChainComplexMap {C} {D} f .ChainComplexMap.map n = prefunctoriality.chainFunct f n
-cellMap-to-ChainComplexMap {C} {D} f .ChainComplexMap.comm n = functoriality.comm∂Funct f n
+cellMap-to-ChainComplexMap {C} {D} f .ChainComplexMap.chainmap n = prefunctoriality.chainFunct f n
+cellMap-to-ChainComplexMap {C} {D} f .ChainComplexMap.bdrycomm n = functoriality.comm∂Funct f n

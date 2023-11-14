@@ -70,20 +70,20 @@ finCW→CW : (n : ℕ) → finCW n → CW
 finCW→CW n C = fst C , fst (snd C)
 
 --the cofiber of the inclusion of X n into X (suc n)
-cofiber : (n : ℕ) (C : CW) → Pointed₀
-cofiber n C = Pushout (terminal (fst C n)) (CW↪ C n) , inl tt
+cofiber : (n : ℕ) (C : CW) → Type
+cofiber n C = Pushout (terminal (fst C n)) (CW↪ C n)
 
 --...is basically a sphere bouquet
 cofiber≃bouquet : (n : ℕ) (C : CW)
-  → cofiber n C ≃∙ SphereBouquet n (Fin (snd C .fst n))
-cofiber≃bouquet n C = Bouquet≃∙-gen n (snd C .fst n) (α n) e
+  → cofiber n C ≃ SphereBouquet n (Fin (snd C .fst n))
+cofiber≃bouquet n C = Bouquet≃-gen n (snd C .fst n) (α n) e
   where
-  s = Bouquet≃∙-gen
+  s = Bouquet≃-gen
   α = C .snd .snd .fst
   e = C .snd .snd .snd .snd n
 
 --sending X (suc n) into the cofiber
-to_cofiber : (n : ℕ) (C : CW) → (fst C (suc n)) → fst (cofiber n C)
+to_cofiber : (n : ℕ) (C : CW) → (fst C (suc n)) → (cofiber n C)
 to_cofiber n C x = inr x
 
 --the connecting map of the long exact sequence
@@ -93,16 +93,8 @@ to_cofiber n C x = inr x
 δ-pre conn (inr x) = south
 δ-pre conn (push a i) = merid a i
 
-δ∙-pre : ∀ {ℓ} {A B : Type ℓ} (conn : A → B)
-  → (Pushout (terminal A) conn , inl tt) →∙ Susp∙ A
-δ∙-pre conn = δ-pre conn , refl
-
-δ : (n : ℕ) (C : CW) → fst (cofiber n C) → Susp (fst C n)
+δ : (n : ℕ) (C : CW) → (cofiber n C) → Susp (fst C n)
 δ n C = δ-pre (CW↪ C n)
-
---pointed version
-δ∙ : (n : ℕ) (C : CW) → cofiber n C →∙ Susp∙ (fst C n)
-δ∙ n C = δ∙-pre (CW↪ C n)
 
 
 -- elimination from Cₙ into prop
@@ -158,5 +150,5 @@ CW→Prop C {A = A} pr ind  =
     λ n a → subst A (push a))
 
 -- realisation of finite complex
-realiseFin : (n : ℕ) (C : finCW n) → Iso (fst C n) (realise (finCW→CW n C)) 
+realiseFin : (n : ℕ) (C : finCW n) → Iso (fst C n) (realise (finCW→CW n C))
 realiseFin n C = Lim→FiniteIso n (snd C .snd)
