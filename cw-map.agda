@@ -95,7 +95,7 @@ module functoriality {C D : CW} (f : cellMap C D) where
   funct∘pre∂ n = (bouquetSusp→ (bouquetFunct n)) ∘ (preboundary.pre∂ C n)
 
   degree-funct∘pre∂ : (n : ℕ) → bouquetDegree (funct∘pre∂ n) ≡ compGroupHom (∂ C n) (chainFunct n)
-  degree-funct∘pre∂ zero = {!!}
+  degree-funct∘pre∂ zero = {!!} -- trying to prove the equality of two maps into ℤ[Fin (Bn 0)] should be easy, as Bn 0 is equal to 0!
   degree-funct∘pre∂ (suc n) = degreeComp (bouquetSusp→ (bouquetFunct (suc n))) (preboundary.pre∂ C (suc n))
                             ∙ cong (λ X → compGroupHom (∂ C (suc n)) X) (sym (degreeSusp (bouquetFunct (suc n))))
 
@@ -106,10 +106,57 @@ module functoriality {C D : CW} (f : cellMap C D) where
   degree-pre∂∘funct n = degreeComp (preboundary.pre∂ D n) (bouquetFunct (suc n))
 
   commPre∂Funct : (n : ℕ) → funct∘pre∂ n ≡ pre∂∘funct n
-  commPre∂Funct n = {!!}
+  commPre∂Funct n = funExt λ x → (step1 x) ∙ (step2 x) ∙ (step3 x) ∙ (step4 x) ∙ (step5 x) ∙ (step6 x)
+    where
+      open preboundary
+      open Iso
+
+      bouquet : (C : CW) (n m : ℕ) → Type
+      bouquet = λ C n m → SphereBouquet n (Fin (snd C .fst m))
+
+      iso1 : (C : CW) (n : ℕ) → Iso (Susp (bouquet C n n)) (bouquet C (suc n) n)
+      iso1 C n = sphereBouquetSuspIso
+
+      iso2 : (C : CW) (n : ℕ) → Iso (cofiber n C) (bouquet C n n)
+      iso2 C n = BouquetIso-gen n (snd C .fst n) (snd C .snd .fst n) (snd C .snd .snd .snd n)
+
+      step1 = λ (x : bouquet C (suc n) (suc n)) → cong (fun (iso1 D n) ∘ (suspFun (bouquetFunct n)))
+                     (leftInv (iso1 C n) (((suspFun (fun (iso2 C n))) ∘ (suspFun (to_cofiber n C))
+                                   ∘ (δ (suc n) C) ∘ (inv (iso2 C (suc n)))) x))
+
+      step2aux : ∀ x → suspFun (bouquetFunct n) x
+                 ≡ (suspFun (fun (iso2 D n)) ∘ suspFun (fn+1/fn n) ∘ suspFun (inv (iso2 C n))) x
+      step2aux north = refl
+      step2aux south = refl
+      step2aux (merid a i) = refl
+
+      step2 = λ (x : bouquet C (suc n) (suc n)) → cong (fun (iso1 D n))
+        (step2aux (((suspFun (fun (iso2 C n))) ∘ (suspFun (to_cofiber n C))
+                  ∘ (δ (suc n) C) ∘ (inv (iso2 C (suc n)))) x))
+
+      step3aux : ∀ x → (suspFun (inv (iso2 C n)) ∘ suspFun (fun (iso2 C n))) x ≡ x
+      step3aux north = refl
+      step3aux south = refl
+      step3aux (merid a i) j = merid (leftInv (iso2 C n) a j) i
+
+      step3 = λ (x : bouquet C (suc n) (suc n)) →
+        cong (fun (iso1 D n) ∘ (suspFun (fun (iso2 D n))) ∘ (suspFun (fn+1/fn n)))
+             (step3aux (((suspFun (to_cofiber n C)) ∘ (δ (suc n) C) ∘ (inv (iso2 C (suc n)))) x))
+
+      step4 = λ (x : bouquet C (suc n) (suc n)) → cong ((fun (iso1 D n)) ∘ (suspFun (fun (iso2 D n))))
+        (sym (commToCofiberSusp n (((δ (suc n) C) ∘ (inv (iso2 C (suc n)))) x)))
+
+      step5 = λ (x : bouquet C (suc n) (suc n)) →
+        cong ((fun (iso1 D n)) ∘ (suspFun (fun (iso2 D n))) ∘ (suspFun (to_cofiber n D)))
+          (sym (commδ (suc n) (inv (iso2 C (suc n)) x)))
+
+      step6 = λ (x : bouquet C (suc n) (suc n)) →
+        cong ((fun (iso1 D n)) ∘ (suspFun (fun (iso2 D n))) ∘ (suspFun (to_cofiber n D)) ∘ (δ (suc n) D))
+        (sym (leftInv (iso2 D (suc n)) (((fn+1/fn (suc n)) ∘ (inv (iso2 C (suc n)))) x)))
+
 
   comm∂Funct : (n : ℕ) → compGroupHom (chainFunct (suc n)) (∂ D n) ≡ compGroupHom (∂ C n) (chainFunct n)
-  comm∂Funct n = (sym (degree-pre∂∘funct n)) ∙∙ cong bouquetDegree {!!} ∙∙ (degree-funct∘pre∂ n)
+  comm∂Funct n = (sym (degree-pre∂∘funct n)) ∙∙ cong bouquetDegree (sym (commPre∂Funct n)) ∙∙ (degree-funct∘pre∂ n)
 
 cellMap-to-ChainComplexMap : {C D : CW} (f : cellMap C D)
                            → ChainComplexMap (CW-ChainComplex C) (CW-ChainComplex D)
