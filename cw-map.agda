@@ -63,7 +63,7 @@ module prefunctoriality {C D : CW} (f : cellMap C D) (n : ℕ) where
   fn+1/fn (push x i) = (push (f .map n x) ∙ (cong inr (f .comm n x))) i
 
   bouquetFunct : SphereBouquet n (Fin An) → SphereBouquet n (Fin Bn)
-  bouquetFunct = λ x → Iso.fun (BouquetIso-gen n Bn βn isoDn) (fn+1/fn (Iso.inv (BouquetIso-gen n An αn isoCn) x))
+  bouquetFunct x = Iso.fun (BouquetIso-gen n Bn βn isoDn) (fn+1/fn (Iso.inv (BouquetIso-gen n An αn isoCn) x))
 
   chainFunct : AbGroupHom (ℤ[A C ] n) (ℤ[A D ] n)
   chainFunct = bouquetDegree bouquetFunct
@@ -95,9 +95,8 @@ module functoriality {C D : CW} (f : cellMap C D) where
   funct∘pre∂ n = (bouquetSusp→ (bouquetFunct n)) ∘ (preboundary.pre∂ C n)
 
   degree-funct∘pre∂ : (n : ℕ) → bouquetDegree (funct∘pre∂ n) ≡ compGroupHom (∂ C n) (chainFunct n)
-  degree-funct∘pre∂ zero = {!!} -- trying to prove the equality of two maps into ℤ[Fin (Bn 0)] should be easy, as Bn 0 is equal to 0!
-  degree-funct∘pre∂ (suc n) = degreeComp (bouquetSusp→ (bouquetFunct (suc n))) (preboundary.pre∂ C (suc n))
-                            ∙ cong (λ X → compGroupHom (∂ C (suc n)) X) (sym (degreeSusp (bouquetFunct (suc n))))
+  degree-funct∘pre∂ n = degreeComp (bouquetSusp→ (bouquetFunct n)) (preboundary.pre∂ C n)
+                      ∙ cong (λ X → compGroupHom (∂ C n) X) (sym (degreeSusp (bouquetFunct n)))
 
   pre∂∘funct : (n : ℕ) → (SphereBouquet (suc n) (Fin (An (suc n)))) → SphereBouquet (suc n) (Fin (Bn n))
   pre∂∘funct n = (preboundary.pre∂ D n) ∘ (bouquetFunct (suc n))

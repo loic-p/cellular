@@ -69,19 +69,28 @@ gen∈Im→isEquiv G e H =
        → isEquiv (fst h))
      (J> 1∈Im→isEquiv G e)
 
-
 ----------- main part ------------
+S⁰×S⁰→ℤ : S₊ 0 → S₊ 0 → ℤ
+S⁰×S⁰→ℤ false false = 0
+S⁰×S⁰→ℤ false true = -1
+S⁰×S⁰→ℤ true false = 1
+S⁰×S⁰→ℤ true true = 0
+
+S⁰×S⁰→ℤ-diag : (x : Bool) → S⁰×S⁰→ℤ x x ≡ 0
+S⁰×S⁰→ℤ-diag false = refl
+S⁰×S⁰→ℤ-diag true = refl
+
 degree : (n : ℕ) → (S₊ n → S₊ n) → ℤ
-degree zero f = 0
+degree zero f = S⁰×S⁰→ℤ (f true) (f false)
 degree (suc n) f = Iso.fun ((Hⁿ-Sⁿ≅ℤ n) .fst) ∣ (λ x → ∣ f x ∣) ∣₂
 
 degree∙ : (n : ℕ) → (S₊∙ n →∙ S₊∙ n) → ℤ
-degree∙ zero f = 0
+degree∙ zero f = degree 0 (f .fst)
 degree∙ (suc n) f = Iso.fun ((Hⁿ-Sⁿ≅ℤ n) .fst) ∣ (λ x → ∣ fst f x ∣) ∣₂
 
 degree-const : (n : ℕ) → degree n (λ _ → ptSn n) ≡ 0
 degree-const zero = refl
-degree-const (suc n) = IsGroupHom.pres1 (Hⁿ-Sⁿ≅ℤ n .snd) 
+degree-const (suc n) = IsGroupHom.pres1 (Hⁿ-Sⁿ≅ℤ n .snd)
 
 -- Generator of HⁿSⁿ
 HⁿSⁿ-gen : (n : ℕ) → Iso.fun (fst (Hⁿ-Sⁿ≅ℤ n)) ∣ ∣_∣ₕ ∣₂ ≡ 1
@@ -447,7 +456,17 @@ Hⁿ-Sⁿ≅ℤ-pres-mult n f g =
 degree-comp : (n : ℕ) (f g : (S₊ n → S₊ n))
   → degree n (f ∘ g)
    ≡ degree n f ·ℤ degree n g
-degree-comp zero f g = refl
+degree-comp zero f g with (g true) | (g false)
+... | false | false = S⁰×S⁰→ℤ-diag _ ∙ ·Comm (pos 0) _
+... | false | true = lem _ _
+  where
+  lem : (x y : Bool) → S⁰×S⁰→ℤ x y ≡ (S⁰×S⁰→ℤ y x) ·ℤ negsuc 0
+  lem false false = refl
+  lem false true = refl
+  lem true false = refl
+  lem true true = refl
+... | true | false = ·Comm 1 (S⁰×S⁰→ℤ (f true) (f false))
+... | true | true = S⁰×S⁰→ℤ-diag _ ∙ ·Comm (pos 0) _
 degree-comp (suc n) f g =
      (λ i → degree∥₂≡ n i ∣ f ∘ g ∣₂)
   ∙∙ deg-comp-help n ∣ f ∣₂ ∣ g ∣₂
@@ -479,15 +498,18 @@ comp-comm n f g = PT.map (idfun _) (Iso.fun PathIdTrunc₀Iso
   ∙ Iso.leftInv (degree∥₂Iso n) (∣ g ∘ f ∣₂)))
 
 suspFunS∙ : {n : ℕ} → (S₊ n → S₊ n) → S₊∙ (suc n) →∙ S₊∙ (suc n)
-suspFunS∙ {n = zero} f with (f true)
-... | false = invLooper , refl
-... | true = idfun S¹ , refl
+suspFunS∙ {n = zero} f =
+  (λ x → Iso.inv S¹IsoSuspBool (suspFun f (Iso.fun S¹IsoSuspBool x))) , refl
 suspFunS∙ {n = suc n} f = suspFun f , refl
 
-degree-susp : (n : ℕ) (f : (S₊ (suc n) → S₊ (suc n)))
-            → degree (suc n) f ≡ degree (suc (suc n)) (suspFun f)
-degree-susp n f =
-  cong (Iso.fun (Hⁿ-Sⁿ≅ℤ n .fst))
+degree-susp : (n : ℕ) (f : (S₊ n → S₊ n))
+            → degree n f ≡ degree (suc n) (suspFunS∙ f .fst)
+degree-susp zero f with (f true) | (f false)
+... | false | false = refl
+... | false | true = refl
+... | true | false = refl
+... | true | true = refl
+degree-susp (suc n) f = cong (Iso.fun (Hⁿ-Sⁿ≅ℤ n .fst))
     (sym (Iso.rightInv (fst (suspensionAx-Sn n n)) _)
     ∙ cong (Iso.fun (suspensionAx-Sn n n .fst)) lem)
   where

@@ -56,6 +56,14 @@ snd (suspFun∙ f) = refl
 SphereBouquet : (n : ℕ) (A : Type) → Type
 SphereBouquet n A = Pushout (terminal A) ((λ a → (a , ptSn n)))
 
+SphereBouquet→Prop : ∀ {ℓ} (n : ℕ) {A : Type} (a : A)
+  → {B : SphereBouquet n A → Type ℓ}
+  → ((b : _) → isProp (B b))
+  → ((x : _) (y : _) → B (inr (x , y)))
+  → (s : _) → B s
+SphereBouquet→Prop n a {B = B} pr d =
+  elimProp _ pr (λ t → subst B (sym (push a)) (d a _)) λ {(x , y) → d x y}
+
 Bouquet : (A : Type) (B : A → Pointed₀) → Type
 Bouquet A B = Pushout (terminal A) (λ a → a , pt (B a))
 
@@ -216,14 +224,32 @@ Iso.leftInv (Iso-SuspBouquet-Bouquet A B) = SuspBouquet-Bouquet-cancel A B .snd
 SuspBouquet≃Bouquet : (A : Type) (B : A → Pointed₀)
   → Susp (Bouquet A B) ≃ Bouquet A (λ a → Susp∙ (fst (B a)))
 SuspBouquet≃Bouquet A B = isoToEquiv (Iso-SuspBouquet-Bouquet A B)
+open import Cubical.Data.Sigma
+
+sphereBouquetSuspIso₀ : {A : Type}
+  → Iso (Bouquet A (λ a → Susp∙ (fst (S₊∙ zero))))
+      (SphereBouquet 1 A)
+Iso.fun sphereBouquetSuspIso₀ (inl x) = inl x
+Iso.fun sphereBouquetSuspIso₀ (inr (a , b)) =
+  inr (a , Iso.inv (IsoSucSphereSusp 0) b)
+Iso.fun sphereBouquetSuspIso₀ (push a i) = push a i
+Iso.inv sphereBouquetSuspIso₀ (inl x) = inl x
+Iso.inv sphereBouquetSuspIso₀ (inr (a , b)) =
+  inr (a , Iso.fun (IsoSucSphereSusp 0) b)
+Iso.inv sphereBouquetSuspIso₀ (push a i) = push a i
+Iso.rightInv sphereBouquetSuspIso₀ (inl x) = refl
+Iso.rightInv sphereBouquetSuspIso₀ (inr (a , y)) i =
+  inr (a , Iso.leftInv (IsoSucSphereSusp 0) y i)
+Iso.rightInv sphereBouquetSuspIso₀ (push a i) = refl
+Iso.leftInv sphereBouquetSuspIso₀ (inl x) = refl
+Iso.leftInv sphereBouquetSuspIso₀ (inr (a , y)) i =
+  inr (a , Iso.rightInv (IsoSucSphereSusp 0) y i)
+Iso.leftInv sphereBouquetSuspIso₀ (push a i) = refl
 
 sphereBouquetSuspIso : {A : Type} {n : ℕ}
   → Iso (Susp (SphereBouquet n A)) (SphereBouquet (suc n) A)
 sphereBouquetSuspIso {A = A} {n = zero} =
-  compIso (Iso-SuspBouquet-Bouquet A λ _ → S₊∙ zero)
-    (subst (λ P → Iso (Bouquet A (λ a → P)) (SphereBouquet 1 A))
-      (ua∙ (isoToEquiv (IsoSucSphereSusp zero)) refl)
-      idIso)
+  compIso (Iso-SuspBouquet-Bouquet A λ _ → S₊∙ zero) sphereBouquetSuspIso₀
 sphereBouquetSuspIso {A = A} {n = suc n} = Iso-SuspBouquet-Bouquet A λ _ → S₊∙ (suc n)
 
 sphereBouquet≃Susp : {A : Type} {n : ℕ}
@@ -312,6 +338,16 @@ bouquetSusp→ : {n : ℕ} {A B : Type}
 bouquetSusp→ {n = n} {A} {B} f =
      sphereBouquetSuspFun ∘ (suspFun f) ∘ sphereBouquetSuspInvFun
 
+bouquetSusp→∘ : {n : ℕ} {A B C : Type}
+  → (f : SphereBouquet n A → SphereBouquet n B)
+  → (g : SphereBouquet n B → SphereBouquet n C)
+  → bouquetSusp→ g ∘ bouquetSusp→ f ≡ bouquetSusp→ (g ∘ f)
+bouquetSusp→∘ f g i =
+  sphereBouquetSuspFun
+          ∘ ((λ i → suspFun g ∘ (λ x → Iso.leftInv sphereBouquetSuspIso x i) ∘ suspFun f)
+           ∙ sym (suspFun-comp g f)) i
+          ∘ sphereBouquetSuspInvFun
+
 -- probably not needed
 -- private
 --   bouquetSusp→' : {n : ℕ} {A B : Type}
@@ -371,8 +407,8 @@ EqHoms {n} {m} {ϕ} {ψ} idr =
            ∙∙ sym (IsGroupHom.presinv (snd ψ) f)))
 
 degreeComp∙ : {n m k l : ℕ}
-  → (f : (SphereBouquet n (Fin m) , inl tt) →∙ (SphereBouquet n (Fin k) , inl tt))
-  → (g : (SphereBouquet n (Fin l) , inl tt) →∙ (SphereBouquet n (Fin m) , inl tt))
+  → (f : (SphereBouquet (suc n) (Fin m) , inl tt) →∙ (SphereBouquet (suc n) (Fin k) , inl tt))
+  → (g : (SphereBouquet (suc n) (Fin l) , inl tt) →∙ (SphereBouquet (suc n) (Fin m) , inl tt))
   → bouquetDegree ((fst f) ∘ (fst g)) ≡ compGroupHom (bouquetDegree (fst g)) (bouquetDegree (fst f))
 degreeComp∙ {n} {m} {k} {l} f g =
   EqHoms
@@ -381,33 +417,32 @@ degreeComp∙ {n} {m} {k} {l} f g =
       → sumFinId l
          (λ a →
            ·Comm (generator x a) _
-      ∙ cong (degree n (λ x₁ → chooseS t (fst f (fst g (inr (a , x₁))))) ·ℤ_)
+      ∙ cong (degree (suc n) (λ x₁ → chooseS t (fst f (fst g (inr (a , x₁))))) ·ℤ_)
              (generator-comm x a))
       ∙ sym (generator-is-generator
-          (λ a → degree n (λ x₁ → chooseS t (fst f (fst g (inr (a , x₁)))))) x)
+          (λ a → degree (suc n) (λ x₁ → chooseS t (fst f (fst g (inr (a , x₁)))))) x)
       ∙ main n m (λ s → fst g (inr (x , s)))
                  ((λ s → chooseS t (fst f s))
                  , (cong (chooseS t) (snd f)))
       ∙ sumFinId m λ a →
-          degree-comp' n
+          degree-comp' (suc n)
               (λ x₁ → chooseS t (fst f (inr (a , x₁))))
               (λ x₁ → chooseS a (fst g (inr (x , x₁))))
          ∙ λ j → simplify x a (~ j)
-              ·ℤ degree n (λ x₁ → chooseS t (fst f (inr (a , x₁))))
+              ·ℤ degree (suc n) (λ x₁ → chooseS t (fst f (inr (a , x₁))))
   where
-  main : (n m : ℕ) (w : S₊ n → SphereBouquet n (Fin m))
-       (F : ((SphereBouquet n (Fin m)) , inl tt) →∙ S₊∙ n)
-       → degree n (λ s → fst F (w s))
-        ≡ sumFin λ a → degree n (λ s → fst F (inr (a , chooseS a (w s))))
+  main : (n m : ℕ) (w : S₊ (suc n) → SphereBouquet (suc n) (Fin m))
+       (F : ((SphereBouquet (suc n) (Fin m)) , inl tt) →∙ S₊∙ (suc n))
+       → degree (suc n) (λ s → fst F (w s))
+        ≡ sumFin λ a → degree (suc n) (λ s → fst F (inr (a , chooseS a (w s))))
   main n zero w (F , Fp) =
-      (λ j → degree n (λ s → F (lem w j s)))
-    ∙ (λ j → degree n (λ s → Fp j))
-    ∙ degree-const n
+      (λ j → degree (suc n) (λ s → F (lem w j s)))
+    ∙ (λ j → degree (suc n) (λ s → Fp j))
+    ∙ degree-const (suc n)
     where
-    lem : (f : S₊ n → SphereBouquet n (Fin zero)) → (f ≡ λ _ → inl tt)
-    lem f = funExt λ x → sym (isContrSphereBouquetZero n .snd (f x))
-  main zero (suc m) w F = sym (+Comm 0 _ ∙ sumFin0 m)
-  main (suc n) (suc m) w F =
+    lem : (f : S₊ (suc n) → SphereBouquet (suc n) (Fin zero)) → (f ≡ λ _ → inl tt)
+    lem f = funExt λ x → sym (isContrSphereBouquetZero (suc n) .snd (f x))
+  main n (suc m) w F =
     cong (Iso.fun (Hⁿ-Sⁿ≅ℤ n .fst))
       (cong ∣_∣₂ (funExt (λ x → asSum F (w x)))
             ∙ sym (sumFinK-comm
@@ -452,23 +487,19 @@ degreeComp∙ {n} {m} {k} {l} f g =
           λ x' → id₂ x x' y)
 
   simplify : (x : Fin l) (a : Fin m)
-    → sumFin (λ a₁ → generator x a₁ ·ℤ degree n (λ x₁ → chooseS a (fst g (inr (a₁ , x₁)))))
-     ≡ degree n (λ x₁ → chooseS a (fst g (inr (x , x₁))))
+    → sumFin (λ a₁ → generator x a₁ ·ℤ degree (suc n) (λ x₁ → chooseS a (fst g (inr (a₁ , x₁)))))
+     ≡ degree (suc n) (λ x₁ → chooseS a (fst g (inr (x , x₁))))
   simplify x a =
        sumFinId l
-           (λ p → ·Comm (generator x p) (degree n (λ x₁ → chooseS a (fst g (inr (p , x₁)))))
-         ∙ λ i → degree n (λ x₁ → chooseS a (fst g (inr (p , x₁)))) ·ℤ generator-comm x p i)
-     ∙ sym (generator-is-generator (λ a₁ → degree n (λ x₁ → chooseS a (fst g (inr (a₁ , x₁))))) x)
+           (λ p → ·Comm (generator x p) (degree (suc n) (λ x₁ → chooseS a (fst g (inr (p , x₁)))))
+         ∙ λ i → degree (suc n) (λ x₁ → chooseS a (fst g (inr (p , x₁)))) ·ℤ generator-comm x p i)
+     ∙ sym (generator-is-generator (λ a₁ → degree (suc n) (λ x₁ → chooseS a (fst g (inr (a₁ , x₁))))) x)
 
-degreeComp : {n m k l : ℕ}
-  → (f : SphereBouquet n (Fin m) → SphereBouquet n (Fin k))
-  → (g : SphereBouquet n (Fin l) → SphereBouquet n (Fin m))
+degreeComp-pos : {n m k l : ℕ}
+  → (f : SphereBouquet (suc n) (Fin m) → SphereBouquet (suc n) (Fin k))
+  → (g : SphereBouquet (suc n) (Fin l) → SphereBouquet (suc n) (Fin m))
   → bouquetDegree (f ∘ g) ≡ compGroupHom (bouquetDegree g) (bouquetDegree f)
-degreeComp {n = zero} {m = m} {k = k} {l = l} f g =
-  EqHoms (λ (x : Fin l) →
-    funExt (λ t → sumFinId l (λ y → ·Comm (generator x y) (pos 0)) ∙ sumFin0 l ∙ (sym (sumFin0 m))
-    ∙ sumFinId m (λ y → ·Comm (pos 0) (sumFin (λ a → generator x a ·ℤ pos 0)))))
-degreeComp {n = suc n} {m = m} {k = k} {l = l} f g = PT.rec2 goalIsProp aux (isConnectedSphereBouquet (f (inl tt)))
+degreeComp-pos {n = n} {m = m} {k = k} {l = l} f g = PT.rec2 goalIsProp aux (isConnectedSphereBouquet (f (inl tt)))
                                                     (isConnectedSphereBouquet (g (inl tt)))
   where
     isSetAbGroupHom : (m : ℕ) (k : ℕ) → isSet (AbGroupHom (FreeAbGroup (Fin m)) (FreeAbGroup (Fin k)))
@@ -481,31 +512,134 @@ degreeComp {n = suc n} {m = m} {k = k} {l = l} f g = PT.rec2 goalIsProp aux (isC
       → bouquetDegree (f ∘ g) ≡ compGroupHom (bouquetDegree g) (bouquetDegree f)
     aux Hf Hg = degreeComp∙ (f , Hf) (g , Hg)
 
-degreeSusp : {n m k : ℕ}
-  → (f : SphereBouquet (suc n) (Fin m) → SphereBouquet (suc n) (Fin k))
+degreeConst : (n a b : ℕ) → bouquetDegree {n} {a} {b} (λ _ → inl tt) ≡ 0hom {G = ℤ[Fin a ]} {H = ℤ[Fin b ]}
+degreeConst n a b = GroupHom≡ ((λ i r x → sumFin (λ a → r a ·ℤ (degree.degree-const n i)))
+                              ∙∙ (λ i r x → sumFin (λ a → ·Comm (r a) (pos 0) i))
+                              ∙∙ λ i r x → sumFin0 a i)
+
+degreeSusp₀ : {m k : ℕ}
+  → (f : SphereBouquet zero (Fin m) → SphereBouquet zero (Fin k))
   → bouquetDegree f ≡ bouquetDegree (bouquetSusp→ f)
-degreeSusp {n = n} {m = m} {k = k} f =
+degreeSusp₀ {m = m} {k = zero} f =
+  subst (λ f → bouquetDegree f ≡ bouquetDegree (bouquetSusp→ f))
+        f-const
+        (degreeConst zero _ _
+      ∙ sym (degreeConst (suc zero) _ _)
+      ∙ cong bouquetDegree lem₂)
+  where
+  f-const : (λ _ → inl tt) ≡ f
+  f-const = funExt (λ x → isContrSphereBouquetZero 0 .snd (f x))
+  lem₂ : (λ _ → inl tt) ≡ bouquetSusp→ {n = zero} (λ _ → inl tt)
+  lem₂ = funExt (λ x
+    → isContrSphereBouquetZero 1 .snd (bouquetSusp→ (λ _ → inl tt) x))
+degreeSusp₀ {m = m} {k = suc k} f =
+  Σ≡Prop (λ _ → isPropIsGroupHom _ _)
+    (funExt λ r → funExt λ a → sumFinId m λ y → cong (r y ·ℤ_)
+              (degree-susp 0 (λ x → chooseS a (f (inr (y , x))))
+              ∙ λ i → degree 1 (λ z → help y a z i)))
+    where
+    help : (y : _) (a : _) (z : _)
+      → suspFunS∙ (λ x → chooseS a (f (inr (y , x)))) .fst z
+       ≡ chooseS a (bouquetSusp→ f (inr (y , z)))
+    help y a base = refl
+    help y a (loop i) j = help' j i
+      where
+      main : (ft ff : SphereBouquet zero (Fin (suc k)))
+           → cong SuspBool→S¹ (merid (chooseS a ff))
+           ∙ cong SuspBool→S¹ (sym (merid (chooseS a ft)))
+           ≡ cong (chooseS a) (cong sphereBouquetSuspFun (merid ff)
+           ∙ sym (cong sphereBouquetSuspFun (merid ft)))
+      main =
+        SphereBouquet→Prop 0 fzero (λ _ → isPropΠ λ _ → isGroupoidS¹ _ _ _ _)
+             λ x y → SphereBouquet→Prop 0 fzero (λ _ → isGroupoidS¹ _ _ _ _)
+               λ x' y'
+           → (cong₂ _∙_ (final y' x') (cong sym (final y x))
+            ∙ sym (cong-∙ (chooseS a)
+                  (merid-lem x' y' i1) (sym (merid-lem x y i1))))
+            ∙ λ i → cong (chooseS a)
+                  ((merid-lem x' y' (~ i) ∙ sym (merid-lem x y (~ i))))
+        where
+        merid-lem : (x : Fin (suc k)) (y : Bool)
+          → cong (sphereBouquetSuspIso .Iso.fun) (merid (inr (x , y)))
+           ≡ push x ∙∙ (λ i → inr (x , SuspBool→S¹ (merid y i))) ∙∙ sym (push x)
+        merid-lem x y = cong-∙∙ (Iso.fun sphereBouquetSuspIso₀)
+                                (push x)
+                                (λ i → inr (x , (merid y ∙ sym (merid true)) i))
+                                (sym (push x))
+          ∙ cong (push x ∙∙_∙∙ sym (push x))
+              (cong-∙ (λ z → Iso.fun sphereBouquetSuspIso₀ (inr (x , z)))
+                                       (merid y) (sym (merid true))
+              ∙ sym (rUnit _))
+
+        pre-final : (y : Bool) (x : Fin (suc k))
+          → cong SuspBool→S¹ (merid (chooseS a (inr (x , y))))
+          ≡ cong (chooseS a) (push x)
+          ∙∙ cong (chooseS a) (λ i → inr (x , SuspBool→S¹ (merid y i)))
+          ∙∙ cong (chooseS a) (sym (push x))
+        pre-final y x with (fst a ≟ fst x)
+        ... | lt x₁ = rUnit refl
+        ... | eq x₁ = rUnit _
+        ... | gt x₁ = rUnit refl
+
+        final : (y : Bool) (x : Fin (suc k))
+          → cong SuspBool→S¹ (merid (chooseS a (inr (x , y))))
+          ≡ cong (chooseS a) ((push x)
+                           ∙∙ (λ i → inr (x , SuspBool→S¹ (merid y i)))
+                           ∙∙ sym (push x))
+        final y x =
+            pre-final y x
+          ∙ cong-∙∙ (chooseS a) (push x) (λ i → inr (x , SuspBool→S¹ (merid y i)))
+           (sym (push x))
+
+      help' : cong (suspFunS∙ (λ x → chooseS a (f (inr (y , x)))) .fst) loop
+           ≡ cong (chooseS a) λ i → bouquetSusp→ f (inr (y , loop i))
+      help' =
+          (λ j i → Iso.inv S¹IsoSuspBool
+                    (cong-∙ (suspFun λ x
+                  → chooseS a (f (inr (y , x)))) (merid false) (sym (merid true)) j i))
+        ∙ cong-∙ (Iso.inv S¹IsoSuspBool)
+                 (merid (chooseS a (f (inr (y , false)))))
+                 (sym (merid (chooseS a (f (inr (y , true))))))
+        ∙ main (f (inr (y , true))) ((f (inr (y , false))))
+        ∙ cong (cong (chooseS a)) (refl
+             ∙ (sym  (cong-∙ sphereBouquetSuspFun
+                     (merid (f (inr (y , false)))) (sym (merid (f (inr (y , true)))))))
+             ∙ cong (cong sphereBouquetSuspFun)
+               (sym (cong-∙ (suspFun f)
+                      (merid (inr (y , false))) (sym (merid (inr (y , true)))))
+             ∙ cong (cong (suspFun f))
+                 (sym (cong-∙ (λ x → Iso.inv (Iso-SuspBouquet-Bouquet _ _)
+                              (inr (y , x))) (merid false) (sym (merid true))))))
+        ∙ λ j i → chooseS a (sphereBouquetSuspFun
+                    (suspFun f (Iso.inv (Iso-SuspBouquet-Bouquet _ _)
+                      (inr (y , (merid false ∙ sym (merid true)) i)))))
+
+degreeSusp : {n m k : ℕ}
+  → (f : SphereBouquet n (Fin m) → SphereBouquet n (Fin k))
+  → bouquetDegree f ≡ bouquetDegree (bouquetSusp→ f)
+degreeSusp {n = zero} = degreeSusp₀
+degreeSusp {n = suc n} {m = m} {k = k} f =
   EqHoms λ (x : Fin m)
     → funExt λ (b : Fin k) → sumFinId m
       λ z → cong (generator x z ·ℤ_)
-             (degree-susp n (λ x₁ → chooseS b (f (inr (z , x₁))))
+             (degree-susp (suc n) (λ x₁ → chooseS b (f (inr (z , x₁))))
            ∙ cong (Iso.fun (Hⁿ-Sⁿ≅ℤ (suc n) .fst))
                 (cong ∣_∣₂ (funExt λ x → help b z x)))
   where
-  f1 : (b : Fin k) → (SphereBouquet (suc n) (Fin k) , inl tt) →∙ coHomK-ptd (suc n)
-  fst (f1 b) x = ∣ chooseS b x ∣ₕ
-  snd (f1 b) = refl
+  f₁ : (b : Fin k) → (SphereBouquet (suc n) (Fin k) , inl tt) →∙ coHomK-ptd (suc n)
+  fst (f₁ b) x = ∣ chooseS b x ∣ₕ
+  snd (f₁ b) = refl
 
-  f2 : (b : Fin k) → (SphereBouquet (suc n) (Fin k) , inl tt) →∙ coHomK-ptd (suc n)
-  fst (f2 b) x = ΩKn+1→Kn (suc n)
+  f₂ : (b : Fin k) → (SphereBouquet (suc n) (Fin k) , inl tt) →∙ coHomK-ptd (suc n)
+  fst (f₂ b) x = ΩKn+1→Kn (suc n)
                   λ i → ∣ chooseS b (Bouquet→ΩBouquetSusp (Fin k) (λ _ → S₊∙ (suc n)) x i) ∣
-  snd (f2 b) = ΩKn+1→Kn-refl (suc n)
+  snd (f₂ b) = ΩKn+1→Kn-refl (suc n)
 
-  f1≡f2 : (b : Fin k) (x : _) → f1 b .fst x ≡ f2 b .fst x
-  f1≡f2 b = Bouquet→KnEq (suc n) (f1 b) (f2 b) (uncurry main)
+  f₁≡f₂ : (b : Fin k) (x : _) → f₁ b .fst x ≡ f₂ b .fst x
+  f₁≡f₂ b = Bouquet→KnEq (suc n) (f₁ b) (f₂ b) (uncurry main)
     where
     main : (x : Fin k) (y : S₊ (suc n))
-      → f1 b .fst (inr (x , y)) ≡ f2 b .fst (inr (x , y))
+      → f₁ b .fst (inr (x , y)) ≡ f₂ b .fst (inr (x , y))
     main x y =
       main'
       ∙ cong (ΩKn+1→Kn (suc n))
@@ -513,7 +647,7 @@ degreeSusp {n = n} {m = m} {k = k} f =
              (sym (cong-∙∙ (chooseS {n = 2 +ℕ n} b)
              (push x) (λ i → inr (x , σ (suc n) y i)) (sym (push x)))))
       where
-      main' : f1 b .fst (inr (x , y))
+      main' : f₁ b .fst (inr (x , y))
             ≡ ΩKn+1→Kn (suc n)
                (cong ∣_∣ₕ (cong (chooseS {n = 2 +ℕ n} b) (push x)
                       ∙∙ (λ i → chooseS {n = 2 +ℕ n} b (inr (x , σ (suc n) y i)))
@@ -537,16 +671,23 @@ degreeSusp {n = n} {m = m} {k = k} f =
          ; (j = i0) → ∣ compPath-filler
                          (merid (chooseS b (f (inr (z , a)))))
                          (sym (merid (ptSn (suc n)))) (~ r) i ∣ₕ
-         ; (j = i1) → (cong (Kn→ΩKn+1 (suc n)) (f1≡f2 b (f (inr (z , a))))
+         ; (j = i1) → (cong (Kn→ΩKn+1 (suc n)) (f₁≡f₂ b (f (inr (z , a))))
                      ∙ Iso.rightInv (Iso-Kn-ΩKn+1 (suc n))
                         (λ i → ∣ chooseS b (bouquetSusp→ f
                                   (inr (z , merid a i))) ∣)) r i})
           (Kn→ΩKn+1 (suc n) ∣ chooseS b (f (inr (z , a))) ∣ i)
 
-degreeConst : (n a b : ℕ) → bouquetDegree {n} {a} {b} (λ _ → inl tt) ≡ 0hom {G = ℤ[Fin a ]} {H = ℤ[Fin b ]}
-degreeConst n a b = GroupHom≡ ((λ i r x → sumFin (λ a → r a ·ℤ (degree.degree-const n i)))
-                              ∙∙ (λ i r x → sumFin (λ a → ·Comm (r a) (pos 0) i))
-                              ∙∙ λ i r x → sumFin0 a i)
+degreeComp : {n m k l : ℕ}
+  → (f : SphereBouquet n (Fin m) → SphereBouquet n (Fin k))
+  → (g : SphereBouquet n (Fin l) → SphereBouquet n (Fin m))
+  → bouquetDegree (f ∘ g) ≡ compGroupHom (bouquetDegree g) (bouquetDegree f)
+degreeComp {n = zero} f g =
+     degreeSusp (f ∘ g)
+  ∙∙ Σ≡Prop (λ _ → isPropIsGroupHom _ _)
+      ((λ i → bouquetDegree (bouquetSusp→∘ g f (~ i)) .fst)
+    ∙ cong fst (degreeComp-pos (bouquetSusp→ f) (bouquetSusp→ g)))
+  ∙∙ sym (cong₂ compGroupHom (degreeSusp g) (degreeSusp f))
+degreeComp {n = suc n} f g = degreeComp-pos f g
 
 ------------------
 -- Equivalence between Bouquet of spheres and the cofibre
