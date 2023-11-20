@@ -7,10 +7,12 @@ open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Function
 
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
+open import Cubical.Data.Nat.Order
 open import Cubical.Data.Int renaming (_·_ to _·ℤ_ ; -_ to -ℤ_)
 open import Cubical.Data.Fin
 open import Cubical.Data.Sigma
 open import Cubical.Data.Empty as ⊥
+open import Cubical.Data.Bool hiding (_≟_ ; isProp≤)
 
 open import Cubical.HITs.Sn
 open import Cubical.HITs.Pushout
@@ -25,6 +27,7 @@ open import Cubical.Algebra.AbGroup
 open import prelude
 open import freeabgroup
 open import spherebouquet
+open import degree
 open import cw-complex
 open import cw-chain-complex
 open import ChainComplex
@@ -161,3 +164,72 @@ cellMap-to-ChainComplexMap : {C D : CW} (f : cellMap C D)
                            → ChainComplexMap (CW-ChainComplex C) (CW-ChainComplex D)
 cellMap-to-ChainComplexMap {C} {D} f .ChainComplexMap.chainmap n = prefunctoriality.chainFunct f n
 cellMap-to-ChainComplexMap {C} {D} f .ChainComplexMap.bdrycomm n = functoriality.comm∂Funct f n
+
+
+-- sanity check: chainFunct of a cellular map fₙ : Cₙ → Dₙ
+-- is just functoriality of ℤ[-] when n = 1.
+module _ {C D : CW} (f : cellMap C D) where
+  open cellMap
+  open prefunctoriality f
+  cellMap↾₁ : Fin (An 0) → Fin (Bn 0)
+  cellMap↾₁ = fst (CW₁-discrete D) ∘ map f 1 ∘ invEq (CW₁-discrete C)
+
+  chainFunct' : AbGroupHom (ℤ[A C ] 0) (ℤ[A D ] 0)
+  chainFunct' = ℤ[]-funct cellMap↾₁
+
+  chainFunct₀ : chainFunct' ≡ chainFunct 0
+  chainFunct₀ =
+    EqHoms λ t → funExt λ x
+    → sumFin-choose _+_ 0 (λ _ → refl) +Comm
+        (λ a → pre-ℤ[]-funct cellMap↾₁ (generator t) a x)
+        (S⁰×S⁰→ℤ true (chooseS x (bouquetFunct 0 (inr (t , false)))))
+        t (pre-ℤ[]-funct-gen cellMap↾₁ t x ∙ main₁ t x)
+        (main₂ cellMap↾₁ x t)
+    ∙ generator-is-generator'
+        (λ a → degree 0 λ s
+             → chooseS x (bouquetFunct 0 (inr (a , s)))) t
+    where
+    F = Pushout→Bouquet 0 (Bn 0) (βn 0) (isoDn 0)
+
+    main₁ : (t : _) (x : _)
+      → generator (cellMap↾₁ t) x
+       ≡ S⁰×S⁰→ℤ true
+          (chooseS x (F (fst (isoDn 0) (f .map 1 (invEq (CW₁-discrete C) t)))))
+    main₁ t x = (generator-comm (cellMap↾₁ t) x
+      ∙ lem₂ (cellMap↾₁ t) x)
+      ∙ cong (S⁰×S⁰→ℤ true ∘ chooseS x ∘ F)
+             (lem₁ _)
+      where
+      lem₀ : (x : Pushout (βn 0) fst)
+        → inr (CW₁-discrete D .fst (invEq (isoDn 0) x)) ≡ x
+      lem₀ (inl x) = ⊥.rec (CW₀-empty D x)
+      lem₀ (inr x) j = inr (secEq (CW₁-discrete D) x j)
+
+      lem₁ : (x : _)
+        → inr (CW₁-discrete D .fst x) ≡ fst (isoDn 0) x
+      lem₁ x = (λ i → inr (CW₁-discrete D .fst
+                            (retEq (isoDn 0) x (~ i))))
+              ∙ lem₀ (fst (isoDn 0) x)
+
+      lem₂ : (t : _) (x : _)
+        → generator x t ≡ S⁰×S⁰→ℤ true (chooseS x (inr (t , false)))
+      lem₂ t x with (fst x ≟ fst t)
+      ... | lt x₁ = refl
+      ... | eq x₁ = refl
+      ... | gt x₁ = refl
+
+    main₂ : (f' : _) (x : _) (t : _) (x' : Fin (An zero))
+      → ¬ x' ≡ t
+      → pre-ℤ[]-funct {n = An zero} {m = Bn zero}
+                        f' (generator t) x' x
+       ≡ pos 0
+    main₂ f' x t x' p with (f' x' .fst ≟ x .fst) | (fst t ≟ fst x')
+    ... | lt x₁ | r = refl
+    ... | eq x₂ | r = lem
+      where
+      lem : _
+      lem with (fst t ≟ fst x')
+      ... | lt x = refl
+      ... | eq x = ⊥.rec (p (Σ≡Prop (λ _ → isProp≤) (sym x)))
+      ... | gt x = refl
+    ... | gt x₁ | r = refl

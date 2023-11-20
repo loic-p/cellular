@@ -94,6 +94,10 @@ sumFinK {n = n} {m = m} = sumFinGen (λ x y → x +[ m ]ₖ y) (0ₖ m)
 sumFin : {n : ℕ} (f : Fin n → ℤ) → ℤ
 sumFin f = sumFinGen _+_ 0 f
 
+sumFinGenId : ∀ {ℓ} {A : Type ℓ} {n : ℕ} (_+_ : A → A → A) (0A : A)
+  (f g : Fin n → A) → f ≡ g → sumFinGen _+_ 0A f ≡ sumFinGen _+_ 0A g
+sumFinGenId _+_ 0A f g p i = sumFinGen _+_ 0A (p i)
+
 sumFinId : (n : ℕ) {f g : Fin n → ℤ}
   → ((x : _) → f x ≡ g x) → sumFin f ≡ sumFin g
 sumFinId n t i = sumFin λ x → t x i
@@ -251,6 +255,13 @@ generator-is-generator {n = suc n} f (a , suc diff , p) =
            ∙ (cong (_∸ suc a) (p ∙ cong suc (sym q ∙ x)))
            ∙ n∸n a))
   ... | gt _ = refl
+
+generator-is-generator' : {n : ℕ} (f : ℤ[Fin n ] .fst) (a : _)
+  → f a ≡ sumFin {n = n} λ s → (generator a s) ·ℤ f s
+generator-is-generator' {n = n} f a =
+  generator-is-generator f a
+  ∙ sumFinId n λ x → ·Comm (f x) (generator x a)
+                     ∙ cong (_·ℤ f x) (generator-comm x a)
 
 module _ {ℓ} (n : ℕ) (P : ℤ[Fin (suc n) ] .fst → Type ℓ)
          (gens : (x : _) → P (generator x))
@@ -532,3 +543,49 @@ elimPropℤ[Fin] n A pr z t s u w =
 
 -- TODO: elimSET
 -- TODO: clean up
+
+pre-ℤ[]-funct : {n m : ℕ} (f : Fin n → Fin m) (g : ℤ[Fin n ] .fst)
+  (x : Fin n) (y : Fin m) → ℤ
+pre-ℤ[]-funct {n = n} {m} f g x y with ((f x .fst) ≟ y .fst)
+... | lt _ = 0
+... | eq _ = g x
+... | gt _ = 0
+
+pre-ℤ[]-funct-gen : {n m : ℕ} (f : Fin n → Fin m)
+  (t : Fin n)  (y : Fin m)
+  → pre-ℤ[]-funct f (generator t) t y
+  ≡ generator (f t) y
+pre-ℤ[]-funct-gen f t y with (f t .fst ≟ y .fst)
+... | lt _ = refl
+... | eq _ = lem
+  where
+  lem : _
+  lem with (fst t ≟ fst t)
+  ... | lt q = ⊥.rec (¬m<m q)
+  ... | eq _ = refl
+  ... | gt q = ⊥.rec (¬m<m q)
+... | gt _ = refl
+
+ℤ[]-funct-fun : {n m : ℕ} (f : Fin n → Fin m)
+  → ℤ[Fin n ] .fst → ℤ[Fin m ] .fst
+ℤ[]-funct-fun {n = n} {m} f g x =
+  sumFin {n = n} λ y → pre-ℤ[]-funct f g y x
+
+ℤ[]-funct : {n m : ℕ} (f : Fin n → Fin m)
+  → AbGroupHom (ℤ[Fin n ]) (ℤ[Fin m ])
+fst (ℤ[]-funct {n = n} {m} f) = ℤ[]-funct-fun f
+snd (ℤ[]-funct {n = n} {m} f) =
+  makeIsGroupHom λ g h
+   → funExt λ x → sumFinGenId _+_ 0
+              (λ y → pre-ℤ[]-funct f (λ x → g x + h x) y x)
+              (λ y → pre-ℤ[]-funct f g y x + pre-ℤ[]-funct f h y x)
+              (funExt (lem g h x))
+          ∙ sumFinGen-hom _+_ (pos 0) (λ _ → refl) +Comm +Assoc n _ _
+  where
+  lem : (g h : _) (x : _) (y : Fin n)
+    → pre-ℤ[]-funct f (λ x → g x + h x) y x
+     ≡ pre-ℤ[]-funct f g y x + pre-ℤ[]-funct f h y x
+  lem g h x y with (f y . fst ≟ x .fst)
+  ... | lt _ = refl
+  ... | eq _ = refl
+  ... | gt _ = refl
