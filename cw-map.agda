@@ -23,6 +23,7 @@ open import Cubical.Relation.Nullary
 open import Cubical.Algebra.Group.Base
 open import Cubical.Algebra.Group.MorphismProperties
 open import Cubical.Algebra.AbGroup
+open import Cubical.Algebra.Group.Morphisms
 
 open import prelude
 open import freeabgroup
@@ -165,6 +166,10 @@ cellMap-to-ChainComplexMap : {C D : CW} (f : cellMap C D)
 cellMap-to-ChainComplexMap {C} {D} f .ChainComplexMap.chainmap n = prefunctoriality.chainFunct f n
 cellMap-to-ChainComplexMap {C} {D} f .ChainComplexMap.bdrycomm n = functoriality.comm∂Funct f n
 
+cellMap-to-HomologyMap : {C D : CW} (f : cellMap C D) (n : ℕ)
+  → GroupHom (Hᶜʷ C n) (Hᶜʷ D n)
+cellMap-to-HomologyMap {C = C} {D = D} f n =
+  chainComplexMap→HomologyMap (cellMap-to-ChainComplexMap f) n
 
 -- sanity check: chainFunct of a cellular map fₙ : Cₙ → Dₙ
 -- is just functoriality of ℤ[-] when n = 1.
