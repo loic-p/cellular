@@ -426,4 +426,4 @@ snd (negGroupHom A B ϕ) =
              (IsGroupHom.presinv (snd ϕ) y)
 
 subtrGroupHom : ∀ {ℓ} (A B : AbGroup ℓ) (ϕ ψ : AbGroupHom A B) → AbGroupHom A B
-subtrGroupHom A B ϕ ψ = addGroupHom A B (negGroupHom A B ϕ) (negGroupHom A B ψ)
+subtrGroupHom A B ϕ ψ = addGroupHom A B ϕ (negGroupHom A B ψ)
