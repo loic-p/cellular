@@ -35,14 +35,14 @@ record ChainComplexMap {ℓ ℓ' : Level} (A : ChainComplex ℓ) (B : ChainCompl
     chainmap : (n : ℕ) → AbGroupHom (chain A n) (chain B n)
     bdrycomm : (n : ℕ) → compGroupHom (chainmap (suc n)) (bdry B n) ≡ compGroupHom (bdry A n) (chainmap n)
 
-record ChainHomotopy {ℓ ℓ' : Level} {A : ChainComplex ℓ} {B : ChainComplex ℓ'} (f g : ChainComplexMap A B) : Type (ℓ-max ℓ ℓ') where
+record ChainHomotopy {ℓ : Level} {A : ChainComplex ℓ} {B : ChainComplex ℓ} (f g : ChainComplexMap A B) : Type ℓ where
   open ChainComplex
   open ChainComplexMap
   field
     htpy : (n : ℕ) → AbGroupHom (chain A n) (chain B (suc n))
-    bdryhtpy : (n : ℕ) (x : chain A (suc n)) → (chainmap f (suc n)) - (chainmap g (suc n))
-                       ≡ compGroupHom (htpy (suc n)) (bdry B (suc n)) + compGroupHom (bdry A n) (htpy n)
-    -- bdryhtpy : (n : ℕ) → compGroupHom (htpy (suc n)) (bdry B (suc n)) ≡ compGroupHom (bdry A n) (htpy n)
+    bdryhtpy : (n : ℕ) → subtrGroupHom _ _ (chainmap f (suc n)) (chainmap g (suc n))
+                       ≡ addGroupHom _ _ (compGroupHom (htpy (suc n)) (bdry B (suc n)))
+                                     (compGroupHom (bdry A n) (htpy n))
 
 record CoChainComplex (ℓ : Level) : Type (ℓ-suc ℓ) where
   field
