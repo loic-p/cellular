@@ -23,6 +23,7 @@ open import Cubical.HITs.Susp
 open import Cubical.HITs.FreeAbGroup.Base
 open import Cubical.HITs.SequentialColimit
 open import Cubical.HITs.PropositionalTruncation as PT
+open import Cubical.HITs.Truncation as TR
 
 open import Cubical.Homotopy.Loopspace
 open import Cubical.Homotopy.Connected
@@ -327,3 +328,77 @@ Lim→Prop {C = C} {B = B} pr ind (push x i) =
   isProp→PathP {B = λ i → B (push x i)}
     (λ i → pr _)
     (ind _ x) (ind (suc _) (C .Sequence.map x)) i
+
+-- connectedness lemma
+isConnectedCong² : ∀ {ℓ ℓ'} (n : HLevel) {A : Type ℓ} {B : Type ℓ'} (f : A → B)
+    → isConnectedFun (suc (suc n)) f
+    → ∀ {a₀ a₁ a₂ a₃} {p : a₀ ≡ a₁} {q : a₂ ≡ a₃}
+                       {r : a₀ ≡ a₂} {s : a₁ ≡ a₃}
+    → isConnectedFun n
+         {A = Square p q r s}
+         {B = Square (cong f p) (cong f q) (cong f r) (cong f s)}
+         (λ p i j → f (p i j))
+isConnectedCong² n {A = A} f cf {a₀} {a₁} {r = r} {s = s}
+  = isConnectedCong²' _ r _ s
+  where
+  isConnectedCong²' : (a₂ : A) (r : a₀ ≡ a₂) (a₃ : A) (s : a₁ ≡ a₃)
+       {p : a₀ ≡ a₁} {q : a₂ ≡ a₃}
+    → isConnectedFun n
+         {A = Square p q r s}
+         {B = Square (cong f p) (cong f q) (cong f r) (cong f s)}
+         (λ p i j → f (p i j))
+  isConnectedCong²' =
+    J> (J> isConnectedCong n (cong f) (isConnectedCong (suc n) f cf))
+
+sphereToTrunc : (n : ℕ) {A : S₊ n → Type}
+  → ((x : S₊ n) → hLevelTrunc (suc n) (A x))
+  → ∥ ((x : _) → A x) ∥₁
+sphereToTrunc zero {A = A} indr =
+  TR.rec squash₁ (λ p → TR.rec squash₁
+    (λ q → ∣ (λ { false → q ; true → p}) ∣₁)
+         (indr false)) (indr true)
+sphereToTrunc (suc zero) {A = A} indr =
+  lem (indr base) (cong indr loop)
+  where
+  lem : (x : hLevelTrunc 2 (A base))
+      → PathP (λ i → hLevelTrunc 2 (A (loop i))) x x
+      → ∥ ((x : S¹) → A x) ∥₁
+  lem = TR.elim (λ _ → isSetΠ λ _ → isProp→isSet squash₁) λ a p
+    → TR.rec squash₁ (λ q → ∣ (λ { base → a
+      ; (loop i) → toPathP {A = λ i → A (loop i)} q i}) ∣₁)
+        (PathIdTruncIso 1 .Iso.fun
+          (fromPathP p))
+sphereToTrunc (suc (suc n)) {A = A} indr =
+  lem (sphereToTrunc (suc n)) (indr north) (indr south)
+    λ a → cong indr (merid a)
+  where
+  lem : ({A : S₊ (suc n) → Type} →
+      ((i : S₊ (suc n)) → hLevelTrunc (suc (suc n)) (A i)) →
+      ∥ ((x : S₊ (suc n)) → A x) ∥₁)
+      → (x : hLevelTrunc (3 + n) (A north))
+        (y : hLevelTrunc (3 + n) (A south))
+      → ((a : _) → PathP (λ i → hLevelTrunc (3 + n) (A (merid a i))) x y)
+      → ∥ ((x : S₊ (2 + n)) → A x) ∥₁
+  lem indr =
+    TR.elim (λ _ → isOfHLevelΠ2 (3 + n)
+              λ _ _ → isProp→isOfHLevelSuc (2 + n) squash₁)
+      λ a → TR.elim (λ _ → isOfHLevelΠ (3 + n)
+              λ _ → isProp→isOfHLevelSuc (2 + n) squash₁)
+              λ b → λ f →
+          PT.map (λ ma → λ { north → a
+                            ; south → b
+                            ; (merid a i) → ma a i})
+            (indr {A = λ x → PathP (λ i → A (merid x i)) a b}
+              λ x → TR.rec (isOfHLevelTrunc (2 + n))
+                (λ p → ∣ toPathP p ∣)
+                (Iso.fun (PathIdTruncIso _) (fromPathP (f x))))
+
+compPath-filler'' : ∀ {ℓ} {A : Type ℓ} {x y z : A}
+      (p : x ≡ y) (q : y ≡ z)
+      → Square refl (p ∙ q) (sym p) q
+compPath-filler'' p q i j =
+  hcomp (λ k → λ {(i = i0) → p i1
+                 ; (i = i1) → compPath-filler p q k j
+                 ; (j = i0) → p (~ i)
+                 ; (j = i1) → q (i ∧ k)})
+        (p (~ i ∨ j))

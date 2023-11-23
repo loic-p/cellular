@@ -17,6 +17,8 @@ open import Cubical.Data.Bool hiding (_≟_ ; isProp≤)
 open import Cubical.HITs.Sn
 open import Cubical.HITs.Pushout
 open import Cubical.HITs.Susp
+open import Cubical.HITs.SequentialColimit
+
 
 open import Cubical.Relation.Nullary
 
@@ -39,6 +41,11 @@ record cellMap (A B : CW) : Type where
   field
     map : (n : ℕ) → fst A n → fst B n
     comm : (n : ℕ) (x : fst A n) → CW↪ B n (map n x) ≡ map (suc n) (CW↪ A n x)
+
+realiseCellMap : {A B : CW} → cellMap A B → realise A → realise B
+realiseCellMap record { map = map ; comm = comm } (incl x) = incl (map _ x)
+realiseCellMap record { map = map ; comm = comm } (push {n = n} x i) =
+  (push (map n x) ∙ λ i → incl (comm n x i)) i
 
 idCellMap : (A : CW) → cellMap A A
 idCellMap A .cellMap.map n x = x

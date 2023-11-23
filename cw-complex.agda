@@ -6,6 +6,8 @@ open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.HLevels
 open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Univalence
+open import Cubical.Foundations.Transport
+open import Cubical.Foundations.Function
 
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
 open import Cubical.Data.Nat.Order
@@ -152,3 +154,78 @@ CW→Prop C {A = A} pr ind  =
 -- realisation of finite complex
 realiseFin : (n : ℕ) (C : finCW n) → Iso (fst C n) (realise (finCW→CW n C))
 realiseFin n C = Lim→FiniteIso n (snd C .snd)
+
+-- elimination principles for CW complexes
+module _ {ℓ : Level} (C : CW) where
+  private
+    e = snd C .snd .snd .snd
+    A : (n : ℕ) → _
+    A n = Fin (snd C .fst n)
+    α = snd C .snd .fst
+
+  module _ (n : ℕ) {B : fst C (suc n) → Type ℓ}
+         (inler : (x : fst C n) → B (invEq (e n) (inl x)))
+         (inrer : (x : A n) → B (invEq (e n) (inr x)))
+         (pusher : (x : A n) (y : S⁻ n)
+        → PathP (λ i → B (invEq (e n) (push (x , y) i)))
+                 (inler (α n (x , y)))
+                 (inrer x)) where
+    private
+      gen : ∀ {ℓ ℓ'} {A B : Type ℓ} (C : A → Type ℓ')
+                  (e : A ≃ B)
+               → ((x : B) → C (invEq e x))
+               → (x : A) → C x
+      gen C e h x = subst C (retEq e x) (h (fst e x))
+
+      gen-coh : ∀ {ℓ ℓ'} {A B : Type ℓ} (C : A → Type ℓ')
+                  (e : A ≃ B) (h : (x : B) → C (invEq e x))
+               → (b : B)
+               → gen C e h (invEq e b) ≡ h b
+      gen-coh {ℓ' = ℓ'} {A = A} {B = B} C e =
+        EquivJ (λ A e → (C : A → Type ℓ') (h : (x : B) → C (invEq e x))
+               → (b : B)
+               → gen C e h (invEq e b) ≡ h b)
+               (λ C h b → transportRefl (h b)) e C
+
+      main : (x : _) → B (invEq (snd C .snd .snd .snd n) x)
+      main (inl x) = inler x
+      main (inr x) = inrer x
+      main (push (x , y) i) = pusher x y i
+
+    CW-elim : (x : _) → B x
+    CW-elim = gen B (snd C .snd .snd .snd n) main
+
+    CW-elim-inl : (x : _) → CW-elim (invEq (snd C .snd .snd .snd n) (inl x)) ≡ inler x
+    CW-elim-inl x = gen-coh B (snd C .snd .snd .snd n) main (inl x)
+
+  module _ (n : ℕ) {B : fst C (suc (suc n)) → Type ℓ}
+           (inler : (x : fst C (suc n))
+                  → B (invEq (snd C .snd .snd .snd (suc n)) (inl x)))
+           (ind : ((x : Fin (snd C .fst (suc n))) (y : S₊ n)
+           → PathP (λ i → B (invEq (snd C .snd .snd .snd (suc n))
+                                   ((push (x , y) ∙ sym (push (x , ptSn n))) i)))
+                   (inler (snd C .snd .fst (suc n) (x , y)))
+                   (inler (snd C .snd .fst (suc n) (x , ptSn n))))) where
+    CW-elim' : (x : _) → B x
+    CW-elim' =
+      CW-elim (suc n) inler
+        (λ x → subst (λ t → B (invEq (snd C .snd .snd .snd (suc n)) t))
+                      (push (x , ptSn n))
+                      (inler (α (suc n) (x , ptSn n))))
+        λ x y → toPathP (sym (substSubst⁻ (B ∘ invEq (snd C .snd .snd .snd (suc n)))  _ _)
+           ∙ cong (subst (λ t → B (invEq (snd C .snd .snd .snd (suc n)) t))
+                         (push (x , ptSn n)))
+                  (sym (substComposite (B ∘ invEq (snd C .snd .snd .snd (suc n))) _ _ _)
+            ∙ fromPathP (ind x y)))
+
+    CW-elim'-inl : (x : _)
+      → CW-elim' (invEq (snd C .snd .snd .snd (suc n)) (inl x)) ≡ inler x
+    CW-elim'-inl = CW-elim-inl (suc n) {B = B} inler _ _
+
+
+module CW-fields (C : CW) where
+  card = C .snd .fst
+  A = Fin ∘ card
+  α = C .snd .snd .fst
+  e = C .snd .snd .snd .snd
+  
