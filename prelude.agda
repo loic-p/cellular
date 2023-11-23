@@ -31,6 +31,8 @@ open import Cubical.Homotopy.Connected
 open import Cubical.Algebra.AbGroup
 open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup
 open import Cubical.Algebra.Group.MorphismProperties
+open import Cubical.Algebra.Group.Morphisms
+open import Cubical.Algebra.Group.Properties
 
 open import Cubical.Relation.Nullary
 
@@ -402,3 +404,26 @@ compPath-filler'' p q i j =
                  ; (j = i0) → p (~ i)
                  ; (j = i1) → q (i ∧ k)})
         (p (~ i ∨ j))
+
+addGroupHom : ∀ {ℓ} (A B : AbGroup ℓ) (ϕ ψ : AbGroupHom A B) → AbGroupHom A B
+fst (addGroupHom A B ϕ ψ) x = AbGroupStr._+_ (snd B) (ϕ .fst x) (ψ .fst x) 
+snd (addGroupHom A B ϕ ψ) = makeIsGroupHom
+  λ x y → cong₂ (AbGroupStr._+_ (snd B))
+                 (IsGroupHom.pres· (snd ϕ) x y)
+                 (IsGroupHom.pres· (snd ψ) x y)
+        ∙ AbGroupTheory.comm-4 B (fst ϕ x) (fst ϕ y) (fst ψ x) (fst ψ y)
+
+negGroupHom : ∀ {ℓ} (A B : AbGroup ℓ) (ϕ : AbGroupHom A B) → AbGroupHom A B
+fst (negGroupHom A B ϕ) x = AbGroupStr.-_ (snd B) (ϕ .fst x)
+snd (negGroupHom A B ϕ) =
+  makeIsGroupHom λ x y
+    → sym (IsGroupHom.presinv (snd ϕ) (AbGroupStr._+_ (snd A) x y))
+     ∙ cong (fst ϕ) (GroupTheory.invDistr (AbGroup→Group A) x y
+                  ∙ AbGroupStr.+Comm (snd A) _ _)
+     ∙ IsGroupHom.pres· (snd ϕ) _ _
+     ∙ cong₂ (AbGroupStr._+_ (snd B))
+             (IsGroupHom.presinv (snd ϕ) x)
+             (IsGroupHom.presinv (snd ϕ) y)
+
+subtrGroupHom : ∀ {ℓ} (A B : AbGroup ℓ) (ϕ ψ : AbGroupHom A B) → AbGroupHom A B
+subtrGroupHom A B ϕ ψ = addGroupHom A B (negGroupHom A B ϕ) (negGroupHom A B ψ)
