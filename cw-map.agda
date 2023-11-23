@@ -73,8 +73,15 @@ module prefunctoriality {C D : CW} (f : cellMap C D) (n : ℕ) where
   fn+1/fn (inr x) = inr (f .map (suc n) x)
   fn+1/fn (push x i) = (push (f .map n x) ∙ (cong inr (f .comm n x))) i
 
+  cofibMap→bouquetMap : (cofiber n C → cofiber n D)
+    → SphereBouquet n (Fin An) → SphereBouquet n (Fin Bn)
+  cofibMap→bouquetMap fn+1/fn x =
+    Iso.fun (BouquetIso-gen n Bn βn isoDn)
+      (fn+1/fn
+        (Iso.inv (BouquetIso-gen n An αn isoCn) x))
+
   bouquetFunct : SphereBouquet n (Fin An) → SphereBouquet n (Fin Bn)
-  bouquetFunct x = Iso.fun (BouquetIso-gen n Bn βn isoDn) (fn+1/fn (Iso.inv (BouquetIso-gen n An αn isoCn) x))
+  bouquetFunct = cofibMap→bouquetMap fn+1/fn
 
   chainFunct : AbGroupHom (ℤ[A C ] n) (ℤ[A D ] n)
   chainFunct = bouquetDegree bouquetFunct
