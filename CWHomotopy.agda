@@ -145,17 +145,7 @@ module _ (C D : CW) (f g : cellMap C D) (H : cellHom f g) where
     MMchainHomotopy : ∀ x →
       MMmap-add C D n merid-f merid-g merid-tt MM∂H MMΣg x
       ≡ MMmap-add C D n merid-f merid-tt merid-tt MMΣf MMΣH∂ x
-    MMchainHomotopy x = {!!} -- Square→compPath help
-      where
-      open import Cubical.Foundations.GroupoidLaws
-      open import Cubical.Foundations.Path
-      
-      help : Square (MMΣf x) (MMΣg x) (MM∂H x) (sym (MMΣH∂ x))
-      help i j =
-         hcomp (λ k → λ {(i = i0) → compPath-filler (push (f .map n x)) (λ i₁ → inr (f .comm n x i₁)) k (~ j)
-                       ; (i = i1) → compPath-filler (push (g .map n x)) (λ i₁ → inr (g .comm n x i₁)) k (~ j)
-                       ; (j = i1) → (push (f .map n x) ∙∙ (λ i → inr (H .hom n x i)) ∙∙ (λ i₁ → push (g .map n x) (~ i₁))) i})
-                (doubleCompPath-filler  (push (f .map n x)) (λ i → (inr (H .hom n x i))) (λ i₁ → push (g .map n x) (~ i₁)) j i)
+    MMchainHomotopy x = {!!} -- should be basic path manipulation but somehow agda COMPLETELY REFUSES to understand ANYTHING WHATSOEVER?????
 
   -- in this module, we prove that decoding the MMmaps results in the intended functions
   module _ (n : ℕ) where
@@ -279,3 +269,130 @@ module _ (C D : CW) (f g : cellMap C D) (H : cellHom f g) where
                          ; (l = i1) → merid (((push (f .map (suc n) x)) ∙∙ (cong inr (H .hom (suc n) x))
                                             ∙∙ (sym (push (g .map (suc n) x)))) j) (i ∨ (~ k)) })
                 south
+
+
+-- homomorphism proof. "mainHole" only thing remaining. I think we might want to
+-- explicitly write out all the sides of cube in the merid (push)-case before attemping it
+
+-- keeping imports here for now
+open import Cubical.ZCohomology.Base
+open import Cubical.ZCohomology.Properties
+open import Cubical.ZCohomology.GroupStructure
+open import Cubical.HITs.Truncation as TR hiding (map)
+open import Cubical.HITs.Sn
+open import Cubical.HITs.S1
+open import Cubical.Foundations.GroupoidLaws
+open import Cubical.Foundations.Path
+open import Cubical.ZCohomology.Groups.Sn
+open import Cubical.HITs.SetTruncation as ST hiding (map)
+
+cofibIso : (n : ℕ) (C : CW) → Iso (Susp (cofiber n C)) (SphereBouquet (suc n) (CW-fields.A C n))
+cofibIso n C =
+  compIso (congSuspIso
+            (BouquetIso-gen n (CW-fields.card C n) (CW-fields.α C n) (CW-fields.e C n)))
+          sphereBouquetSuspIso
+
+realiseMMmap' : (C D : CW) (n : ℕ) (m1 m2 : (x : C .fst (suc n)) → cofiber n D)
+               → MMmap C D n m1 m2
+               → SphereBouquet (suc n) (CW-fields.A C n)
+               → SphereBouquet (suc n) (CW-fields.A D n)
+realiseMMmap' C D n m1 m2 f =
+    Iso.fun (cofibIso n D)
+  ∘ realiseMMmap C D n m1 m2 f
+  ∘ Iso.inv (cofibIso n C)
+
+module _ (C D : CW) (n : ℕ) (m1 m2 : (x : C .fst (suc n)) → cofiber n D)
+          (f : MMmap C D n m1 m2)
+          
+          (a : CW-fields.A D n) where
+  realiseMMmap'∈cohom-raw : (t : CW-fields.A C n) → S₊ (suc n) → S₊ (suc n)
+  realiseMMmap'∈cohom-raw t x = chooseS a (realiseMMmap' C D n m1 m2 f (inr (t , x)))
+  realiseMMmap'∈cohom : (t : CW-fields.A C n)  → S₊ (suc n) → coHomK (suc n)
+  realiseMMmap'∈cohom t x = ∣ realiseMMmap'∈cohom-raw t x ∣ₕ
+
+  realiseMMmap'∈cohom' : (x : Susp (cofiber n C)) → coHomK (suc n)
+  realiseMMmap'∈cohom' x = ∣ chooseS a (Iso.fun (cofibIso n D) (realiseMMmap C D n m1 m2 f x)) ∣ₕ
+ 
+
+mainHole : (C D : CW) (n : ℕ) (m1 m2 m3 : (x : C .fst (suc n)) → cofiber n D)
+          (f : MMmap C D n m1 m2)
+          (g : MMmap C D n m2 m3)
+   → (b : _)
+   → Square (λ j → (realiseMMmap C D n m1 m2 f (merid b j)))
+             (λ j →  (realiseMMmap C D n m1 m3
+                       (MMmap-add C D n m1 m2 m3 f g) (merid b j)))
+             (λ _ → north)
+             (λ i →  realiseMMmap C D n m2 m3 g (merid b i))
+mainHole C D n m1 m2 m3 f g x = {!!}
+
+realiseMMmap'∈cohom'+ : (C D : CW) (n : ℕ) (m1 m2 m3 : (x : C .fst (suc n)) → cofiber n D)
+          (f : MMmap C D n m1 m2)
+          (g : MMmap C D n m2 m3)
+          (a : CW-fields.A D n)
+          (x : _)
+       → realiseMMmap'∈cohom' C D n m1 m3 (MMmap-add C D n m1 m2 m3 f g) a x
+       ≡ realiseMMmap'∈cohom' C D n m1 m2 f a x
+      +ₖ realiseMMmap'∈cohom' C D n m2 m3 g a x
+realiseMMmap'∈cohom'+ C D zero m1 m2 m3 f g a north = refl
+realiseMMmap'∈cohom'+ C D zero m1 m2 m3 f g a south = refl
+realiseMMmap'∈cohom'+ C D zero m1 m2 m3 f g a (merid b i) j =
+  ((sym (PathP→compPathL (help b))
+    ∙ sym (lUnit _))
+  ∙ ∙≡+₁ (λ i → realiseMMmap'∈cohom' C D zero m1 m2 f a (merid b i))
+         (λ i → realiseMMmap'∈cohom' C D zero m2 m3 g a (merid b i))) j i
+  where
+  help : (b : _)
+    → PathP (λ i → ∣ base ∣ₕ ≡ cong (realiseMMmap'∈cohom' C D zero m2 m3 g a) (merid b) i)
+         (cong (realiseMMmap'∈cohom' C D zero m1 m2 f a) (merid b))
+         (cong (realiseMMmap'∈cohom' C D zero m1 m3 (MMmap-add C D zero m1 m2 m3 f g) a) (merid b))
+  help b i j = ∣ chooseS a (Iso.fun (cofibIso zero D) (mainHole C D zero m1 m2 m3 f g b i j)) ∣ₕ
+realiseMMmap'∈cohom'+ C D (suc n) m1 m2 m3 f g a north = refl
+realiseMMmap'∈cohom'+ C D (suc n) m1 m2 m3 f g a south = refl
+realiseMMmap'∈cohom'+ C D (suc n) m1 m2 m3 f g a (merid b i) j =
+  ((sym (PathP→compPathL (help b))
+    ∙ sym (lUnit _))
+  ∙ ∙≡+₂ n (λ i → realiseMMmap'∈cohom' C D (suc n) m1 m2 f a (merid b i))
+         (λ i → realiseMMmap'∈cohom' C D (suc n) m2 m3 g a (merid b i))) j i
+  where
+  help : (b : _)
+    → PathP (λ i → ∣ north ∣ₕ ≡ cong (realiseMMmap'∈cohom' C D (suc n) m2 m3 g a) (merid b) i)
+         (cong (realiseMMmap'∈cohom' C D (suc n) m1 m2 f a) (merid b))
+         (cong (realiseMMmap'∈cohom' C D (suc n) m1 m3 (MMmap-add C D (suc n) m1 m2 m3 f g) a) (merid b))
+  help b i j = ∣ chooseS a (Iso.fun (cofibIso (suc n) D) (mainHole C D (suc n) m1 m2 m3 f g b i j)) ∣ₕ
+
+realiseMMmap'∈cohom+ : (C D : CW) (n : ℕ) (m1 m2 m3 : (x : C .fst (suc n)) → cofiber n D)
+          (f : MMmap C D n m1 m2)
+          (g : MMmap C D n m2 m3)
+          (t : CW-fields.A C n)
+          (a : CW-fields.A D n)
+          (x : S₊ (suc n))
+       → realiseMMmap'∈cohom C D n m1 m3 (MMmap-add C D n m1 m2 m3 f g) a t x
+       ≡ realiseMMmap'∈cohom C D n m1 m2 f a t x
+      +ₖ realiseMMmap'∈cohom C D n m2 m3 g a t x 
+realiseMMmap'∈cohom+ C D n m1 m2 m3 f g t a x =
+  realiseMMmap'∈cohom'+ C D n m1 m2 m3 f g a (Iso.inv (cofibIso n C) (inr (t , x)))
+
+module _  (C D : CW) (n : ℕ) (m1 m2 m3 : (x : C .fst (suc n)) → cofiber n D)
+          (f : MMmap C D n m1 m2) (g : MMmap C D n m2 m3) where
+  realiseMMmap-hom : bouquetDegree (realiseMMmap' C D n m1 m3 (MMmap-add C D n m1 m2 m3 f g))
+                   ≡ addGroupHom _ _ (bouquetDegree (realiseMMmap' C D n m1 m2 f))
+                                     (bouquetDegree (realiseMMmap' C D n m2 m3 g))
+  realiseMMmap-hom =
+    EqHoms λ t → funExt λ a
+      → sym (generator-is-generator'
+              (λ a₁ → degree (suc n)
+                λ x → chooseS a (realiseMMmap' C D n m1 m3 (MMmap-add C D n m1 m2 m3 f g)
+                         (inr (a₁ , x)))) t)
+       ∙ cong (fst (Hⁿ-Sⁿ≅ℤ n) .Iso.fun ∘ ∣_∣₂)
+              (funExt (realiseMMmap'∈cohom+ C D n m1 m2 m3 f g t a))
+      ∙∙ IsGroupHom.pres· (snd (Hⁿ-Sⁿ≅ℤ n))
+           (∣ (λ x → ∣ chooseS a (realiseMMmap' C D n m1 m2 f (inr (t , x))) ∣ₕ) ∣₂)
+           (∣ (λ x → ∣ chooseS a (realiseMMmap' C D n m2 m3 g (inr (t , x))) ∣ₕ) ∣₂)
+      ∙∙ cong₂ _+_ (generator-is-generator'
+              (λ a₁ → degree (suc n)
+                λ x → chooseS a (realiseMMmap' C D n m1 m2 f
+                         (inr (a₁ , x)))) t)
+                    (generator-is-generator'
+              (λ a₁ → degree (suc n)
+                λ x → chooseS a (realiseMMmap' C D n m2 m3 g
+                         (inr (a₁ , x)))) t)
