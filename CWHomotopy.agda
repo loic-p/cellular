@@ -5,6 +5,7 @@ open import Cubical.Foundations.Pointed
 open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Function
+open import Cubical.Foundations.GroupoidLaws
 
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
 open import Cubical.Data.Nat.Order
@@ -143,9 +144,23 @@ module _ (C D : CW) (f g : cellMap C D) (H : cellHom f g) where
 
     -- the chain homotopy equation at the level of MMmaps
     MMchainHomotopy : ∀ x →
-      MMmap-add C D n merid-f merid-g merid-tt MM∂H MMΣg x
-      ≡ MMmap-add C D n merid-f merid-tt merid-tt MMΣf MMΣH∂ x
-    MMchainHomotopy x = {!!} -- should be basic path manipulation but somehow agda COMPLETELY REFUSES to understand ANYTHING WHATSOEVER?????
+      MMmap-add C D n merid-f merid-tt merid-tt (MMmap-add C D n merid-f merid-g merid-tt MM∂H MMΣg) MMΣH∂ x
+      ≡ MMΣf x
+    MMchainHomotopy x = sym (doubleCompPath-elim (MM∂H x) (MMΣg x) (MMΣH∂ x)) ∙ aux2
+      where
+        aux : Square (MMΣf x) (MMΣg x) (MM∂H x) (sym (MMΣH∂ x))
+        aux i j =
+           hcomp (λ k → λ {(i = i0) → compPath-filler (push (f .map n x)) (λ i₁ → inr (f .comm n x i₁)) k (~ j)
+                         ; (i = i1) → compPath-filler (push (g .map n x)) (λ i₁ → inr (g .comm n x i₁)) k (~ j)
+                         ; (j = i1) → (push (f .map n x) ∙∙ (λ i → inr (H .hom n x i)) ∙∙ (λ i₁ → push (g .map n x) (~ i₁))) i})
+                  (doubleCompPath-filler  (push (f .map n x)) (λ i → (inr (H .hom n x i))) (λ i₁ → push (g .map n x) (~ i₁)) j i)
+
+        aux2 : (MM∂H x ∙∙ MMΣg x ∙∙ MMΣH∂ x) ≡ MMΣf x
+        aux2 i j =
+          hcomp (λ k → λ { (j = i0) → MM∂H x ((~ i) ∧ (~ k))
+                         ; (j = i1) → MMΣH∂ x (i ∨ k)
+                         ; (i = i1) → MMΣf x j })
+                (aux (~ i) j)
 
   -- in this module, we prove that decoding the MMmaps results in the intended functions
   module _ (n : ℕ) where
@@ -281,7 +296,6 @@ open import Cubical.ZCohomology.GroupStructure
 open import Cubical.HITs.Truncation as TR hiding (map)
 open import Cubical.HITs.Sn
 open import Cubical.HITs.S1
-open import Cubical.Foundations.GroupoidLaws
 open import Cubical.Foundations.Path
 open import Cubical.ZCohomology.Groups.Sn
 open import Cubical.HITs.SetTruncation as ST hiding (map)
@@ -303,7 +317,6 @@ realiseMMmap' C D n m1 m2 f =
 
 module _ (C D : CW) (n : ℕ) (m1 m2 : (x : C .fst (suc n)) → cofiber n D)
           (f : MMmap C D n m1 m2)
-          
           (a : CW-fields.A D n) where
   realiseMMmap'∈cohom-raw : (t : CW-fields.A C n) → S₊ (suc n) → S₊ (suc n)
   realiseMMmap'∈cohom-raw t x = chooseS a (realiseMMmap' C D n m1 m2 f (inr (t , x)))
@@ -312,7 +325,7 @@ module _ (C D : CW) (n : ℕ) (m1 m2 : (x : C .fst (suc n)) → cofiber n D)
 
   realiseMMmap'∈cohom' : (x : Susp (cofiber n C)) → coHomK (suc n)
   realiseMMmap'∈cohom' x = ∣ chooseS a (Iso.fun (cofibIso n D) (realiseMMmap C D n m1 m2 f x)) ∣ₕ
- 
+
 
 mainHole : (C D : CW) (n : ℕ) (m1 m2 m3 : (x : C .fst (suc n)) → cofiber n D)
           (f : MMmap C D n m1 m2)
@@ -323,7 +336,25 @@ mainHole : (C D : CW) (n : ℕ) (m1 m2 m3 : (x : C .fst (suc n)) → cofiber n D
                        (MMmap-add C D n m1 m2 m3 f g) (merid b j)))
              (λ _ → north)
              (λ i →  realiseMMmap C D n m2 m3 g (merid b i))
-mainHole C D n m1 m2 m3 f g x = {!!}
+mainHole C D n m1 m2 m3 f g (inl tt) i j = north
+mainHole C D n m1 m2 m3 f g (inr x) i j =
+  hcomp (λ k → λ { (i ∨ j = i0) → merid (m1 x) (~ k)
+                 ; (i ∨ (~ j) = i0) → merid (m2 x) (~ k)
+                 ; (i ∧ (~ j) = i1) → merid (m1 x) (~ k)
+                 ; (i ∧ j = i1) → merid (m3 x) (~ k)
+                 ; (j = i0) → merid (m1 x) (~ k) })
+        south
+mainHole C D n m1 m2 m3 f g (push a l) i j =
+  hcomp (λ k → λ { (i ∨ j = i0) → merid (m1 (CW↪ C n a)) (~ k)
+                 ; (i ∨ (~ j) = i0) → merid (m2 (CW↪ C n a)) (~ k)
+                 ; (i ∨ l = i0) → merid (f a j) (~ k)
+                 ; (i ∧ (~ j) = i1) → merid (m1 (CW↪ C n a)) (~ k)
+                 ; (i ∧ j = i1) → merid (m3 (CW↪ C n a)) (~ k)
+                 ; (i ∧ (~ l) = i1) → merid (MMmap-add C D n m1 m2 m3 f g a j) (~ k)
+                 ; (j = i0) → merid (m1 (CW↪ C n a)) (~ k)
+                 ; (j ∧ (~ l) = i1) → merid (g a i) (~ k)
+                 ; (l = i0) → merid (doubleCompPath-filler (refl) (f a) (g a) i j) (~ k) })
+        south
 
 realiseMMmap'∈cohom'+ : (C D : CW) (n : ℕ) (m1 m2 m3 : (x : C .fst (suc n)) → cofiber n D)
           (f : MMmap C D n m1 m2)
@@ -368,7 +399,7 @@ realiseMMmap'∈cohom+ : (C D : CW) (n : ℕ) (m1 m2 m3 : (x : C .fst (suc n)) �
           (x : S₊ (suc n))
        → realiseMMmap'∈cohom C D n m1 m3 (MMmap-add C D n m1 m2 m3 f g) a t x
        ≡ realiseMMmap'∈cohom C D n m1 m2 f a t x
-      +ₖ realiseMMmap'∈cohom C D n m2 m3 g a t x 
+      +ₖ realiseMMmap'∈cohom C D n m2 m3 g a t x
 realiseMMmap'∈cohom+ C D n m1 m2 m3 f g t a x =
   realiseMMmap'∈cohom'+ C D n m1 m2 m3 f g a (Iso.inv (cofibIso n C) (inr (t , x)))
 
