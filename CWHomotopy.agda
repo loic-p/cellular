@@ -59,7 +59,7 @@ cofibIso n C =
           sphereBouquetSuspIso
 
 -- Building a chain homotopy from a cell homotopy
-module bouquetHomotopy (C D : CW) (f g : cellMap C D) (H : cellHom f g) (n : ℕ) where
+module preChainHomotopy (C D : CW) (f g : cellMap C D) (H : cellHom f g) (n : ℕ) where
   open cellMap
   open cellHom
 
@@ -180,7 +180,7 @@ module realiseMMmap (C D : CW) (f g : cellMap C D) (H : cellHom f g) (n : ℕ) w
   open cellHom
   open MMmaps C D
   open MMchainHomotopy C D f g H
-  open bouquetHomotopy C D f g H
+  open preChainHomotopy C D f g H
 
   -- an alternative extraction function, that will be useful in some computations
   realiseMMmap2 : (n : ℕ) → (m1 m2 : (x : C .fst (suc n)) → cofiber n D)
@@ -245,24 +245,24 @@ module realiseMMmap (C D : CW) (f g : cellMap C D) (H : cellHom f g) (n : ℕ) w
   realiseMMΣg = realiseMMΣcellMap g
 
   -- a compact version of ∂ ∘ H
-  ∂H : Susp (cofiber n C) → Susp (cofiber n D)
-  ∂H north = north
-  ∂H south = north
-  ∂H (merid (inl tt) i) = north
-  ∂H (merid (inr x) i) = ((merid (inr (f .map (suc n) x))) ∙∙ refl ∙∙ (sym (merid (inr (g .map (suc n) x))))) i
-  ∂H (merid (push x j) i) =
+  cof∂H : Susp (cofiber n C) → Susp (cofiber n D)
+  cof∂H north = north
+  cof∂H south = north
+  cof∂H (merid (inl tt) i) = north
+  cof∂H (merid (inr x) i) = ((merid (inr (f .map (suc n) x))) ∙∙ refl ∙∙ (sym (merid (inr (g .map (suc n) x))))) i
+  cof∂H (merid (push x j) i) =
     hcomp (λ k → λ { (i = i0) → merid (inr (f .comm n x j)) (~ k)
                    ; (i = i1) → merid (inr (g .comm n x j)) (~ k)
                    ; (j = i0) → merid (inr (hom H n x i)) (~ k) })
           (south)
 
-  -- realisation of MM∂H is equal to ∂H
+  -- realisation of MM∂H is equal to cof∂H
   realiseMM∂H : (x : Susp (cofiber n C)) →
     realiseMMmap n (merid-f n) (merid-g n) (MM∂H n) x
     ≡ suspFun (to_cofiber n D) (δ (suc n) D (Hn+1/Hn n x))
   realiseMM∂H x = aux2 x ∙ aux x
     where
-      aux : (x : Susp (cofiber n C)) → ∂H x ≡ suspFun (to_cofiber n D) (δ (suc n) D (Hn+1/Hn n x))
+      aux : (x : Susp (cofiber n C)) → cof∂H x ≡ suspFun (to_cofiber n D) (δ (suc n) D (Hn+1/Hn n x))
       aux north = refl
       aux south = refl
       aux (merid (inl tt) i) = refl
@@ -287,7 +287,7 @@ module realiseMMmap (C D : CW) (f g : cellMap C D) (H : cellHom f g) (n : ℕ) w
 
       aux2 : (x : Susp (cofiber n C)) →
         realiseMMmap n (λ x → (inr (f .map (suc n) x))) (λ x → (inr (g .map (suc n) x))) (MM∂H n) x
-        ≡ ∂H x
+        ≡ cof∂H x
       aux2 north = refl
       aux2 south = refl
       aux2 (merid (inl tt) i) = refl
@@ -458,15 +458,87 @@ module bouquetAdd where
                            (inr (a₁ , x)))) t)
 
 -- Now we have all the ingredients, we can get the chain homotopy equation
-module bouquetMMmap (C D : CW) (f g : cellMap C D) (H : cellHom f g) (n : ℕ) where
+module chainHomEquation (C D : CW) (f g : cellMap C D) (H : cellHom f g) (n : ℕ) where
   open cellMap
-  open MMmaps C D
-  open MMchainHomotopy C D f g H
-  open bouquetHomotopy C D f g H
-  open realiseMMmap C D f g H
+  open MMmaps C D (suc n)
+  open MMchainHomotopy C D f g H (suc n)
+  open preChainHomotopy C D f g H
+  open realiseMMmap C D f g H (suc n)
 
-  bouquetMMΣf : bouquetMMmap n (merid-f n) (merid-tt n) (MMΣf n)
-              ≡ bouquetSusp→ (prefunctoriality.bouquetFunct f n)
-  bouquetMMΣf = (cong (λ X → Iso.fun (cofibIso n D) ∘ X ∘ Iso.inv (cofibIso n C)) realiseMMΣf') ∙ {!!}
+  ∂H H∂ fn+1 gn+1 : AbGroupHom (ℤ[A C ] (suc n)) (ℤ[A D ] (suc n))
+
+  ∂H = compGroupHom (chainHomotopy (suc n)) (∂ D (suc n))
+  H∂ = compGroupHom (∂ C n) (chainHomotopy n)
+  fn+1 = prefunctoriality.chainFunct f (suc n)
+  gn+1 = prefunctoriality.chainFunct g (suc n)
+
+  suspIso-suspFun : {A B C D : Type} (e1 : Iso A B) (e2 : Iso C D) (f : C → A)
+    → Iso.fun (congSuspIso e1) ∘ (suspFun f) ∘ Iso.inv (congSuspIso e2) ≡ suspFun (Iso.fun e1 ∘ f ∘ Iso.inv e2)
+  suspIso-suspFun e1 e2 f i north = north
+  suspIso-suspFun e1 e2 f i south = south
+  suspIso-suspFun e1 e2 f i (merid a j) = merid ((Iso.fun e1 ∘ f ∘ Iso.inv e2) a) j
+
+  BouquetIso : ∀ C n → Iso (cofiber n C) (SphereBouquet n (Fin (CW-fields.card C n)))
+  BouquetIso C n = BouquetIso-gen n (CW-fields.card C n) (CW-fields.α C n) (CW-fields.e C n)
+
+  cofibIso-suspFun : (n : ℕ) (C D : CW) (f : cofiber n C → cofiber n D) →
+    Iso.fun (cofibIso n D) ∘ (suspFun f) ∘ Iso.inv (cofibIso n C)
+    ≡ bouquetSusp→ ((Iso.fun (BouquetIso D n)) ∘ f ∘ Iso.inv (BouquetIso C n))
+  cofibIso-suspFun n C D f = cong (λ X → Iso.fun sphereBouquetSuspIso ∘ X ∘ Iso.inv sphereBouquetSuspIso)
+                                  (suspIso-suspFun (BouquetIso D n) (BouquetIso C n) f)
+
+  bouquet∂H : bouquetDegree (bouquetMMmap merid-f merid-g MM∂H) ≡ ∂H
+  bouquet∂H = {!!}
+
+  bouquetΣH∂ : bouquetDegree (bouquetMMmap merid-tt merid-tt MMΣH∂) ≡ H∂
+  bouquetΣH∂ = {!!}
+
+  bouquetΣf : bouquetDegree (bouquetMMmap merid-f merid-tt MMΣf) ≡ fn+1
+  bouquetΣf =
+    cong (λ X → bouquetDegree ((Iso.fun (cofibIso (suc n) D)) ∘ X ∘ (Iso.inv (cofibIso (suc n) C))))
+         (funExt realiseMMΣf)
+    ∙ (cong bouquetDegree (cofibIso-suspFun (suc n) C D (prefunctoriality.fn+1/fn f (suc n))))
+    ∙ sym (degreeSusp (prefunctoriality.bouquetFunct f (suc n)))
+
+  bouquetΣg : bouquetDegree (bouquetMMmap merid-g merid-tt MMΣg) ≡ gn+1
+  bouquetΣg =
+    cong (λ X → bouquetDegree ((Iso.fun (cofibIso (suc n) D)) ∘ X ∘ (Iso.inv (cofibIso (suc n) C))))
+         (funExt realiseMMΣg)
+    ∙ (cong bouquetDegree (cofibIso-suspFun (suc n) C D (prefunctoriality.fn+1/fn g (suc n))))
+    ∙ sym (degreeSusp (prefunctoriality.bouquetFunct g (suc n)))
+
+  -- Alternative formulation of the chain homotopy equation
+  chainHomotopy1 : addGroupHom _ _ (addGroupHom _ _ ∂H gn+1) H∂ ≡ fn+1
+  chainHomotopy1 = cong (λ X → addGroupHom _ _ X H∂) aux
+                   ∙ aux2
+                   ∙ cong (λ X → bouquetDegree (bouquetMMmap merid-f merid-tt X)) (funExt MMchainHomotopy)
+                   ∙ bouquetΣf
     where
-      realiseMMΣf' = funExt (realiseMMΣf n)
+      MM∂H+MMΣg = MMmap-add merid-f merid-g merid-tt MM∂H MMΣg
+      MM∂H+MMΣg+MMΣH∂ = MMmap-add merid-f merid-tt merid-tt MM∂H+MMΣg MMΣH∂
+
+      aux : addGroupHom _ _ ∂H gn+1
+        ≡ bouquetDegree (bouquetMMmap merid-f merid-tt MM∂H+MMΣg)
+      aux = cong₂ (λ X Y → addGroupHom _ _ X Y) (sym bouquet∂H) (sym bouquetΣg)
+            ∙ sym (bouquetAdd.realiseMMmap-hom C D (suc n) merid-f merid-g merid-tt MM∂H MMΣg)
+
+      aux2 : addGroupHom _ _ (bouquetDegree (bouquetMMmap merid-f merid-tt MM∂H+MMΣg)) H∂
+        ≡ bouquetDegree (bouquetMMmap merid-f merid-tt MM∂H+MMΣg+MMΣH∂)
+      aux2 = cong (addGroupHom _ _ (bouquetDegree (bouquetMMmap merid-f merid-tt MM∂H+MMΣg)))
+                  (sym bouquetΣH∂)
+             ∙ sym (bouquetAdd.realiseMMmap-hom C D (suc n) merid-f merid-tt merid-tt MM∂H+MMΣg MMΣH∂)
+
+  -- Standard formulation of the chain homotopy equation
+  chainHomotopy2 : subtrGroupHom _ _ fn+1 gn+1 ≡ addGroupHom _ _ ∂H H∂
+  chainHomotopy2 = GroupHom≡ (funExt λ x → aux (fn+1 .fst x) (∂H .fst x) (gn+1 .fst x)
+                     (H∂ .fst x) (cong (λ X → X .fst x) chainHomotopy1))
+    where
+      open AbGroupStr (snd (ℤ[A D ] (suc n))) renaming (_+_ to _+G_ ; -_ to -G_ ; +Assoc to +AssocG ; +Comm to +CommG)
+      aux : ∀ w x y z → (x +G y) +G z ≡ w → w +G (-G y) ≡ x +G z
+      aux w x y z H = cong (λ X → X +G (-G y)) (sym H)
+        ∙ sym (+AssocG (x +G y) z (-G y))
+        ∙ cong (λ X → (x +G y) +G X) (+CommG z (-G y))
+        ∙ +AssocG (x +G y) (-G y) z
+        ∙ cong (λ X → X +G z) (sym (+AssocG x y (-G y))
+                              ∙ cong (λ X → x +G X) (+InvR y)
+                              ∙ +IdR x)
