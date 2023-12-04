@@ -463,8 +463,9 @@ module chainHomEquation (C D : CW) (f g : cellMap C D) (H : cellHom f g) (n : �
   open MMmaps C D (suc n)
   open MMchainHomotopy C D f g H (suc n)
   open preChainHomotopy C D f g H
-  open realiseMMmap C D f g H (suc n)
+  open realiseMMmap C D f g H
 
+  -- The four abelian group maps that are involved in the equation
   ∂H H∂ fn+1 gn+1 : AbGroupHom (ℤ[A C ] (suc n)) (ℤ[A D ] (suc n))
 
   ∂H = compGroupHom (chainHomotopy (suc n)) (∂ D (suc n))
@@ -472,6 +473,7 @@ module chainHomEquation (C D : CW) (f g : cellMap C D) (H : cellHom f g) (n : �
   fn+1 = prefunctoriality.chainFunct f (suc n)
   gn+1 = prefunctoriality.chainFunct g (suc n)
 
+  -- Technical lemma regarding suspensions of Iso's
   suspIso-suspFun : {A B C D : Type} (e1 : Iso A B) (e2 : Iso C D) (f : C → A)
     → Iso.fun (congSuspIso e1) ∘ (suspFun f) ∘ Iso.inv (congSuspIso e2) ≡ suspFun (Iso.fun e1 ∘ f ∘ Iso.inv e2)
   suspIso-suspFun e1 e2 f i north = north
@@ -481,29 +483,67 @@ module chainHomEquation (C D : CW) (f g : cellMap C D) (H : cellHom f g) (n : �
   BouquetIso : ∀ C n → Iso (cofiber n C) (SphereBouquet n (Fin (CW-fields.card C n)))
   BouquetIso C n = BouquetIso-gen n (CW-fields.card C n) (CW-fields.α C n) (CW-fields.e C n)
 
+  -- Technical lemma to pull bouquetSusp out of a suspended cofiber map
   cofibIso-suspFun : (n : ℕ) (C D : CW) (f : cofiber n C → cofiber n D) →
     Iso.fun (cofibIso n D) ∘ (suspFun f) ∘ Iso.inv (cofibIso n C)
     ≡ bouquetSusp→ ((Iso.fun (BouquetIso D n)) ∘ f ∘ Iso.inv (BouquetIso C n))
   cofibIso-suspFun n C D f = cong (λ X → Iso.fun sphereBouquetSuspIso ∘ X ∘ Iso.inv sphereBouquetSuspIso)
                                   (suspIso-suspFun (BouquetIso D n) (BouquetIso C n) f)
 
+  -- connecting MM∂H to ∂H
   bouquet∂H : bouquetDegree (bouquetMMmap merid-f merid-g MM∂H) ≡ ∂H
-  bouquet∂H = {!!}
+  bouquet∂H =
+    cong (λ X → bouquetDegree ((Iso.fun (cofibIso (suc n) D)) ∘ X ∘ (Iso.inv (cofibIso (suc n) C))))
+         (funExt (realiseMM∂H (suc n)))
+      ∙ cong bouquetDegree ιδH≡pre∂∘H
+      ∙ degreeComp (preboundary.pre∂ D (suc n)) (bouquetHomotopy (suc n))
+    where
+      ιδH : SphereBouquet (suc (suc n)) (Fin (CW-fields.card C (suc n)))
+          → SphereBouquet (suc (suc n)) (Fin (CW-fields.card D (suc n)))
+      ιδH = Iso.fun (cofibIso (suc n) D) ∘ suspFun (to_cofiber (suc n) D) ∘ δ (suc (suc n)) D
+            ∘ Hn+1/Hn (suc n) ∘ Iso.inv (cofibIso (suc n) C)
 
+      ιδH≡pre∂∘H : ιδH ≡ (preboundary.pre∂ D (suc n)) ∘ bouquetHomotopy (suc n)
+      ιδH≡pre∂∘H = cong (λ X → Iso.fun (cofibIso (suc n) D) ∘ suspFun (to_cofiber (suc n) D)
+                               ∘ δ (suc (suc n)) D ∘ X ∘ Hn+1/Hn (suc n)
+                               ∘ Iso.inv (cofibIso (suc n) C))
+                        (sym (funExt (Iso.leftInv (BouquetIso D (suc (suc n))))))
+
+  -- connecting MMΣH∂ to H∂
   bouquetΣH∂ : bouquetDegree (bouquetMMmap merid-tt merid-tt MMΣH∂) ≡ H∂
-  bouquetΣH∂ = {!!}
+  bouquetΣH∂ =
+    cong (λ X → bouquetDegree ((Iso.fun (cofibIso (suc n) D)) ∘ X ∘ (Iso.inv (cofibIso (suc n) C))))
+         (funExt (realiseMMΣH∂ n))
+      ∙ cong bouquetDegree
+             (cofibIso-suspFun (suc n) C D (Hn+1/Hn n ∘ suspFun (to_cofiber n C) ∘ δ (suc n) C))
+      ∙ sym (degreeSusp Hιδ)
+      ∙ cong bouquetDegree Hιδ≡H∘pre∂
+      ∙ degreeComp (bouquetHomotopy n) (preboundary.pre∂ C n)
+    where
+      Hιδ : SphereBouquet (suc n) (Fin (CW-fields.card C (suc n)))
+          → SphereBouquet (suc n) (Fin (CW-fields.card D (suc n)))
+      Hιδ = Iso.fun (BouquetIso D (suc n)) ∘ (Hn+1/Hn n) ∘ suspFun (to_cofiber n C)
+            ∘ δ (suc n) C ∘ Iso.inv (BouquetIso C (suc n))
 
+      Hιδ≡H∘pre∂ : Hιδ ≡ bouquetHomotopy n ∘ (preboundary.pre∂ C n)
+      Hιδ≡H∘pre∂ = cong (λ X → Iso.fun (BouquetIso D (suc n)) ∘ (Hn+1/Hn n) ∘ X
+                               ∘ suspFun (to_cofiber n C) ∘ δ (suc n) C
+                               ∘ Iso.inv (BouquetIso C (suc n)))
+                        (sym (funExt (Iso.leftInv (cofibIso n C))))
+
+  -- connecting MMΣf to fn+1
   bouquetΣf : bouquetDegree (bouquetMMmap merid-f merid-tt MMΣf) ≡ fn+1
   bouquetΣf =
     cong (λ X → bouquetDegree ((Iso.fun (cofibIso (suc n) D)) ∘ X ∘ (Iso.inv (cofibIso (suc n) C))))
-         (funExt realiseMMΣf)
+         (funExt (realiseMMΣf (suc n)))
     ∙ (cong bouquetDegree (cofibIso-suspFun (suc n) C D (prefunctoriality.fn+1/fn f (suc n))))
     ∙ sym (degreeSusp (prefunctoriality.bouquetFunct f (suc n)))
 
+  -- connecting MMΣg to gn+1
   bouquetΣg : bouquetDegree (bouquetMMmap merid-g merid-tt MMΣg) ≡ gn+1
   bouquetΣg =
     cong (λ X → bouquetDegree ((Iso.fun (cofibIso (suc n) D)) ∘ X ∘ (Iso.inv (cofibIso (suc n) C))))
-         (funExt realiseMMΣg)
+         (funExt (realiseMMΣg (suc n)))
     ∙ (cong bouquetDegree (cofibIso-suspFun (suc n) C D (prefunctoriality.fn+1/fn g (suc n))))
     ∙ sym (degreeSusp (prefunctoriality.bouquetFunct g (suc n)))
 
@@ -542,3 +582,9 @@ module chainHomEquation (C D : CW) (f g : cellMap C D) (H : cellHom f g) (n : �
         ∙ cong (λ X → X +G z) (sym (+AssocG x y (-G y))
                               ∙ cong (λ X → x +G X) (+InvR y)
                               ∙ +IdR x)
+
+-- Going from a cell homotopy to a chain homotopy
+cellHom-to-ChainHomotopy : {C D : CW} {f g : cellMap C D} (H : cellHom f g)
+                         → ChainHomotopy (cellMap-to-ChainComplexMap f) (cellMap-to-ChainComplexMap g)
+cellHom-to-ChainHomotopy {C} {D} {f} {g} H .ChainHomotopy.htpy n = preChainHomotopy.chainHomotopy C D f g H n
+cellHom-to-ChainHomotopy {C} {D} {f} {g} H .ChainHomotopy.bdryhtpy n = chainHomEquation.chainHomotopy2 C D f g H n
