@@ -123,6 +123,30 @@ module _ (C : CW) where
   ... | eq x = idEquiv _
   ... | gt x = ⊥.rec (¬m<m (≤-trans x p))
 
+-- module _ (n : ℕ) (C : finCW n) where
+--   open CW-fields (finCW→CW n C)
+--   private
+--     Cᶜʷ = finCW→CW n C
+
+--   finCWCoe₁ : (m : ℕ) → fst C m ≃ subComplex Cᶜʷ n .fst m
+--   finCWCoe₁ m with (m ≟ n)
+--   ... | lt x = idEquiv _
+--   ... | eq x = idEquiv _
+--   ... | gt x = invEquiv (finCW≃ n C m (<-weaken x))
+
+--   finCWCoe₂₁ : (m : ℕ)
+--     → PathP (λ i → yieldsCW λ m → ua (finCWCoe₁ m) i)
+--              (fst (C .snd)) (subComplexYieldsCW Cᶜʷ n)
+--   fst (finCWCoe₂₁ m i) = {!!}
+--   fst (snd (finCWCoe₂₁ m i)) = {!!}
+--   fst (snd (snd (finCWCoe₂₁ m i))) = {!!}
+--   snd (snd (snd (finCWCoe₂₁ m i))) = {!!}
+
+--   finCWCoe₂ : (m : ℕ)
+--     → PathP (λ i → yieldsFinCW n λ m → ua (finCWCoe₁ m) i)
+--              (C .snd) (subComplexYieldsFinCW Cᶜʷ n)
+--   finCWCoe₂ m = {!!}
+
 realiseSubComplex : (n : ℕ) (C : CW) → Iso (fst C n) (realise (subComplex C n))
 realiseSubComplex n C =
   compIso (equivToIso (complex≃subcomplex C n n (0 , refl)))
@@ -201,3 +225,177 @@ subComplexHomology C n m p =
   ... | lt x | gt x₁ | t = ⊥.rec (¬m<m (<-trans x₁ p))
   ... | eq x | s | t = ⊥.rec (¬m<m (subst (suc m <_) (sym x) q))
   ... | gt x | s | t = ⊥.rec (¬-suc-n<n (<-trans p x))
+
+open import CWHomotopy
+open import cw-map
+
+open import Cubical.Foundations.Transport
+restrCellMap : (C D : CW) (f : cellMap C D) (m : ℕ)
+  → cellMap (subComplex C m) (subComplex D m)
+SequenceMap.map (restrCellMap C D f m) n k with (n ≟ m)
+... | lt x = SequenceMap.map f n k 
+... | eq x = SequenceMap.map f n k
+... | gt x = SequenceMap.map f m k
+SequenceMap.comm (restrCellMap C D f m) n x with (suc n ≟ m) | (n ≟ m)
+... | lt x₁ | lt x₂ = SequenceMap.comm f n x
+... | lt x₁ | eq x₂ = rec (¬m<m (subst (_< m) x₂ (<-trans (0 , (λ _ → suc n)) x₁)))
+... | lt x₁ | gt x₂ = rec (¬-suc-n<n (<-trans (suc-≤-suc x₂) x₁))
+... | eq x₁ | lt x₂ = SequenceMap.comm f n x
+... | eq x₁ | eq x₂ = rec (snot (x₁ ∙ (λ i → x₂ (~ i))))
+... | eq x₁ | gt x₂ = rec (¬-suc-n<n (subst (_< n) (sym x₁) x₂))
+... | gt x₁ | lt x₂ = rec (¬-<-suc x₂ x₁)
+... | gt x₁ | eq x₂ =
+      transportRefl _
+    ∙ substCommSlice (fst C) (fst D) (SequenceMap.map f) x₂ x
+    ∙ cong (SequenceMap.map f m) (sym (transportRefl _))
+... | gt x₁ | gt x₂ = refl
+
+Hᶜʷ-sub : CW → ℕ → Group₀
+Hᶜʷ-sub C m = Hᶜʷ (subComplex C (3 +ℕ m)) m
+
+Hᶜʷ→finite : (C D : CW) (m : ℕ)
+  (f : cellMap C D)
+  → GroupHom (Hᶜʷ-sub C m) (Hᶜʷ-sub D m)
+Hᶜʷ→finite C D m f = ϕ
+  where
+  ϕ = chainComplexMap→HomologyMap
+         {C = CW-ChainComplex (subComplex C (3 +ℕ m))}
+         {D = CW-ChainComplex (subComplex D (3 +ℕ m))}
+         (cellMap-to-ChainComplexMap (restrCellMap C D f (3 +ℕ m)))
+         m
+
+Hᶠᶜʷ : (m : ℕ) (C : finCW m) (n : ℕ) → Group₀
+Hᶠᶜʷ m C n = Hᶜʷ (finCW→CW m C) n
+
+
+open import Cubical.HITs.PropositionalTruncation as PT
+open import cw-approx
+module _ (m : ℕ) {C D : finCW m}
+  (f g : cellMap (finCW→CW m C) (finCW→CW m D))
+  (h∞ : realiseCellMap f ≡ realiseCellMap g) where
+
+  cellHomotopy₁ : ∥ cellHom f g ∥₁
+  cellHomotopy₁ = map (λ {(F , h) → record { hom = F ; coh = h }})
+                      (pathToCellularHomotopyFin m f g h∞)
+
+
+module _ (m : ℕ) (n : ℕ) {C D : finCW m} 
+        (f : realise (finCW→CW m C) → realise (finCW→CW m D)) where
+
+  cellMap→Hᶠᶜʷ-hom : cellMap (finCW→CW m C) (finCW→CW m D) → GroupHom (Hᶠᶜʷ m C n) (Hᶠᶜʷ m D n)
+  cellMap→Hᶠᶜʷ-hom ϕ = chainComplexMap→HomologyMap (cellMap-to-ChainComplexMap ϕ) n
+
+  cellMap→Hᶠᶜʷ-hom-coh : (p q : Σ[ r ∈ (cellMap (finCW→CW m C) (finCW→CW m D)) ]
+                                (realiseSequenceMap r ≡ f))
+      → _
+  cellMap→Hᶠᶜʷ-hom-coh p q with (finMap→cellHom m (fst p) (fst q) (snd p ∙ sym (snd q)))
+  ... | r = PT.rec (isSetGroupHom _ _)
+                   (λ r → ChainHomotopy→HomologyPath  _ _ (cellHom-to-ChainHomotopy r) n) r
+
+  Hᶠᶜʷ→ : GroupHom (Hᶠᶜʷ m C n) (Hᶠᶜʷ m D n)
+  Hᶠᶜʷ→ = rec→Set isSetGroupHom
+                  (cellMap→Hᶠᶜʷ-hom ∘ fst)
+                  cellMap→Hᶠᶜʷ-hom-coh
+                  (finMap→cellMap₁ m C D f)
+
+
+rewriteHᶠᶜʷ : (m : ℕ) (n : ℕ) {C D : finCW m} 
+     → (f : realise (finCW→CW m C) → realise (finCW→CW m D))
+     →  (g : cellMap (finCW→CW m C) (finCW→CW m D))
+     → (realiseCellMap g ≡ f)
+     → Hᶠᶜʷ→ m n f ≡ cellMap→Hᶠᶜʷ-hom m n f g
+rewriteHᶠᶜʷ m n {C = C} {D = D} f g p = main
+  where
+  finMap→cellMap₁-path : finMap→cellMap₁ m C D f ≡ ∣ g , p ∣₁
+  finMap→cellMap₁-path = squash₁ _ _
+
+  main : Hᶠᶜʷ→ m n f ≡ cellMap→Hᶠᶜʷ-hom m n f g
+  main = cong (rec→Set isSetGroupHom
+              (cellMap→Hᶠᶜʷ-hom m n {C = C} {D} f ∘ fst)
+              (cellMap→Hᶠᶜʷ-hom-coh m n {C = C} {D} f))
+              finMap→cellMap₁-path
+
+cellMap-to-ChainComplexMapId : (C : CW) → cellMap-to-ChainComplexMap {C} (idCellMap C) ≡ idChainMap _
+cellMap-to-ChainComplexMapId C = ChainComplexMap≡ (chainFunct-id C)
+
+cellMap-to-ChainComplexMapComp : {C D E : CW} (g : cellMap D E) (f : cellMap C D)
+  → cellMap-to-ChainComplexMap (composeCellMap g f)
+  ≡ compChainMap (cellMap-to-ChainComplexMap f) (cellMap-to-ChainComplexMap g)
+cellMap-to-ChainComplexMapComp g f = ChainComplexMap≡ λ n → sym (chainFunct-comp g f n)
+
+Hᶠᶜʷ→-id : (m : ℕ) (n : ℕ) {C : finCW m}
+  → Hᶠᶜʷ→ m n {C = C} {D = C} (idfun _) ≡ idGroupHom
+Hᶠᶜʷ→-id m n {C = C} =
+    rewriteHᶠᶜʷ m n {C = C} (idfun _) (idCellMap _) realiseIdSequenceMap
+  ∙ cong (λ f → chainComplexMap→HomologyMap f n)
+      (cellMap-to-ChainComplexMapId _)
+  ∙ chainComplexMap→HomologyMapId n
+
+Hᶠᶜʷ→comp : (m : ℕ) (n : ℕ) {C D E : finCW m}
+  (g : realise (finCW→CW m D) → realise (finCW→CW m E))
+  (f : realise (finCW→CW m C) → realise (finCW→CW m D))
+  → Hᶠᶜʷ→ m n {C = C} {D = E} (g ∘ f)
+   ≡ compGroupHom (Hᶠᶜʷ→ m n f) (Hᶠᶜʷ→ m n g)
+Hᶠᶜʷ→comp m n {C = C} {D = D} {E = E} g f =
+  PT.rec2 (isSetGroupHom _ _)
+          (λ {(F , fp) (G , gp)
+       → (rewriteHᶠᶜʷ m n (g ∘ f) (composeCellMap G F)
+                      (realiseCompSequenceMap G F
+                    ∙ (λ i x → gp i (fp i x)))
+        ∙ cong (λ f → chainComplexMap→HomologyMap f n)
+               (cellMap-to-ChainComplexMapComp G F)
+        ∙ chainComplexMap→HomologyMapComp _ _ n)
+        ∙ cong₂ compGroupHom (sym (rewriteHᶠᶜʷ m n f F fp))
+                             (sym (rewriteHᶠᶜʷ m n g G gp))})
+          (finMap→cellMap₁ m C D f)
+          (finMap→cellMap₁ m D E g)
+
+finCW↑ : (n m : ℕ) → (m ≥ n) → finCW n → finCW m
+fst (finCW↑ m n p C) = fst C
+fst (snd (finCW↑ m n p C)) = snd C .fst
+snd (snd (finCW↑ m n p C)) k =
+  subst (λ r → isEquiv (CW↪ (fst C , snd C .fst) r))
+        (sym (+-assoc k (fst p) m) ∙ cong (k +ℕ_) (snd p))
+        (snd C .snd (k +ℕ fst p))
+
+-- open import Cubical.Algebra.Group.GroupPath
+-- H : fincw → ℕ → Group ℓ-zero
+-- H (X , A) n =
+--   rec→Gpd isGroupoidGroup
+--            H-gr
+--            (record { link = {!!}
+--                     ; coh₁ = {!!} }) A
+--   where
+--   isGroupoidGroup : isGroupoid (Group ℓ-zero)
+--   isGroupoidGroup = {!!}
+
+--   H-gr : isFinCW X → Group ℓ-zero
+--   H-gr (m , C) = Hᶠᶜʷ m (C .fst) n
+
+--   C↑ : {!!}
+--   C↑ = {!!}
+
+--   module _ (nc nd : ℕ) (C : finCW nc) (D : finCW nd)
+--            (eC : X ≃ realise (finCW→CW nc C))
+--            (eD : X ≃ realise (finCW→CW nd D))
+--     where
+--     Cup Dup : finCW (nc +ℕ nd)
+--     Cup = finCW↑ nc (nc +ℕ nd) (nd , +-comm nd nc) C
+--     Dup = finCW↑ nd (nc +ℕ nd) (nc , refl) D
+
+--     H→ = Hᶠᶜʷ→ (nc +ℕ nd) n {C = Cup} {D = Dup} (invEq (compEquiv (invEquiv eD) eC))
+
+--     2-Const : {!H→!} ≡ {!!} -- 2-Constant H-gr
+--     2-Const =
+--       (λ _ → Hᶜʷ ((C .fst) , (C .snd .fst)) n)
+--       ∙ uaGroup ((H→ .fst
+--                  , {!finCW↑ nc (nc +ℕ nd) (nd , +-comm nd nc) C!})
+--                  , H→ .snd)
+--       ∙ λ _ → Hᶜʷ ((D .fst) , (D .snd .fst)) n
+
+-- -- Hᶜʷ→ : (C D : CW) (f : cellMap C D) (m : ℕ)
+-- --   → GroupHom (Hᶜʷ C m) (Hᶜʷ D m) 
+-- -- Hᶜʷ→ C D f m =
+-- --   compGroupHom (GroupIso→GroupHom (subComplexHomology C (3 +ℕ m) m (0 , refl)))
+-- --     (compGroupHom (Hᶜʷ→finite C D f m)
+-- --       (GroupIso→GroupHom (invGroupIso (subComplexHomology D (3 +ℕ m) m (0 , refl)))))

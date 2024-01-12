@@ -41,6 +41,12 @@ yieldsCW X =
 CW : Type₁
 CW = Σ[ X ∈ (ℕ → Type) ] (yieldsCW X)
 
+module CW-fields (C : CW) where
+  card = C .snd .fst
+  A = Fin ∘ card
+  α = C .snd .snd .fst
+  e = C .snd .snd .snd .snd
+
 CW₀-empty : (C : CW) → ¬ fst C 0
 CW₀-empty C = snd (snd (snd C)) .fst
 
@@ -157,12 +163,7 @@ realiseFin n C = Lim→FiniteIso n (snd C .snd)
 
 -- elimination principles for CW complexes
 module _ {ℓ : Level} (C : CW) where
-  private
-    e = snd C .snd .snd .snd
-    A : (n : ℕ) → _
-    A n = Fin (snd C .fst n)
-    α = snd C .snd .fst
-
+  open CW-fields C
   module _ (n : ℕ) {B : fst C (suc n) → Type ℓ}
          (inler : (x : fst C n) → B (invEq (e n) (inl x)))
          (inrer : (x : A n) → B (invEq (e n) (inr x)))
@@ -187,45 +188,75 @@ module _ {ℓ : Level} (C : CW) where
                → gen C e h (invEq e b) ≡ h b)
                (λ C h b → transportRefl (h b)) e C
 
-      main : (x : _) → B (invEq (snd C .snd .snd .snd n) x)
+      main : (x : _) → B (invEq (e n) x)
       main (inl x) = inler x
       main (inr x) = inrer x
       main (push (x , y) i) = pusher x y i
 
     CW-elim : (x : _) → B x
-    CW-elim = gen B (snd C .snd .snd .snd n) main
+    CW-elim = gen B (e n) main
 
-    CW-elim-inl : (x : _) → CW-elim (invEq (snd C .snd .snd .snd n) (inl x)) ≡ inler x
-    CW-elim-inl x = gen-coh B (snd C .snd .snd .snd n) main (inl x)
+    CW-elim-inl : (x : _) → CW-elim (invEq (e n) (inl x)) ≡ inler x
+    CW-elim-inl x = gen-coh B (e n) main (inl x)
 
   module _ (n : ℕ) {B : fst C (suc (suc n)) → Type ℓ}
            (inler : (x : fst C (suc n))
-                  → B (invEq (snd C .snd .snd .snd (suc n)) (inl x)))
-           (ind : ((x : Fin (snd C .fst (suc n))) (y : S₊ n)
-           → PathP (λ i → B (invEq (snd C .snd .snd .snd (suc n))
+                  → B (invEq (e (suc n)) (inl x)))
+           (ind : ((x : A (suc n)) (y : S₊ n)
+           → PathP (λ i → B (invEq (e (suc n))
                                    ((push (x , y) ∙ sym (push (x , ptSn n))) i)))
-                   (inler (snd C .snd .fst (suc n) (x , y)))
-                   (inler (snd C .snd .fst (suc n) (x , ptSn n))))) where
+                   (inler (α (suc n) (x , y)))
+                   (inler (α (suc n) (x , ptSn n))))) where
     CW-elim' : (x : _) → B x
     CW-elim' =
       CW-elim (suc n) inler
-        (λ x → subst (λ t → B (invEq (snd C .snd .snd .snd (suc n)) t))
+        (λ x → subst (λ t → B (invEq (e (suc n)) t))
                       (push (x , ptSn n))
                       (inler (α (suc n) (x , ptSn n))))
-        λ x y → toPathP (sym (substSubst⁻ (B ∘ invEq (snd C .snd .snd .snd (suc n)))  _ _)
-           ∙ cong (subst (λ t → B (invEq (snd C .snd .snd .snd (suc n)) t))
+        λ x y → toPathP (sym (substSubst⁻ (B ∘ invEq (e (suc n)))  _ _)
+           ∙ cong (subst (λ t → B (invEq (e (suc n)) t))
                          (push (x , ptSn n)))
-                  (sym (substComposite (B ∘ invEq (snd C .snd .snd .snd (suc n))) _ _ _)
+                  (sym (substComposite (B ∘ invEq (e (suc n))) _ _ _)
             ∙ fromPathP (ind x y)))
 
     CW-elim'-inl : (x : _)
-      → CW-elim' (invEq (snd C .snd .snd .snd (suc n)) (inl x)) ≡ inler x
-    CW-elim'-inl = CW-elim-inl (suc n) {B = B} inler _ _
+      → CW-elim' (invEq (e (suc n)) (inl x)) ≡ inler x
+    CW-elim'-inl = CW-elim-inl (suc n) {B = B} inler _ _  
 
+finCW≃ : (n : ℕ) (C : finCW n) (m : ℕ) → n ≤ m → fst C n ≃ fst C m
+finCW≃ n C m (zero , diff) = substEquiv (λ n → fst C n) diff
+finCW≃ n C zero (suc x , diff) = ⊥.rec (snotz diff)
+finCW≃ n C (suc m) (suc x , diff) =
+  compEquiv (finCW≃ n C m (x , cong predℕ diff))
+            (compEquiv (substEquiv (λ n → fst C n) (sym (cong predℕ diff)))
+            (compEquiv (_ , snd C .snd x)
+            (substEquiv (λ n → fst C n) diff)))
 
-module CW-fields (C : CW) where
-  card = C .snd .fst
-  A = Fin ∘ card
-  α = C .snd .snd .fst
-  e = C .snd .snd .snd .snd
-  
+isCW : (X : Type) → Type₁
+isCW X = Σ[ X' ∈ CW ] X ≃ realise X'
+
+isFinCW : (X : Type) → Type₁
+isFinCW X = Σ[ m ∈ ℕ ] (Σ[ X' ∈ finCW m ] X ≃ (realise (finCW→CW m X')))
+
+cw : Type₁
+cw = Σ[ A ∈ Type ] ∥ isCW A ∥₁
+
+fincw : Type₁
+fincw = Σ[ A ∈ Type ] ∥ isFinCW A ∥₁
+
+open import Cubical.HITs.PropositionalTruncation as PT
+
+isFinCW→isCW : (X : Type) → isFinCW X → isCW X
+isFinCW→isCW X (n , X' , str) = (finCW→CW n X') , str
+
+fincw→cw : fincw → cw
+fincw→cw (X , p) = X , PT.map (isFinCW→isCW X) p
+
+cw-expl : Type₁
+cw-expl = Σ[ A ∈ Type ] (isCW A)
+
+fincw-expl : Type₁
+fincw-expl = Σ[ A ∈ Type ] (isFinCW A)
+
+_→ᶜʷ_ : cw → cw → Type
+C →ᶜʷ D = fst C → fst D

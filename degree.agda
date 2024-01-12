@@ -502,6 +502,15 @@ suspFunS∙ {n = zero} f =
   (λ x → Iso.inv S¹IsoSuspBool (suspFun f (Iso.fun S¹IsoSuspBool x))) , refl
 suspFunS∙ {n = suc n} f = suspFun f , refl
 
+suspFunS∙Id : {n : ℕ} → suspFunS∙ (idfun (S₊ n)) ≡ idfun∙ _
+suspFunS∙Id {n = zero} = ΣPathP ((funExt (λ { base → refl
+  ; (loop i) j → help j i})) , refl)
+  where
+  help : cong (fst (suspFunS∙ (idfun (S₊ zero)))) loop ≡ loop
+  help = (λ j → cong (λ x → SuspBool→S¹ (suspFun-id {A = Bool} j (S¹→SuspBool x))) loop)
+       ∙ λ i j → S¹→SuspBool→S¹ (loop j) i 
+suspFunS∙Id {n = suc n} = ΣPathP (suspFun-id , refl)
+
 degree-susp : (n : ℕ) (f : (S₊ n → S₊ n))
             → degree n f ≡ degree (suc n) (suspFunS∙ f .fst)
 degree-susp zero f with (f true) | (f false)
@@ -520,3 +529,11 @@ degree-susp (suc n) f = cong (Iso.fun (Hⁿ-Sⁿ≅ℤ n .fst))
       ; south → cong ∣_∣ₕ (merid (ptSn (suc n)))
       ; (merid a i) j →
         ∣ compPath-filler (merid (f a)) (sym (merid (ptSn (suc n)))) (~ j) i ∣ₕ})
+
+
+degree-idfun : (n : ℕ) → degree n (λ x → x) ≡ 1
+degree-idfun zero = refl
+degree-idfun (suc n) =
+   cong (degree (suc n)) (sym (cong fst suspFunS∙Id))
+  ∙∙ (sym (degree-susp n (idfun _)))
+  ∙∙ degree-idfun n

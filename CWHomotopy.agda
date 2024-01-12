@@ -43,7 +43,7 @@ module CWHomotopy where
 -- A cellular homotopy between two cellular maps
 -- TODO : use finite approximations instead
 record cellHom {C D : CW} (f g : cellMap C D) : Type where
-  open cellMap
+  open SequenceMap
   field
     hom : (n : ℕ) → (x : C .fst n) → CW↪ D n (f .map n x) ≡ CW↪ D n (g .map n x)
     coh : (n : ℕ) → (c : C .fst n) → Square (cong (CW↪ D (suc n)) (hom n c))
@@ -60,7 +60,7 @@ cofibIso n C =
 
 -- Building a chain homotopy from a cell homotopy
 module preChainHomotopy (C D : CW) (f g : cellMap C D) (H : cellHom f g) (n : ℕ) where
-  open cellMap
+  open SequenceMap
   open cellHom
 
   -- the homotopy expressed as a map Susp (cofiber n C) → cofiber (suc n) D
@@ -94,8 +94,8 @@ module MMmaps (C D : CW) (n : ℕ) where
 
   -- the suspension of a cell map as a MMmap
   MMΣcellMap : (f : cellMap C D)
-       → MMmap (λ x → (inr (f .cellMap.map (suc n) x))) (λ x → inl tt)
-  MMΣcellMap f x = sym (push (f .cellMap.map n x) ∙ (cong inr (f .cellMap.comm n x)))
+       → MMmap (λ x → (inr (f .SequenceMap.map (suc n) x))) (λ x → inl tt)
+  MMΣcellMap f x = sym (push (f .SequenceMap.map n x) ∙ (cong inr (f .SequenceMap.comm n x)))
 
   -- Addition of MMmaps
   MMmap-add : (m1 m2 m3 : (x : C .fst (suc n)) → cofiber n D)
@@ -129,7 +129,7 @@ module MMmaps (C D : CW) (n : ℕ) where
 -- Expressing the chain homotopy at the level of MMmaps
 -- There, it is easy to prove the chain homotopy equation
 module MMchainHomotopy (C D : CW) (f g : cellMap C D) (H : cellHom f g) (n : ℕ) where
-  open cellMap
+  open SequenceMap
   open cellHom
   open MMmaps C D n
 
@@ -176,7 +176,7 @@ module MMchainHomotopy (C D : CW) (f g : cellMap C D) (H : cellHom f g) (n : ℕ
 -- Now we want to transform our MMmap equation to the actual equation
 -- First, we connect the involved MMmaps to cofiber maps
 module realiseMMmap (C D : CW) (f g : cellMap C D) (H : cellHom f g) (n : ℕ) where
-  open cellMap
+  open SequenceMap
   open cellHom
   open MMmaps C D
   open MMchainHomotopy C D f g H
@@ -459,7 +459,7 @@ module bouquetAdd where
 
 -- Now we have all the ingredients, we can get the chain homotopy equation
 module chainHomEquation (C D : CW) (f g : cellMap C D) (H : cellHom f g) (n : ℕ) where
-  open cellMap
+  open SequenceMap
   open MMmaps C D (suc n)
   open MMchainHomotopy C D f g H (suc n)
   open preChainHomotopy C D f g H
@@ -588,3 +588,20 @@ cellHom-to-ChainHomotopy : {C D : CW} {f g : cellMap C D} (H : cellHom f g)
                          → ChainHomotopy (cellMap-to-ChainComplexMap f) (cellMap-to-ChainComplexMap g)
 cellHom-to-ChainHomotopy {C} {D} {f} {g} H .ChainHomotopy.htpy n = preChainHomotopy.chainHomotopy C D f g H n
 cellHom-to-ChainHomotopy {C} {D} {f} {g} H .ChainHomotopy.bdryhtpy n = chainHomEquation.chainHomotopy2 C D f g H n
+
+open import cw-approx
+
+open import Cubical.HITs.PropositionalTruncation as PT
+finMap→cellMap₁ : (m : ℕ) (C D : finCW m) (f : realise (finCW→CW m C) → realise (finCW→CW m D))
+  → ∃[ ϕ ∈ cellMap (finCW→CW m C) (finCW→CW m D) ] realiseCellMap ϕ ≡ f
+finMap→cellMap₁ m C D f =
+  PT.map (λ {(ϕ , p) → record { map = fst ∘ ϕ ; comm = λ n c → sym (p n c) }
+           , sym (terminates→funId m m (snd (snd C)) (snd (snd D)) f _ λ n c → sym (ϕ n .snd c))})
+         (approxFinCw m C D f)
+
+module _ (m : ℕ) {C D : finCW m}
+  (f-c g-c : cellMap (finCW→CW m C) (finCW→CW m D))
+  (h∞ : realiseCellMap f-c ≡ realiseCellMap g-c) where
+  finMap→cellHom : ∥ cellHom f-c g-c ∥₁
+  finMap→cellHom = PT.map (λ {(f , p) → record { hom = f ; coh = p }})
+                           (pathToCellularHomotopyFin m f-c g-c h∞)

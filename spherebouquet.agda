@@ -406,6 +406,37 @@ EqHoms {n} {m} {ϕ} {ψ} idr =
            ∙∙ (λ i x → -ℤ (p i x))
            ∙∙ sym (IsGroupHom.presinv (snd ψ) f)))
 
+bouquetDegreeId : {n m : ℕ} → bouquetDegree (idfun (SphereBouquet n (Fin m))) ≡ idGroupHom
+bouquetDegreeId {n = n} {m = m} =
+  EqHoms λ (x : Fin m)
+    → funExt λ t
+      → sym (generator-is-generator' (λ w → degree n (λ x₁ → chooseS t (inr (w , x₁)))) x)
+      ∙ help x t
+  where
+  help :  (x t : Fin m) → degree n (λ x₁ → chooseS t (inr (x , x₁))) ≡ generator x t
+  help x y with (fst x ≟ fst y)
+  ... | lt p = cong (degree n) (funExt lem) ∙ degree-const n
+    where
+    lem : (x₁ : S₊ n) → chooseS y (inr (x , x₁)) ≡ ptSn n
+    lem x₁ with (fst y ≟ fst x)
+    ... | lt x = refl
+    ... | eq q = ⊥.rec (¬m<m (subst (fst x <_) q p))
+    ... | gt x = refl
+  ... | eq p = cong (degree n) (funExt lem) ∙ degree-idfun n
+    where
+    lem : (x₁ : S₊ n) → chooseS y (inr (x , x₁)) ≡ x₁
+    lem x₁ with (fst y ≟ fst x)
+    ... | lt q = ⊥.rec (¬m<m (subst (fst y <_) p q))
+    ... | eq x = refl
+    ... | gt q = ⊥.rec (¬m<m (subst (_< fst y) p q))
+  ... | gt p = cong (degree n) (funExt lem) ∙ degree-const n
+      where
+    lem : (x₁ : S₊ n) → chooseS y (inr (x , x₁)) ≡ ptSn n
+    lem x₁ with (fst y ≟ fst x)
+    ... | lt x = refl
+    ... | eq q = ⊥.rec (¬m<m (subst (_< fst x) q p))
+    ... | gt x = refl
+
 degreeComp∙ : {n m k l : ℕ}
   → (f : (SphereBouquet (suc n) (Fin m) , inl tt) →∙ (SphereBouquet (suc n) (Fin k) , inl tt))
   → (g : (SphereBouquet (suc n) (Fin l) , inl tt) →∙ (SphereBouquet (suc n) (Fin m) , inl tt))
@@ -909,3 +940,14 @@ module _ {Cₙ Cₙ₊₁ : Type} (n mₙ : ℕ)
   Bouquet≃-gen : Pushout (terminal Cₙ) (invEq e ∘ inl)
                ≃ SphereBouquet n (Fin mₙ)
   Bouquet≃-gen = isoToEquiv BouquetIso-gen
+
+degreeCompFull : {n m k l : ℕ}
+  → (f : (SphereBouquet n (Fin m) , inl tt) →∙ (SphereBouquet n (Fin k) , inl tt))
+  → (g : (SphereBouquet n (Fin l) , inl tt) →∙ (SphereBouquet n (Fin m) , inl tt))
+  → bouquetDegree ((fst f) ∘ (fst g)) ≡ compGroupHom (bouquetDegree (fst g)) (bouquetDegree (fst f))
+degreeCompFull {n = zero} {m} {k = k} {l = l} f g = Σ≡Prop (λ _ → isPropIsGroupHom _ _)
+    (cong fst (degreeSusp (fst f ∘ fst g))
+  ∙ sym (cong (fst ∘ bouquetDegree) (bouquetSusp→∘ (fst g) (fst f)))
+  ∙ cong fst (degreeComp∙ (bouquetSusp→ (fst f) , refl) (bouquetSusp→ (fst g) , refl))
+  ∙ cong fst (cong₂ compGroupHom (sym (degreeSusp (fst g))) (sym (degreeSusp (fst f)))))
+degreeCompFull {n = suc n} = degreeComp∙

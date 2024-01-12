@@ -11,10 +11,12 @@ open import Cubical.Foundations.Univalence
 open import Cubical.Foundations.Isomorphism
 
 open import Cubical.Data.Nat
-open import Cubical.Data.Bool
+open import Cubical.Data.Bool hiding (_≤_)
 open import Cubical.Data.Fin
 open import Cubical.Data.Empty
 open import Cubical.Data.Sigma
+open import Cubical.Data.Sum
+open import Cubical.Data.Nat.Order
 
 open import Cubical.HITs.S1
 open import Cubical.HITs.Sn
@@ -41,6 +43,13 @@ open import Cubical.Relation.Nullary
 private
   variable
     ℓ ℓ' ℓ'' : Level
+
+
+Dichotomyℕ : ∀ (n m : ℕ) → (n ≤ m) ⊎ (n > m)
+Dichotomyℕ n m with (Cubical.Data.Nat.Order._≟_ n m)
+... | lt x = inl (<-weaken x)
+... | Trichotomy.eq x = inl (0 , x)
+... | gt x = inr x
 
 -- terminal map from any type to Unit
 terminal : (A : Type ℓ) → A → Unit
@@ -188,6 +197,9 @@ open ElimDataShifted
 -- terminating sequences
 terminates : ∀ {ℓ} → Sequence ℓ → (n : ℕ) → Type ℓ
 terminates seq n = (k : ℕ) → isEquiv (Sequence.map seq {n = k + n})
+
+finiteSequence : (ℓ : Level) (m : ℕ) → Type (ℓ-suc ℓ)
+finiteSequence ℓ m = Σ[ S ∈ Sequence ℓ ] terminates S m
 
 -- goal: prove that colim Aₘ ≃ Aₙ for a sequence
 -- A₀ → A₁ → ... → Aₙ ≃ Aₙ₊₁ ≃ ...

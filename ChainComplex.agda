@@ -41,8 +41,8 @@ record ChainHomotopy {ℓ : Level} {A : ChainComplex ℓ} {B : ChainComplex ℓ}
   field
     htpy : (n : ℕ) → AbGroupHom (chain A n) (chain B (suc n))
     bdryhtpy : (n : ℕ) → subtrGroupHom _ _ (chainmap f (suc n)) (chainmap g (suc n))
-                       ≡ addGroupHom _ _ (compGroupHom (htpy (suc n)) (bdry B (suc n)))
-                                     (compGroupHom (bdry A n) (htpy n))
+                         ≡ addGroupHom _ _ (compGroupHom (htpy (suc n)) (bdry B (suc n)))
+                                       (compGroupHom (bdry A n) (htpy n))
 
 record CoChainComplex (ℓ : Level) : Type (ℓ-suc ℓ) where
   field
@@ -198,6 +198,25 @@ chainComplexMap→HomologyMapId {C = C} n =
     (funExt (SQ.elimProp (λ _ → GroupStr.is-set (snd (homology n C)) _ _)
         λ _ → cong [_]
           (Σ≡Prop (λ _ → AbGroupStr.is-set (snd (chain C n)) _ _) refl)))
+
+ChainHomotopy→HomologyPath : ∀ {ℓ} {A B : ChainComplex ℓ} (f g : ChainComplexMap A B)
+  → ChainHomotopy f g
+  → (n : ℕ) → chainComplexMap→HomologyMap f n ≡ chainComplexMap→HomologyMap g n
+ChainHomotopy→HomologyPath {A = A} {B = B} f g ϕ n =
+  Σ≡Prop (λ _ → isPropIsGroupHom _ _)
+    (funExt (SQ.elimProp (λ _ → GroupStr.is-set (snd (homology n _)) _ _)
+      λ {(a , p) → eq/ _ _
+        ∣ (ChainHomotopy.htpy ϕ (suc n) .fst a)
+        , (Σ≡Prop (λ _ → AbGroupStr.is-set (snd (chain B n))  _ _)
+                  (sym ((funExt⁻ (cong fst (ChainHomotopy.bdryhtpy ϕ n)) a)
+                     ∙ cong₂ _+B_ refl
+                                (cong (fst (ChainHomotopy.htpy ϕ n)) p
+                              ∙ IsGroupHom.pres1 (snd (ChainHomotopy.htpy ϕ n)))
+                     ∙ AbGroupStr.+IdR (snd (chain B (suc n))) _))) ∣₁}))
+  where
+  open GroupTheory (AbGroup→Group (chain B (suc n)))
+  invB = GroupStr.inv (snd (AbGroup→Group (chain B (suc n))))
+  _+B_ = AbGroupStr._+_ (snd (chain B (suc n)))
 
 chainComplexEquiv→HomoglogyIso : {C D : ChainComplex ℓ} (f : C ≃Chain D)
   → (n : ℕ) → GroupIso (homology n C) (homology n D)
