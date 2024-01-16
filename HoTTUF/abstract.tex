@@ -1,0 +1,123 @@
+\documentclass[a4page]{article}
+% \usepackage{biblatex}
+\usepackage[a4paper,
+            bindingoffset=0.2in,
+            left=1in,
+            right=1in,
+            top=1in,
+            bottom=1in,
+            footskip=.25in]{geometry}
+\usepackage{amsmath, amsfonts, amsthm , mathtools , bbold, float}
+
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usepackage{mathpartir}
+\usepackage[citecolor=blue,linkcolor=blue,urlcolor=blue,colorlinks]{hyperref}
+\usepackage[nameinlink,capitalize,noabbrev]{cleveref}
+\usepackage{quiver}
+\usepackage{xspace}
+\usepackage{xcolor}
+\usepackage{bbm}
+\usepackage{breakurl}
+\usepackage{bbding}
+\hypersetup{pdfborder={0 0 100}}
+\usepackage{lipsum}
+%\usepackage{biblatex}
+%\bibliographystyle{unsrt}
+\usepackage[backend=biber,style=alphabetic,sorting=nty,giveninits]{biblatex} % Bibliography management
+\addbibresource{refs.bib}
+
+
+
+\usepackage{textcomp}
+\usepackage{xspace}
+\usepackage{url}
+\usepackage{multirow}
+\usepackage{hhline}
+\usepackage{pifont}
+\usetikzlibrary{arrows,matrix,decorations.pathmorphing,
+  decorations.markings, calc, backgrounds}
+\usepackage{mathpartir}
+\usepackage{microtype}
+%\DeclareMathOperator*{\bigsmile}{\raisebox{-0.ex}{\scalebox{1.5}{$\smile$}}}
+
+\DisableLigatures[-]{family=tt*}
+
+\input{macros}
+
+% To change indentation of code:
+% \setlength{\mathindent}{5pt}
+
+% \bibliographystyle{plainurl}% the mandatory bibstyle
+
+\title{Cellular Homology and the Cellular Approximation Theorem in HoTT}
+
+\author{
+  An author\\
+  \footnotesize{SU}\\
+  \footnotesize{\texttt{hoho@math.su.se}}
+  \and
+  Another author\\
+  \footnotesize{SU}\\
+  \footnotesize{\texttt{haha@math.su.se}}
+  \and
+  A third author\\
+  \footnotesize{SU}\\
+  \footnotesize{\texttt{hehe@math.su.se}}
+}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+In~\cite{BuchholtzFavonia18}, Buchholtz and Favonia develops a theory
+of cellular cohomology in HoTT. This is done in two steps. Step 1 is
+the construction of cohomology groups of (the skeleton of) a CW
+complex using the usual definition via cochain complexes.  Step 2 is
+the construction of an isomorphism between their definition of
+cohomology the more well-established definition in terms of
+Eilenberg-MacLane spaces (see~\cite{LicataFinster14}). Step 2 allows
+the authors to infer all e.g. functoriality and the Eilenberg-Steenrod
+axioms of their cohomology theory. Step 2 is, however, not as readily
+available when developing cellular homology---despite homology having
+been studied in HoTT~\cite{graham18,christensen2020hurewicz}, it
+generally considered harder to work with than cohomology. \todo{blabla bla rewrite please...}
+
+We revisit \cite{BuchholtzFavonia18} definition of cellular chain
+complexes and develop a functorial homology theory, not via reduction
+to another more well-studied homology theory, but via cellular
+maps. This crucially relies on the so called \emph{cellular
+  approximation theorem} which we prove in HoTT.
+
+Let $\bN^{-} := \bN \cup \{-1\}$ and $\mathsf{Fin}(n)$ denote the $n$-element set.
+\begin{definition}[CW skeleta]
+  A \textbf{CW-skeleton} is an infinite sequence of types and maps
+  \[X_{-1} \xrightarrow{\incl{-1}} X_0 \xrightarrow{\incl{0}} X_1 \xrightarrow{\incl{1}} \dots \]
+  equppied with a function $c : \bN^- \to \bN$ and a set of attaching maps $\alpha_i : S^i \times \fin{c_i} \to X_i$ such that $X_{-1}$ is empty and the following square is a pushout.
+  \[
+\begin{tikzcd}[ampersand replacement=\&]
+	{S^{i} \times \fin{c(i)}} \&\& \fin{c(i)} \\
+	{X_i} \&\& {X_{i+1}}
+	\arrow["{\mathsf{snd}}", from=1-1, to=1-3]
+	\arrow["{\alpha_{i}}"', from=1-1, to=2-1]
+	\arrow[from=2-1, to=2-3]
+	\arrow[from=1-3, to=2-3]
+	\arrow["\lrcorner"{anchor=center, pos=0.125, rotate=180}, draw=none, from=2-3, to=1-1]
+\end{tikzcd}
+\]
+A CW-skeleton is said to be \textbf{finite (of dimension $n$)} if $\incl{m}$ is an equivalence for all $m \geq n$.
+\end{definition}
+\begin{definition}[CW complexes]\todo{Not sure if all these defs are needed...}
+  A type $A$ is said to be a \textbf{CW complex} if there merely exists some CW skeleton $(X_i)$ such that $A$ is equivalent to $\lim_{n\to \infty} X_i$. We say that $A$ is of \textbf{dimension $n$} if $(X_i)$ is finite of dimension $n$ and that $A$ is \textbf{finite} if there merely exists some $n$ such that $A$ is of dimension $n$.
+\end{definition}
+
+Let $\bZ[n]$ denote the free abelian group with $n-1$ generators with $\bZ[0]$ defined to be the trivial group. Buchholtz and Favonia~\cite{BuchholtzFavonia18} showed how to construct the chain complex
+$\dots \xrightarrow{\partial_1} \bZ[c_{1}] \xrightarrow{\partial_0} \bZ[c_{0}]$ associated to a CW-skeleton $(X,\mathsf{incl},c,\alpha)$.
+
+
+
+\printbibliography
+
+
+\end{document}
