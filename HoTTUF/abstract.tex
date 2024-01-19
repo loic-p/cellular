@@ -88,7 +88,6 @@ cellular maps.
 %
 In particular, we prove a constructive version of the \emph{cellular
   approximation theorem}, a cornerstone of the classical theory of CW complexes. All results presented here have been formalised in \CubicalAgda \cite{cubicalagda2}.
-\todo{Add a ref to the code?}
 
 \smallskip
 
@@ -189,7 +188,7 @@ $.
 %
 We can show that \( \partial_n \circ \partial_{n+1} = 0 \) for all \( n \),
 which allows us to define the \( n \)-th homology group of a CW-skeleton by
-$\hskel{n}(X) := \mathsf{ker}(\partial_n)/\mathsf{im}(\partial_{n+1})$. The differentials $\partial_n$ are defined in terms of (an appropriate definition of) the \emph{degree} of map between wedge sums of spheres $\bigvee_{x : \mathsf{Fin}(c_{n+1})} \mathbb{S}^n \to \bigvee_{x : \mathsf{Fin}(c_{n})} \mathbb{S}^n$. In fact, much of our work can be reduced to statements about the behaviour of such functions and of the degree assignment.
+$\hskel{n}(X) := \mathsf{ker}(\partial_n)/\mathsf{im}(\partial_{n+1})$. The differentials $\partial_n$ are defined in terms of (an appropriate definition of) the \emph{degree} of map between wedge sums of spheres $\bigvee_{x : \mathsf{Fin}(c_{n+1})} \mathbb{S}^{n+1} \to \bigvee_{x : \mathsf{Fin}(c_{n})} \mathbb{S}^{n+1}$. In fact, much of our work can be reduced to statements about the behaviour of such functions and of the degree assignment.
 
 The homology groups defined here can be extended to functors from \( \cwskel \)
 to \( \abgrp \):\footnote{Although \( \cwskel \) is wild, \( \abgrp \) is a $1$-category, and hence functoriality is interpreted in the $1$-categorical sense.}
@@ -274,8 +273,7 @@ Combining~\cref{cellhom-approx} and \cref{cellhomToHomology}, we see that if $f_
 
 Thus, we have defined the functor $\hskelinf{n}$, assigning homology groups to any type equivalent to the colimit of a CW skeleton. However, for CW complexes, the existence of such an equivalence is only assumed to \emph{merely} exist. We would like to define a fuctor $\hcw{n} : \mathsf{CW} \to \abgrp$, but the universe of abelian groups is a groupoid. We may, however, apply the rule for groupoid-valued elimination of propositional truncations. Applied to the goal in question, it says that we may define $\hcw{n}$ by (1) defining $\hcw{n}(X_\infty)$ for CW-skelta $X_\bullet$, (2) showing that for $e : X_\infty \simeq Y_{\infty}$, we have an isomorphism $e_* : \hcw{n}(X_\infty) \cong \hcw{n}(Y_\infty)$ and (3) that $e_*$ is functorial. For (1), we simply set $\hcw{n}(X_\infty) := \hskelinf{n}(X_\bullet)$. The conditions (2) and (3) follow from functoriality of $\hskelinf{n}$. Functoriality of $\hcw{n}$ follows in a similar manner. This completes the definition of the cellular homology theory $\hcw{n}$.
 
-The formalisation of the analoguous cohomology theory as well as the verification of the Eilenberg-Steenrod axioms is future/ongoing work. When this is completed, we are planning on computing cellular (co)homology groups of some well-known spaces. Using this, we are planning on putting our theory to the test in \texttt{Cubical Agda} by attepting to carry out concrete (co)homology computations. Our hope is that the development of cellular (co)homology will perform better than other alternatives and will be able to compute e.g.\ some of the examples that failed in~\cite[Section 6]{BLM22}.
-\todo{Also mention in one sentence that this is part of a bigger project to formalize the proof of Barton-Campion?}
+The formalisation of the analoguous cohomology theory as well as the verification of the Eilenberg-Steenrod axioms is future/ongoing work. When this is completed, we are planning on computing cellular (co)homology groups of some well-known spaces. Using this, we are planning on putting our theory to the test in \texttt{Cubical Agda} by attepting to carry out concrete (co)homology computations. Our hope is that the development of cellular (co)homology will perform better than other alternatives and will be able to compute e.g.\ some of the examples that failed in~\cite[Section 6]{BLM22}. We also hope that the results we present here will be useful in the formalisation of recent work by~Barton and Campion~\cite{SerreFiniteness}, which, in fact, was the orignal motivation behind this project.
 
 \printbibliography
 
