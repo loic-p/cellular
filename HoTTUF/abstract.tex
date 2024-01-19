@@ -50,81 +50,79 @@
 
 % \bibliographystyle{plainurl}% the mandatory bibstyle
 
-\title{Cellular Homology and the Cellular Approximation Theorem in Cubical Type Theory}
+\title{Cellular Homology and the Cellular Approximation Theorem}
 
 \author{
-  An author\\
-  \footnotesize{SU}\\
-  \footnotesize{\texttt{hoho@math.su.se}}
+  Axel Ljunström\\
+  \footnotesize{Stockholm University, Sweden}\\
+  \footnotesize{\texttt{axel.ljungstrom@math.su.se}}
   \and
-  Another author\\
-  \footnotesize{SU}\\
-  \footnotesize{\texttt{haha@math.su.se}}
-  \and
-  A third author\\
-  \footnotesize{SU}\\
-  \footnotesize{\texttt{hehe@math.su.se}}
+  %% Anders Mörtberg\\
+  %% \footnotesize{Stockholm University, Sweden}\\
+  %% \footnotesize{\texttt{anders.mortberg@math.su.se}}
+  %% \and
+  Loïc Pujet\\
+  \footnotesize{Stockholm University, Sweden}\\
+  \footnotesize{\texttt{loic@pujet.fr}}
 }
 \date{}
 
 \begin{document}
 
 \maketitle
-
-In~\cite{BuchholtzFavonia18}, Buchholtz and Favonia develop a theory
-of cellular cohomology in HoTT. They proceed in two steps:
+\vspace{-.5cm}
 %
-first, they define the cohomology groups of a CW complex with the
+In~\cite{BuchholtzFavonia18}, Buchholtz and Favonia develop a theory
+of cellular cohomology in HoTT. The authors proceed in two steps:
+%
+first, they define the cohomology groups of a CW complex, employing the
 standard definition in terms of cochain complexes (see e.g. \cite{May1999}),
 and then, they construct of an isomorphism between their definition and
-the more well-established cohomology defined in terms of Eilenberg-MacLane
+the more well-established cohomology theory defined in terms of Eilenberg-MacLane
 spaces \cite{LicataFinster14}.
 %
 This second step allows the authors to derive many properties of their
 cohomology theory (e.g. functoriality and the Eilenberg-Steenrod axioms)
-by simply transporting the proofs from Eilenberg-Maclane cohomology.
+simply by transporting the relevant proofs from Eilenberg-MacLane cohomology.
 %
-However, this strategy is not as readily available when developing the dual
-theory, cellular homology:
+However, this strategy is not as readily available when developing the cellular \emph{homology}:
 %
-even though there is a definition of homology in HoTT based on
-Eilenberg-Maclane spaces~\cite{graham18,christensen2020hurewicz}, its
-definition is significantly more involved than cohomology, making
-it harder to work with.
-%
-\todo{clearly state new results}
+even though we can define homology theories in terms of Eilenberg-MacLane spaces in HoTT~\cite{graham18,christensen2020hurewicz}, this is significantly more involved than for cohomology. This suggests that, perhaps, a direct construction of cellular homology is the more feasible alternative.
 
-In this work, we use Cubical Agda to revisit Buchholtz and Favonia's
-definition of cellular chain complexes.
-%
-We then define a functorial homology theory not via reduction to another more
+In this work, we revisit Buchholtz and Favonia's
+definition of cellular chain complexes, from which we define a functorial homology theory. This is done not via reduction to another more
 well-studied definition, but by developing the theory of CW complexes and
 cellular maps.
 %
 In particular, we prove a constructive version of the \emph{cellular
-approximation theorem}, a cornerstone of the classical theory of CW complexes.
+approximation theorem}, a cornerstone of the classical theory of CW complexes. All results presented here have been formalised in \texttt{Cubical Agda}.
 
 \bigskip
 
-Define $\bN^{-} := \bN \cup \{-1\}$ and let $\mathsf{Fin}(n)$ denote the finite
-set with $n$ elements. We will need the following definition for CW complexes:
-%
-\begin{definition}[CW skeleta]
-  A \textbf{CW-skeleton} is an infinite sequence of types and maps
-  \[X_{-1} \xrightarrow{\incl{-1}} X_0 \xrightarrow{\incl{0}} X_1 \xrightarrow{\incl{1}} \dots \]
-  equipped with a function $c : \bN^- \to \bN$ and a set of attaching maps $\alpha_i : S^i \times \fin{c_i} \to X_i$ such that $X_{-1}$ is empty and the following square is a pushout:
-  %
-  \footnote{This definition is slightly different from the
+In what follows, let $\mathsf{Fin}(n)$ denote the finite
+set with $n$ elements. We will need the following definition in order to define CW complexes:\footnote{This definition is slightly different from the
   recursive definition employed in (the formalisation
   of)~\cite{BuchholtzFavonia18}. Its usefulness is two-fold: first, it
   allows us to also define infinite dimensional CW complexes, such as
   e.g. $\RPinf$. Second, it allows us to extract the $n$-skeleton,
-  $X_n$, of a CW-skeleton $X_{(-)}$ directly without having to rely on
+  $X_n$, of a CW-skeleton $X_{\bullet}$ directly without having to rely on
   auxilliary functions.}
   %
+%
+\begin{figure}[H]
+\begin{minipage}{0.65 \linewidth}
+\begin{definition}[CW skeleta]
+  A \textbf{CW-skeleton} is an infinite sequence of types and maps
+  $(X_{-1} \xrightarrow{\incl{-1}} X_0 \xrightarrow{\incl{0}} X_1 \xrightarrow{\incl{1}} \dots )$
+  equipped with a function $c : \bN\cup\{-1\} \to \bN$ and a set of attaching maps $\alpha_i : S^i \times \fin{c_i} \to X_i$ s.t. $X_{-1}$ is empty and the square on the right is a pushout. A CW-skeleton is said to be \textbf{finite (of dimension $n$)} if $\incl{m}$ is
+an equivalence for all $m \geq n$.
+\end{definition}
+\end{minipage}
+\begin{minipage}{0.35 \linewidth}
+  %
   \[
-\begin{tikzcd}[ampersand replacement=\&]
-	{S^{i} \times \fin{c(i)}} \&\& \fin{c(i)} \\
+\begin{tikzcd}[ampersand replacement=\& , row sep = small]
+	{S^{i} \times \fin{c_i}} \&\& \fin{c_i} \\
 	{X_i} \&\& {X_{i+1}}
 	\arrow["{\mathsf{snd}}", from=1-1, to=1-3]
 	\arrow["{\alpha_{i}}"', from=1-1, to=2-1]
@@ -133,9 +131,8 @@ set with $n$ elements. We will need the following definition for CW complexes:
 	\arrow["\lrcorner"{anchor=center, pos=0.125, rotate=180}, draw=none, from=2-3, to=1-1]
 \end{tikzcd}
 \]
-A CW-skeleton is said to be \textbf{finite (of dimension $n$)} if $\incl{m}$ is
-an equivalence for all $m \geq n$.
-\end{definition}
+\end{minipage}
+\end{figure}
 %
 The pushout condition ensures that the \( (i+1) \)-skeleton \( X_{i+1} \) is
 obtained by attaching a finite number of \( i \)-dimensional cells to the
@@ -148,7 +145,7 @@ We denote by $\cwskelinf$ the wild category whose objects are CW skeleta and
 whose morphisms are maps between their sequential colimits, i.e.
 $\mathsf{Hom}(X_\bullet,Y_\bullet) := (X_\infty \to Y_\infty)$.
 %
-We denote by $\cwskel$ the category with the same objects but whose
+We denote by $\cwskel$ the wild category with the same objects but whose
 morphisms are \emph{cellular maps}:
 %
 \begin{figure}[H]
@@ -179,7 +176,7 @@ morphisms are \emph{cellular maps}:
 \end{figure}
 \begin{definition}[CW complexes]
   A type $A$ is said to be a \textbf{CW complex} if there merely exists some
-  CW skeleton $X_\bullet$ such that $A$ is equivalent to the sequential colimit
+  CW skeleton $X_\bullet$ s.t. $A$ is equivalent to the sequential colimit
   of $X_\bullet$, i.e. $A \simeq X_\infty$.
   %% We say that $A$ is of \textbf{dimension $n$} if $X_\bullet$ is finite of
   %% dimension $n$ and that $A$ is \textbf{finite} if there merely exists some
@@ -189,41 +186,33 @@ morphisms are \emph{cellular maps}:
 Let $\bZ[n]$ denote the free abelian group with $n-1$ generators, with
 $\bZ[0]$ defined to be the trivial group. Buchholtz and
 Favonia~\cite{BuchholtzFavonia18} showed how to construct the chain
-complex
-\[
+complex associated to a CW-skeleton:
+$
 \dots \xrightarrow{\partial_3} \bZ[c_{2}]
 \xrightarrow{\partial_2} \bZ[c_{1}]
 \xrightarrow{\partial_1} \bZ[c_{0}]
 \xrightarrow{\partial_0} 0
-\]
-associated to a CW-skeleton $(X,\mathsf{incl},c,\alpha)$.
+$.
 %
 We can show that \( \partial_n \circ \partial_{n+1} = 0 \) for all \( n \),
 which allows us to define the \( n \)-th homology group of a CW-skeleton by
-$\hskel{n}(X) := \mathsf{ker}(\partial_n)/\mathsf{im}(\partial_{n+1})$.
-%
-\todo{do we want to talk about sphere bouquets?}
-%
-In fact, the homology groups can be extended to functors from \( \cwskel \)
+$\hskel{n}(X) := \mathsf{ker}(\partial_n)/\mathsf{im}(\partial_{n+1})$. The differentials $\partial_n$ are defined in terms of (an appropriate definition of) the \emph{degree} of map between wedge sums of spheres $\bigvee_{x : \mathsf{Fin}(c_{n+1})} S^n \to \bigvee_{x : \mathsf{Fin}(c_{n})} S^n$. In fact, much of our work can be reduced to statements about the behaviour of such functions and of the degree assignment.
+
+The homology groups defined here can be extended to functors from \( \cwskel \)
 to \( \abgrp \):
 %
 \begin{proposition}
-  $\hskel{n}$ is functorial, i.e. there is a functorial assignment of cellular
-  maps $f_\bullet : X_\bullet \to Y_\bullet$ to homomorphisms
-  $f_* : \hskel{n}(X_\bullet) \to \hskel{n}(Y_\bullet)$.
+  $\hskel{n}$ is functorial.
 \end{proposition}
-%
-\begin{proof}
-  The argument is standard. We can go from a cellular map to an intertwining map
-  between chain complexes, from which we get a map of homology groups.
-\end{proof}
+The argument is standard. We can transform a cellular map into an intertwining map
+  between chain complexes, from which we get a homomorphism of homology groups.
 
 Now, in order to get a homology theory on CW complexes, we would like to lift
 this homology functor from $\cwskel$ to $\cwskelinf$.
 %
 We can straightforwardly define $\hskelinf{n} : \cwskelinf \to \abgrp$ on
-objects by $\hskelinf{n}(X) := H_n^{\mathsf{skel}}(X)$, but the action on
-morphisms is less obvious: in order to reuse the functoriality of $\hskel{n}$,
+objects by $\hskelinf{n}(X) := H_n^{\mathsf{skel}}(X)$. The action on
+morphisms, however, is less obvious: in order to reuse the functoriality of $\hskel{n}$,
 we need a way to lift maps $X_\infty \to Y_\infty$ to cellular maps
 $X_\bullet \to Y_\bullet$.
 %
@@ -242,13 +231,12 @@ finite:
   Let $X_\bullet$ and $Y_\bullet$ be two finite CW skeleta and
   $f : X_{\infty} \to Y_{\infty}$ a map between their colimits.
   %
-  There merely exists a cellular map $f_\bullet : X_\bullet \to Y_\bullet$ such
-  that $f_\infty = f$.
+  There merely exists a cellular map $f_\bullet : X_\bullet \to Y_\bullet$ s.t. $f_\infty = f$.
 \end{theorem}
 %
 By \cref{cell-approx}, it suffices to define the functorial action of
 $\hskelinf{n}$ on functions (of finite complexes) $f : X_\infty \to Y_\infty$
-such that $f$ is merely equal to $f_\infty$ for some cellular map
+s.t. $f$ is merely equal to $f_\infty$ for some cellular map
 $f_i : X_\bullet \to Y_\bullet$.
 %
 By the rule of set-valued elimination of propositional truncations, it
@@ -262,18 +250,16 @@ $\hskel{n}(f_\bullet) = \hskel{n}(g_\bullet)$. To this end, we need
 to extend the approximation theorem to \emph{cellular homotopies}:
 %
 \begin{figure}[H]
-\vspace{-.3cm}
-  \begin{minipage}[t]{0.41 \linewidth}
-\vspace{-0.8cm}
+  \begin{minipage}{0.41 \linewidth}
 \begin{definition}
   A \textbf{cellular homotopy} between two cellular maps
-  $(f_i), (g_i) : X_\bullet \to Y_\bullet$, denoted $(f_i) \sim (g_i)$, is a
+  $f_\bullet, g_\bullet : X_\bullet \to Y_\bullet$, denoted $f_\bullet \sim g_\bullet$, is a
   family of paths $h_i : (x : X_i) \to \incl{i}(f_i(x)) =_{Y_{i+1}} \incl{i}(g_i(x))$
   together with fillers, for each $x:X_i$, of the square indicated on the right.
 \end{definition}
   \end{minipage}
 \hspace{.15cm}
-\begin{minipage}[t]{0.5 \linewidth}
+\begin{minipage}{0.5 \linewidth}
   \begin{tikzcd}[ampersand replacement=\&, row sep = small]
 	{\incl{i+1}(f_{i+1}(\incl{i}(x)))} \&\& {\incl{i+1}(f_{i+1}(\incl{i}(x)))} \\
 	\\
@@ -286,17 +272,17 @@ to extend the approximation theorem to \emph{cellular homotopies}:
 \end{minipage}
 \end{figure}
 \begin{proposition}\label{cellhomToHomology}
-  If $\truncT{}{(f_i) \sim (g_i)}$, then $\hskel{n}(f_{\bullet}) = \hskel{n}(g_{\bullet})$.
+  If $\truncT{}{f_\bullet \sim g_\bullet}$, then $\hskel{n}(f_{\bullet}) = \hskel{n}(g_{\bullet})$.
 \end{proposition}
 \cref{cellhomToHomology} follows via a technical but standard argument. The final component is a cellular approximation theorem for cellular homotopies.
 \begin{theorem}[Cellular approximation, part 2]\label{cellhom-approx}
-  Let $X_\bullet$ and $Y_\bullet$ be finite CW skeleta, $f$ and $g$ two cellular maps $X_\bullet \to Y_\bullet$ such that $f_\infty = g_\infty$. In this case, there merely exists a cellular homotopy $(f_i) \sim (g_i)$.
+  Let $X_\bullet$ and $Y_\bullet$ be finite CW skeleta with two cellular maps $f_\bullet, g_\bullet : X_\bullet \to Y_\bullet$ s.t. $f_\infty = g_\infty$. In this case, there merely exists a cellular homotopy $f_\bullet \sim g_\bullet$.
 \end{theorem}
-Combining~\ref{cellhom-approx} and \cref{cellhomToHomology}, we see that if $f_\infty = g_\infty$, then $\hskel{n}(f_\bullet) = \hskel{n}(g_\bullet)$, which completes the definition of the functorial action of $\hskelinf{n}$ on maps between finite complexes. In order to extend this to maps between possibly infinite complexes, one simply notes that $\hskelinf{n}(X_\bullet) \cong \hskelinf{n}(X_\bullet)^{(n + 1)})$ \todo{correct dimension?} where $X_{\bullet}^{(m)}$ denotes the finite subcomplex of $X_{i}$, converging at level $m$.
+Combining~\ref{cellhom-approx} and \cref{cellhomToHomology}, we see that if $f_\infty = g_\infty$, then $\hskel{n}(f_\bullet) = \hskel{n}(g_\bullet)$, which completes the definition of the functorial action of $\hskelinf{n}$ on maps between finite complexes. In order to extend this to maps between possibly infinite complexes, one simply notes that $\hskelinf{n}(X_\bullet) \cong \hskelinf{n}(X_\bullet^{(n + 1)})$ where $X_{\bullet}^{(m)}$ denotes the finite subcomplex of $X_{i}$, converging at level $m$.
 
 Thus, we have defined the functor $\hskelinf{n}$, assigning homology groups to any type equivalent to the colimit of a CW skeleton. However, for CW complexes, the existence of such an equivalence is only assumed to \emph{merely} exist. We would like to define a fuctor $\hcw{n} : \mathsf{CW} \to \abgrp$, but the universe of abelian groups is a groupoid. We may, however, apply the rule for groupoid-valued elimination of propositional truncations. Applied to the goal in question, it says that we may define $\hcw{n}$ by (1) defining $\hcw{n}(X_\infty)$ for CW-skelta $X_\bullet$, (2) showing that for $e : X_\infty \simeq Y_{\infty}$, we have an isomorphism $e_* : \hcw{n}(X_\infty) \simeq \hcw{n}(Y_\infty)$ and (3) that $e_*$ is functorial. For (1), we simply set $\hcw{n}(X_\infty) := \hskelinf{n}(X_\bullet)$. The conditions (2) and (3) now following from functoriality of $\hskelinf{n}$. Functoriality of $\hcw{n}$ follows in a similar manner. This completes the definition of the cellular cohomology theory $\hcw{n}$.
 
-\todo{outro/mention what we plan on doing next.}
+The formalisation of the analoguous cohomology theory as well as the verification of the Eilenberg-Steenrod axioms is future/ongoing work. When this is completed, we are planning on computing cellular (co)homology groups of some well-known spaces. Using this, we are planning on putting our theory to the test in \texttt{Cubical Agda} by attepting to carry out concrete (co)homology computations. Our hope is that the development of cellular (co)homology will perform better than other alternatives and will be able to compute e.g. some of the examples that failed in~\cite[Section 6]{BLM22}.
 
 \printbibliography
 
