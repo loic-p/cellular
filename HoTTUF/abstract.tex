@@ -79,7 +79,8 @@ simply by transporting the relevant proofs from Eilenberg-MacLane cohomology.
 %
 However, this strategy is not as readily available when developing cellular \emph{homology}:
 %
-even though we can define homology theories in terms of Eilenberg-MacLane spaces in HoTT~\cite{graham18,christensen2020hurewicz,FlorisPhd,spectralsequences}, this is significantly more involved than for cohomology. This suggests that, perhaps, a direct construction of cellular homology is the more feasible alternative.
+even though we can define homology theories in terms of Eilenberg-MacLane spaces in HoTT~\cite{graham18,christensen2020hurewicz,FlorisPhd,spectralsequences}, this is significantly more involved than for cohomology
+as it relies on the theory of stable homotopy groups and smash products of spectra. This suggests that, perhaps, a direct construction of cellular homology is the more feasible alternative.
 
 In this work, we revisit Buchholtz and Favonia's
 definition of cellular chain complexes, from which we define a functorial homology theory. This is done not via reduction to another more
@@ -89,10 +90,10 @@ cellular maps.
 In particular, we prove a constructive version of the \emph{cellular
   approximation theorem}, a cornerstone of the classical theory of CW complexes. All results presented here have been formalised in \CubicalAgda \cite{cubicalagda2}.
 
-\smallskip
+% \smallskip
 
-In what follows, let $\mathsf{Fin}(n)$ denote the finite
-set with $n$ elements. We will need the following definition in order to define CW complexes:\footnote{This definition is slightly different from the
+% Let $\mathsf{Fin}(n)$ denote the finite set with $n$ elements.
+We will need the following definition to define CW complexes:\footnote{This definition is slightly different from the
   recursive definition employed in (the formalisation
   of)~\cite{BuchholtzFavonia18}. Its usefulness is two-fold: first, it
   allows us to also define infinite dimensional CW complexes, such as
@@ -103,7 +104,7 @@ set with $n$ elements. We will need the following definition in order to define 
 %
 \begin{figure}[H]
 \begin{minipage}{0.65 \linewidth}
-\begin{definition}[CW skeleta]
+\begin{definition}
   A \textbf{CW-skeleton} is an infinite sequence of types and maps
   $(X_{-1} \xrightarrow{\incl{-1}} X_0 \xrightarrow{\incl{0}} X_1 \xrightarrow{\incl{1}} \dots )$
   equipped with a function $c : \bN \to \bN$ and a set of attaching maps $\alpha_i : S^i \times \fin{c_{i+1}} \to X_i$ for $i \geq -1$ s.t.\ $X_{-1}$ is empty and the square on the right is a (homotopy) pushout. A CW-skeleton is said to be \textbf{finite (of dimension $n$)} if $\incl{m}$ is
@@ -113,7 +114,7 @@ an equivalence for all $m \geq n$.
 \begin{minipage}{0.35 \linewidth}
   %
   \[
-\begin{tikzcd}[ampersand replacement=\& , row sep = small]
+\begin{tikzcd}[ampersand replacement=\&]
 	{S^{i} \times \fin{c_{i+1}}} \&\& \fin{c_{i+1}} \\
 	{X_i} \&\& {X_{i+1}}
 	\arrow["{\mathsf{snd}}", from=1-1, to=1-3]
@@ -144,9 +145,9 @@ morphisms are \emph{cellular maps}:
 \vspace{-.2cm}
 \begin{minipage}[t]{0.7 \linewidth}
 \begin{definition}
-  Let $X_\bullet$ and $Y_\bullet$ be CW skeleta. A \textbf{cellular map}, which
-  we denote by $f_\bullet : X_\bullet \to Y_\bullet$, consists of a family of
-  functions $f_i : X_i \to Y_i$ for each $i \geq -1$ along with a family of
+  Let $X_\bullet$ and $Y_\bullet$ be CW skeleta. A \textbf{cellular map},
+  denoted $f_\bullet : X_\bullet \to Y_\bullet$, consists of a family
+  $f_i : X_i \to Y_i$ for $i \geq -1$ along with a family of
   homotopies \( h_i \) making the diagram on the right commute.
 \end{definition}
 \end{minipage}
@@ -166,7 +167,8 @@ morphisms are \emph{cellular maps}:
 \]
 \end{minipage}
 \end{figure}
-\begin{definition}[CW complexes]
+\vspace{-0.5cm}
+\begin{definition}
   A type $A$ is said to be a \textbf{CW complex} if there merely exists some
   CW skeleton $X_\bullet$ s.t.\ $A$ is equivalent to the sequential colimit
   of $X_\bullet$, i.e.\ $A \simeq X_\infty$.
@@ -243,10 +245,10 @@ to extend the approximation theorem to \emph{cellular homotopies}:
 \begin{figure}[H]
   \begin{minipage}{0.41 \linewidth}
 \begin{definition}
-  A \textbf{cellular homotopy} between two cellular maps
+  A \textbf{cellular homotopy} between cellular maps
   $f_\bullet, g_\bullet : X_\bullet \to Y_\bullet$, denoted $f_\bullet \sim g_\bullet$, is a
-  family of paths $h_i : (x : X_i) \to \incl{i}(f_i(x)) =_{Y_{i+1}} \incl{i}(g_i(x))$
-  together with fillers, for each $x:X_i$, of the square indicated on the right.
+  family $h_i : (x : X_i) \to \incl{i}(f_i(x)) =_{Y_{i+1}} \incl{i}(g_i(x))$
+  with fillers, for each $x:X_i$, of the square on the right.
 \end{definition}
   \end{minipage}
 \hspace{.15cm}
@@ -271,9 +273,9 @@ This follows from a technical, but standard, argument. The final component is:  
 \end{theorem}
 Combining~\cref{cellhom-approx} and \cref{cellhomToHomology}, we see that if $f_\infty = g_\infty$, then $\hskel{n}(f_\bullet) = \hskel{n}(g_\bullet)$, which completes the definition of the functorial action of $\hskelinf{n}$ on maps between finite complexes. In order to extend this to maps between possibly infinite complexes, one simply notes that $\hskelinf{n}(X_\bullet) \cong \hskelinf{n}(X_\bullet^{(n + 2)})$ where $X_{\bullet}^{(m)}$ denotes the finite subcomplex of $X_{i}$, converging at level $m$.
 
-Thus, we have defined the functor $\hskelinf{n}$, assigning homology groups to any type equivalent to the colimit of a CW skeleton. However, for CW complexes, the existence of such an equivalence is only assumed to \emph{merely} exist. We would like to define a fuctor $\hcw{n} : \mathsf{CW} \to \abgrp$, but the universe of abelian groups is a groupoid. We may, however, apply the rule for groupoid-valued elimination of propositional truncations. Applied to the goal in question, it says that we may define $\hcw{n}$ by (1) defining $\hcw{n}(X_\infty)$ for CW-skelta $X_\bullet$, (2) showing that for $e : X_\infty \simeq Y_{\infty}$, we have an isomorphism $e_* : \hcw{n}(X_\infty) \cong \hcw{n}(Y_\infty)$ and (3) that $e_*$ is functorial. For (1), we simply set $\hcw{n}(X_\infty) := \hskelinf{n}(X_\bullet)$. The conditions (2) and (3) follow from functoriality of $\hskelinf{n}$. Functoriality of $\hcw{n}$ follows in a similar manner. This completes the definition of the cellular homology theory $\hcw{n}$.
+Thus, we have defined the functor $\hskelinf{n}$, assigning homology groups to any type equivalent to the colimit of a CW skeleton. However, for CW complexes, the existence of such an equivalence is only assumed to \emph{merely} exist. We would like to define a fuctor $\hcw{n} : \mathsf{CW} \to \abgrp$, but the universe of abelian groups is a groupoid. We may, however, apply the rule for groupoid-valued elimination of propositional truncations. Applied to the goal in question, it says that we may define $\hcw{n}$ by (1) defining $\hcw{n}(X_\infty)$ for CW-skeleta $X_\bullet$, (2) showing that for $e : X_\infty \simeq Y_{\infty}$, we have an isomorphism $e_* : \hcw{n}(X_\infty) \cong \hcw{n}(Y_\infty)$ and (3) that $e_*$ is functorial. For (1), we simply set $\hcw{n}(X_\infty) := \hskelinf{n}(X_\bullet)$. The conditions (2) and (3) follow from functoriality of $\hskelinf{n}$. Functoriality of $\hcw{n}$ follows in a similar manner. This completes the definition of the cellular homology functors~$\hcw{n}$.
 
-The formalisation of the analoguous cohomology theory as well as the verification of the Eilenberg-Steenrod axioms is future/ongoing work. When this is completed, we are planning on computing cellular (co)homology groups of some well-known spaces. Using this, we are planning on putting our theory to the test in \texttt{Cubical Agda} by attepting to carry out concrete (co)homology computations. Our hope is that the development of cellular (co)homology will perform better than other alternatives and will be able to compute e.g.\ some of the examples that failed in~\cite[Section 6]{BLM22}. We also hope that the results we present here will be useful in the formalisation of recent work by~Barton and Campion~\cite{SerreFiniteness}, which, in fact, was the orignal motivation behind this project.
+The formalisation of the analoguous cohomology theory as well as the verification of the Eilenberg-Steenrod axioms is future/ongoing work. When this is completed, we are planning to compute cellular (co)homology groups of some well-known spaces and use \CubicalAgda to do concrete computations involving the (co)homology operations. Our hope is that the development of cellular (co)homology will perform better than other alternatives and will be able to compute e.g.\ some of the examples that failed in~\cite[Section 6]{BLM22}. We also hope that the results we present here will be useful in the formalisation of recent work by~Barton and Campion~\cite{SerreFiniteness} on a synthetic proof of Serre's finiteness theorem for homotopy groups of spheres, which, in fact, was the orignal motivation behind this project.
 
 \printbibliography
 
