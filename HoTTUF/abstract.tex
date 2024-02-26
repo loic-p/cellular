@@ -69,7 +69,7 @@ of cellular cohomology in HoTT. The authors proceed in two steps:
 %
 first, they define the cohomology groups of a CW complex, employing the
 standard definition in terms of cochain complexes (see e.g.\ \cite{May1999}),
-and then, they construct of an isomorphism between their definition and
+and then they construct an isomorphism between their definition and
 the, in HoTT, more well-established cohomology theory defined in terms of Eilenberg-MacLane
 spaces \cite{ShulmanBlog13,LicataFinster14,CavalloMsc15}.
 %
@@ -88,7 +88,7 @@ well-studied definition, but by developing the theory of CW complexes and
 cellular maps.
 %
 In particular, we prove a constructive version of the \emph{cellular
-  approximation theorem}, a cornerstone of the classical theory of CW complexes. All results presented here have been formalised in \CubicalAgda \cite{cubicalagda2}.
+  approximation theorem}, a cornerstone of the classical theory of CW complexes. All results presented here have been \href{https://github.com/loic-p/cellular/blob/main/summary.agda}{formalised} in \CubicalAgda \cite{cubicalagda2}.
 
 % \smallskip
 
@@ -105,12 +105,13 @@ We will need the following definition to define CW complexes:\footnote{This defi
 \begin{figure}[H]
 \begin{minipage}{0.68 \linewidth}
 \begin{definition}
-  A \textbf{CW-skeleton} is a sequence of types and maps
+  A \textbf{CW-skeleton} is an infinite sequence of types and maps
   $(X_{-1} \xrightarrow{\incl{-1}} X_0 \xrightarrow{\incl{0}} X_1 \xrightarrow{\incl{1}} \dots )$
-  equipped with a function $c : \bN \to \bN$ and a set of attaching maps $\alpha_i : S^i \times \fin{c_{i+1}} \to X_i$ for $i \geq -1$ s.t.
+  equipped with a function $c : \bN \to \bN$ and a set of attaching maps $\alpha_i : S^i \times \fin{c_{i+1}} \to X_i$ for
 \end{definition}
 \end{minipage}
 \vspace{-.1cm}
+\hspace{.1cm}
 \begin{minipage}{0.32 \linewidth}
   %
 \begin{tikzcd}[ampersand replacement=\& , column sep = small , row sep = small]
@@ -123,11 +124,11 @@ We will need the following definition to define CW complexes:\footnote{This defi
 	\arrow["\lrcorner"{anchor=center, pos=0.125, rotate=180}, draw=none, from=2-3, to=1-1]
 \end{tikzcd}
 \end{minipage}
-\emph{$X_{-1}$ is empty and the square on the right is a (homotopy) pushout. A CW-skeleton is said to be \textbf{finite (of dimension $n$)} if $\incl{m}$ is
+\emph{$i \geq -1$ s.t. $X_{-1}$ is empty and the square on the right is a (homotopy) pushout. A CW-skeleton is said to be \textbf{finite (of dimension $n$)} if $\incl{m}$ is
 an equivalence for all $m \geq n$.}
 \end{figure}
 %
-The pushout condition ensures that the \( (i+1) \)-skeleton \( X_{i+1} \) is
+\noindent The pushout condition ensures that the \( (i+1) \)-skeleton \( X_{i+1} \) is
 obtained by attaching a finite number of \( i \)-dimensional cells to the
 \( i \)-skeleton \( X_i \).
 %
@@ -161,8 +162,8 @@ morphisms are \emph{cellular maps}:
 	\arrow["{f_{i+1}}", from=1-1, to=1-3]
 	\arrow["{f_{i}}"', from=2-1, to=2-3]
 	\arrow[equal, "{h_{i}}"', from=1-1, to=2-3, shorten=3ex]
-	\arrow[hook, from=2-1, to=1-1]
-	\arrow[hook, from=2-3, to=1-3]
+	\arrow[from=2-1, to=1-1]
+	\arrow[from=2-3, to=1-3]
 \end{tikzcd}
 \]
 \end{minipage}
@@ -190,7 +191,7 @@ $.
 %
 We can show that \( \partial_n \circ \partial_{n+1} = 0 \) for all \( n \),
 which allows us to define the \( n \)-th homology group of a CW-skeleton by
-$\hskel{n}(X) := \mathsf{ker}(\partial_n)/\mathsf{im}(\partial_{n+1})$. The differentials $\partial_n$ are defined in terms of (an appropriate definition of) the \emph{degree} of map between wedge sums of spheres $\bigvee_{x : \mathsf{Fin}(c_{n+1})} \mathbb{S}^{n+1} \to \bigvee_{x : \mathsf{Fin}(c_{n})} \mathbb{S}^{n+1}$. In fact, much of our work can be reduced to statements about the behaviour of such functions and of the degree assignment.
+$\hskel{n}(X) := \mathsf{ker}(\partial_n)/\mathsf{im}(\partial_{n+1})$. The differentials $\partial_n$ are defined in terms of (an appropriate definition of) the \emph{degree} of maps between wedge sums of spheres $\bigvee_{x : \mathsf{Fin}(c_{n+1})} \mathbb{S}^{n+1} \to \bigvee_{x : \mathsf{Fin}(c_{n})} \mathbb{S}^{n+1}$. In fact, much of our work can be reduced to statements about the behaviour of such functions and of the degree assignment.
 
 The homology groups defined here can be extended to functors from \( \cwskel \)
 to \( \abgrp \):\footnote{Although \( \cwskel \) is wild, \( \abgrp \) is a $1$-category, and hence functoriality is interpreted in the $1$-categorical sense.}
@@ -198,7 +199,7 @@ to \( \abgrp \):\footnote{Although \( \cwskel \) is wild, \( \abgrp \) is a $1$-
 \begin{proposition}
   $\hskel{n}$ is functorial.
 \end{proposition}
-The argument is standard. We can transform a cellular map into an intertwining map
+\noindent The argument is standard. We can transform a cellular map into an intertwining map
   between chain complexes, from which we get a homomorphism of homology groups.
 
 Now, in order to get a homology theory on CW complexes, we would like to lift
@@ -221,7 +222,7 @@ finite:
 %
 %% Given a CW skeleton $X_\bullet$, let $(X_i^{(n)})$ denote the subcomplex obtained by setting $X_i^{(n)} = \begin{cases} X_i & \text{ if $x \leq n$} \\ X_n &\text{ otherwise} \end{cases}$.
 \begin{theorem}[Cellular approximation, part 1]\label{cell-approx}
-  Let $X_\bullet$ and $Y_\bullet$ be two finite CW-skeleta and
+  Let $X_\bullet$ and $Y_\bullet$ be finite CW-skeleta and
   $f : X_{\infty} \to Y_{\infty}$ a map between their colimits.
   %
   There merely exists a cellular map $f_\bullet : X_\bullet \to Y_\bullet$ s.t.\ $f_\infty = f$.
@@ -239,7 +240,7 @@ $\hskelinf{n}(f_\infty) = \hskelinf{n}(g_\infty)$.
 %
 We define $\hskelinf{n}(f_\infty) := \hskel{n}(f_\bullet)$. To complete the
 definition, we need to show that, if $f_\infty = g_\infty$, then
-$\hskel{n}(f_\bullet) = \hskel{n}(g_\bullet)$: we need
+$\hskel{n}(f_\bullet) = \hskel{n}(g_\bullet)$. Thus, we need
 to extend the approximation theorem to \emph{cellular homotopies}:
 %
 \begin{figure}[H]
