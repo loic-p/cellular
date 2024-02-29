@@ -1,0 +1,18 @@
+[0] Config.pm:307> INFO - This is Biber 2.17
+[0] Config.pm:310> INFO - Logfile is 'abstract.blg'
+[75] biber:340> INFO - === mån feb 26, 2024, 16:24:23
+[87] Biber.pm:418> INFO - Reading 'abstract.bcf'
+[149] Biber.pm:972> INFO - Found 13 citekeys in bib section 0
+[160] Biber.pm:4383> INFO - Processing section 0
+[169] Biber.pm:4574> INFO - Looking for bibtex file 'refs.bib' for section 0
+[178] bibtex.pm:1713> INFO - LaTeX decoding ...
+[478] bibtex.pm:1518> INFO - Found BibTeX data source 'refs.bib'
+[601] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'variable = shifted' with 'variable = non-ignorable'
+[601] UCollate.pm:68> INFO - Overriding locale 'en-US' defaults 'normalization = NFD' with 'normalization = prenormalized'
+[601] Biber.pm:4203> INFO - Sorting list 'nty/global//global/global' of type 'entry' with template 'nty' and locale 'en-US'
+[601] Biber.pm:4209> INFO - No sort tailoring available for locale 'en-US'
+[616] bbl.pm:654> INFO - Writing 'abstract.bbl' with encoding 'UTF-8'
+[622] bbl.pm:757> INFO - Output to abstract.bbl
+[622] Biber.pm:130> WARN - legacy month field 'May' in entry 'FlorisPhd' is not an integer - this will probably not sort properly.
+[622] Biber.pm:130> WARN - BibTeX subsystem: /tmp/biber_tmp_BZDI/8fe4c9854184545302f21ebf0d47516c_27510.utf8, line 3070, warning: 3 characters of junk seen at toplevel
+[622] Biber.pm:132> INFO - WARNINGS: 2

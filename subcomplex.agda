@@ -13,29 +13,42 @@ open import Cubical.Data.Nat.Order
 open import Cubical.Data.Fin
 open import Cubical.Data.Sigma
 open import Cubical.Data.Empty as ⊥
+open import Cubical.Data.CW
+open import Cubical.Data.Sequence
+open import Cubical.Data.CW.ChainComplex
+
 
 open import Cubical.HITs.Sn
 open import Cubical.HITs.Pushout
 open import Cubical.HITs.Susp
 
 open import Cubical.Relation.Nullary
+open import Cubical.Structures.Successor
 
 open import Cubical.Algebra.Group
 open import Cubical.Algebra.AbGroup
 open import Cubical.Algebra.Group.Morphisms
 open import Cubical.Algebra.Group.MorphismProperties
 
-open import prelude
-open import spherebouquet
-open import cw-complex
 open import cw-chain-complex
-open import ChainComplex
+-- open import ChainComplex
+
+open import Cubical.Algebra.ChainComplex.Base
+open import Cubical.Algebra.ChainComplex.Natindexed
+
 
 module subcomplex where
 
+
+private
+  variable
+    ℓ ℓ' ℓ'' : Level
+
+open CCℕ
+
 -- finite subcomplex
-module _ (C : CW) where
-  subComplexFam : (n : ℕ) (m : ℕ) → Type
+module _ (C : CWskel ℓ) where
+  subComplexFam : (n : ℕ) (m : ℕ) → Type ℓ
   subComplexFam n m with (m ≟ n)
   ... | lt x = fst C m
   ... | eq x = fst C m
@@ -66,7 +79,7 @@ module _ (C : CW) where
   ... | lt x | eq x₁ = snd C .snd .snd .snd m
   ... | lt x | gt x₁ = ⊥.rec (¬-<-suc x x₁)
   ... | eq x | lt x₁ = ⊥.rec (¬m<m (subst (_< n) x (<-trans (0 , refl) x₁)))
-  ... | eq x | eq x₁ = ⊥.rec (snot (x₁ ∙ sym x))
+  ... | eq x | eq x₁ = ⊥.rec (¬m<m (0 , x₁ ∙ sym x))
   ... | eq x | gt x₁ =
     compEquiv (pathToEquiv (λ i → fst C (x (~ i))))
               (isoToEquiv (PushoutEmptyFam (λ x → ¬Fin0 (fst x)) ¬Fin0))
@@ -76,22 +89,22 @@ module _ (C : CW) where
     ⊥.rec (<-asym (<-trans (0 , refl) (subst (_< suc n) (sym x₁) (0 , refl))) x)
   ... | gt x | gt x₁ = isoToEquiv (PushoutEmptyFam (λ x → ¬Fin0 (fst x)) ¬Fin0)
 
-  subComplexYieldsCW : (n : ℕ) → yieldsCW (subComplexFam n)
-  fst (subComplexYieldsCW n) = subComplexCard n
-  fst (snd (subComplexYieldsCW n)) = subComplexα n
-  fst (snd (snd (subComplexYieldsCW n))) = subComplex₀-empty n
-  snd (snd (snd (subComplexYieldsCW n))) m = subComplexFam≃Pushout n m
+  subComplexYieldsCWskel : (n : ℕ) → yieldsCWskel (subComplexFam n)
+  fst (subComplexYieldsCWskel n) = subComplexCard n
+  fst (snd (subComplexYieldsCWskel n)) = subComplexα n
+  fst (snd (snd (subComplexYieldsCWskel n))) = subComplex₀-empty n
+  snd (snd (snd (subComplexYieldsCWskel n))) m = subComplexFam≃Pushout n m
 
-  subComplex : (n : ℕ) → CW
+  subComplex : (n : ℕ) → CWskel ℓ
   fst (subComplex n) = subComplexFam n
-  snd (subComplex n) = subComplexYieldsCW n
+  snd (subComplex n) = subComplexYieldsCWskel n
 
   subComplexFin : (n m : ℕ) (p : n ≤ m)
-    → isEquiv (CW↪ (subComplexFam n , subComplexYieldsCW n) m)
+    → isEquiv (CW↪ (subComplexFam n , subComplexYieldsCWskel n) m)
   subComplexFin n m r with (m ≟ n) | (suc m ≟ n)
   ... | lt x | p = ⊥.rec (¬m<m (≤-trans x r))
   ... | eq x | lt x₁ = ⊥.rec (¬m<m (subst (_< n) x (<-trans (0 , refl) x₁)))
-  ... | eq x | eq x₁ = ⊥.rec (snot (x₁ ∙ sym x))
+  ... | eq x | eq x₁ = ⊥.rec (⊥.rec (¬m<m (0 , x₁ ∙ sym x)))
   ... | eq x | gt x₁ =
     subst isEquiv (funExt λ x → cong (help .fst)
           (retEq (isoToEquiv (PushoutEmptyFam {A = Fin 0 × fst C m}
@@ -109,13 +122,13 @@ module _ (C : CW) where
                           (λ x₃ → ¬Fin0 (fst x₃)) ¬Fin0 {f = snd} {g = fst}))))
                   (idEquiv _ .snd)
 
-  subComplexYieldsFinCW : (n : ℕ) → yieldsFinCW n (subComplexFam n)
-  fst (subComplexYieldsFinCW n) = subComplexYieldsCW n
-  snd (subComplexYieldsFinCW n) k = subComplexFin n (k +ℕ n) (k , refl)
+  subComplexYieldsFinCWskel : (n : ℕ) → yieldsFinCWskel n (subComplexFam n)
+  fst (subComplexYieldsFinCWskel n) = subComplexYieldsCWskel n
+  snd (subComplexYieldsFinCWskel n) k = subComplexFin n (k +ℕ n) (k , refl)
 
-  finSubComplex : (n : ℕ) → finCW n
+  finSubComplex : (n : ℕ) → finCWskel ℓ n
   fst (finSubComplex n) = subComplexFam n
-  snd (finSubComplex n) = subComplexYieldsFinCW n
+  snd (finSubComplex n) = subComplexYieldsFinCWskel n
 
   complex≃subcomplex : (n m : ℕ) → m ≤ n → fst C m ≃ subComplex n .fst m
   complex≃subcomplex n m p with (m ≟ n)
@@ -123,40 +136,16 @@ module _ (C : CW) where
   ... | eq x = idEquiv _
   ... | gt x = ⊥.rec (¬m<m (≤-trans x p))
 
--- module _ (n : ℕ) (C : finCW n) where
---   open CW-fields (finCW→CW n C)
---   private
---     Cᶜʷ = finCW→CW n C
-
---   finCWCoe₁ : (m : ℕ) → fst C m ≃ subComplex Cᶜʷ n .fst m
---   finCWCoe₁ m with (m ≟ n)
---   ... | lt x = idEquiv _
---   ... | eq x = idEquiv _
---   ... | gt x = invEquiv (finCW≃ n C m (<-weaken x))
-
---   finCWCoe₂₁ : (m : ℕ)
---     → PathP (λ i → yieldsCW λ m → ua (finCWCoe₁ m) i)
---              (fst (C .snd)) (subComplexYieldsCW Cᶜʷ n)
---   fst (finCWCoe₂₁ m i) = {!!}
---   fst (snd (finCWCoe₂₁ m i)) = {!!}
---   fst (snd (snd (finCWCoe₂₁ m i))) = {!!}
---   snd (snd (snd (finCWCoe₂₁ m i))) = {!!}
-
---   finCWCoe₂ : (m : ℕ)
---     → PathP (λ i → yieldsFinCW n λ m → ua (finCWCoe₁ m) i)
---              (C .snd) (subComplexYieldsFinCW Cᶜʷ n)
---   finCWCoe₂ m = {!!}
-
-realiseSubComplex : (n : ℕ) (C : CW) → Iso (fst C n) (realise (subComplex C n))
+realiseSubComplex : (n : ℕ) (C : CWskel ℓ) → Iso (fst C n) (realise (subComplex C n))
 realiseSubComplex n C =
   compIso (equivToIso (complex≃subcomplex C n n (0 , refl)))
           (realiseFin n (finSubComplex C n))
 
-module _ (C : CW) where
+module _ (C : CWskel ℓ) where
   ChainSubComplex : (n : ℕ) → snd C .fst n ≡ snd (subComplex C (suc n)) .fst n
   ChainSubComplex n with (n ≟ suc n)
   ... | lt x = refl
-  ... | eq x = ⊥.rec (snot (sym x))
+  ... | eq x = ⊥.rec (¬m<m (0 , sym x))
   ... | gt x = ⊥.rec (¬-suc-n<n x)
 
   ≤ChainSubComplex : (n m : ℕ) → m < n → snd C .fst m ≡ snd (subComplex C n) .fst m
@@ -165,34 +154,18 @@ module _ (C : CW) where
   ... | eq x = ⊥.rec (¬m<m (subst (_< n) x p))
   ... | gt x = ⊥.rec (¬m<m (<-trans x p))
 
--- needed?
 
--- subComplLem : (C : CW) (n : ℕ) (m : ℕ) (p : suc m < n)
---   → PathP (λ i → (SphereBouquet (suc m) (Fin (≤ChainSubComplex C n (suc m) p i))
---                →∙ SphereBouquet (suc m) (Fin (≤ChainSubComplex C n m (suc (fst p)
---                                      , sym (+-suc (fst p) (suc m)) ∙ snd p) i))))
---            (preboundary.pre∂ C m)
---            (preboundary.pre∂ (subComplex C n) m)
--- subComplLem c n m p with (m ≟ n) | (suc m ≟ n) | (suc (suc m) ≟ n)
--- ... | lt x | lt x₁ | lt x₂ = refl
--- ... | lt x | lt x₁ | eq x₂ = refl
--- ... | lt x | lt x₁ | gt x₂ = ⊥.rec (¬squeeze< (x₁ , x₂))
--- ... | lt x | eq x₁ | r = ⊥.rec (¬m<m (subst (_< n) x₁ p))
--- ... | lt x | gt x₁ | r = ⊥.rec (¬m<m (<-trans x₁ p))
--- ... | eq x | b | r = ⊥.rec (¬-suc-n<n (subst (suc m <_) (sym x) p))
--- ... | gt x | b | r = ⊥.rec (¬-suc-n<n (<-trans p x))
-
-subChainIso : (C : CW) (n m : ℕ) (p : m < n)
-  → AbGroupIso (ℤ[A C ] m) (ℤ[A subComplex C n ] m)
+subChainIso : (C : CWskel ℓ) (n m : ℕ) (p : m < n)
+  → AbGroupIso (CWskel-fields.ℤ[A_] C m) (CWskel-fields.ℤ[A_] (subComplex C n) m)
 subChainIso C n m p with (m ≟ n)
 ... | lt x = idGroupIso
 ... | eq x = ⊥.rec (¬m<m (subst (m <_) (sym x) p))
 ... | gt x = ⊥.rec (¬m<m (<-trans x p))
 
-subComplexHomology : (C : CW) (n m : ℕ) (p : suc (suc m) < n)
+subComplexHomology : (C : CWskel ℓ) (n m : ℕ) (p : suc (suc m) < n)
   → GroupIso (Hᶜʷ C m) (Hᶜʷ (subComplex C n) m)
 subComplexHomology C n m p =
-  homologyIso m _ _
+  homologyIso (m , _) _ _
     (subChainIso C n (suc (suc m)) p)
     (subChainIso C n (suc m) (<-trans (0 , refl) p))
     (subChainIso C n m (<-trans (0 , refl) (<-trans (0 , refl) p)))
@@ -230,10 +203,10 @@ open import CWHomotopy
 open import cw-map
 
 open import Cubical.Foundations.Transport
-restrCellMap : (C D : CW) (f : cellMap C D) (m : ℕ)
+restrCellMap : (C : CWskel ℓ) (D : CWskel ℓ') (f : cellMap C D) (m : ℕ)
   → cellMap (subComplex C m) (subComplex D m)
 SequenceMap.map (restrCellMap C D f m) n k with (n ≟ m)
-... | lt x = SequenceMap.map f n k 
+... | lt x = SequenceMap.map f n k
 ... | eq x = SequenceMap.map f n k
 ... | gt x = SequenceMap.map f m k
 SequenceMap.comm (restrCellMap C D f m) n x with (suc n ≟ m) | (n ≟ m)
@@ -241,7 +214,7 @@ SequenceMap.comm (restrCellMap C D f m) n x with (suc n ≟ m) | (n ≟ m)
 ... | lt x₁ | eq x₂ = rec (¬m<m (subst (_< m) x₂ (<-trans (0 , (λ _ → suc n)) x₁)))
 ... | lt x₁ | gt x₂ = rec (¬-suc-n<n (<-trans (suc-≤-suc x₂) x₁))
 ... | eq x₁ | lt x₂ = SequenceMap.comm f n x
-... | eq x₁ | eq x₂ = rec (snot (x₁ ∙ (λ i → x₂ (~ i))))
+... | eq x₁ | eq x₂ = rec (¬m<m (0 , (x₁ ∙ sym x₂)))
 ... | eq x₁ | gt x₂ = rec (¬-suc-n<n (subst (_< n) (sym x₁) x₂))
 ... | gt x₁ | lt x₂ = rec (¬-<-suc x₂ x₁)
 ... | gt x₁ | eq x₂ =
@@ -250,152 +223,295 @@ SequenceMap.comm (restrCellMap C D f m) n x with (suc n ≟ m) | (n ≟ m)
     ∙ cong (SequenceMap.map f m) (sym (transportRefl _))
 ... | gt x₁ | gt x₂ = refl
 
-Hᶜʷ-sub : CW → ℕ → Group₀
-Hᶜʷ-sub C m = Hᶜʷ (subComplex C (3 +ℕ m)) m
-
-Hᶜʷ→finite : (C D : CW) (m : ℕ)
+Hᶜʷ→finite : (C : CWskel ℓ) (D : CWskel ℓ') (m : ℕ)
   (f : cellMap C D)
-  → GroupHom (Hᶜʷ-sub C m) (Hᶜʷ-sub D m)
+  → GroupHom (Hᶜʷ (subComplex C (3 +ℕ m)) m) (Hᶜʷ (subComplex D (3 +ℕ m)) m)
 Hᶜʷ→finite C D m f = ϕ
   where
   ϕ = chainComplexMap→HomologyMap
          {C = CW-ChainComplex (subComplex C (3 +ℕ m))}
          {D = CW-ChainComplex (subComplex D (3 +ℕ m))}
          (cellMap-to-ChainComplexMap (restrCellMap C D f (3 +ℕ m)))
-         m
+         (m , _)
 
-Hᶠᶜʷ : (m : ℕ) (C : finCW m) (n : ℕ) → Group₀
-Hᶠᶜʷ m C n = Hᶜʷ (finCW→CW m C) n
+Hᶠᶜʷ : (m : ℕ) (C : finCWskel ℓ m) (n : ℕ) → Group₀
+Hᶠᶜʷ m C n = Hᶜʷ (finCWskel→CWskel m C) n
 
 
 open import Cubical.HITs.PropositionalTruncation as PT
 open import cw-approx
-module _ (m : ℕ) {C D : finCW m}
-  (f g : cellMap (finCW→CW m C) (finCW→CW m D))
-  (h∞ : realiseCellMap f ≡ realiseCellMap g) where
 
-  cellHomotopy₁ : ∥ cellHom f g ∥₁
-  cellHomotopy₁ = map (λ {(F , h) → record { hom = F ; coh = h }})
-                      (pathToCellularHomotopyFin m f g h∞)
+module _ (k : ℕ) (n m : ℕ) {C : finCWskel ℓ n} {D : finCWskel ℓ' m}
+        (f : realise (finCWskel→CWskel n C) → realise (finCWskel→CWskel m D)) where
 
+  cellMap→Hᶠᶜʷ-hom : cellMap (finCWskel→CWskel n C) (finCWskel→CWskel m D) → GroupHom (Hᶠᶜʷ n C k) (Hᶠᶜʷ m D k)
+  cellMap→Hᶠᶜʷ-hom ϕ = chainComplexMap→HomologyMap (cellMap-to-ChainComplexMap ϕ) (k , _)
 
-module _ (m : ℕ) (n : ℕ) {C D : finCW m} 
-        (f : realise (finCW→CW m C) → realise (finCW→CW m D)) where
+  cellMap→Hᶠᶜʷ-hom-coh : (p q : Σ[ r ∈ (cellMap (finCWskel→CWskel n C) (finCWskel→CWskel m D)) ]
+                                       (realiseSequenceMap r ≡ f))
+      → cellMap→Hᶠᶜʷ-hom (fst p) ≡ cellMap→Hᶠᶜʷ-hom (fst q)
+  cellMap→Hᶠᶜʷ-hom-coh p q = PT.rec (isSetGroupHom _ _)
+      ((λ ϕ → ChainHomotopy→HomologyPath (cellMap-to-ChainComplexMap (fst p))
+                                          (cellMap-to-ChainComplexMap (fst q))
+                                          (cellHom-to-ChainHomotopy ϕ)
+                                          (k , ≠suc)))
+      (cellHomotopy₁ n m (fst p) (fst q) (snd p ∙ sym (snd q)))
 
-  cellMap→Hᶠᶜʷ-hom : cellMap (finCW→CW m C) (finCW→CW m D) → GroupHom (Hᶠᶜʷ m C n) (Hᶠᶜʷ m D n)
-  cellMap→Hᶠᶜʷ-hom ϕ = chainComplexMap→HomologyMap (cellMap-to-ChainComplexMap ϕ) n
-
-  cellMap→Hᶠᶜʷ-hom-coh : (p q : Σ[ r ∈ (cellMap (finCW→CW m C) (finCW→CW m D)) ]
-                                (realiseSequenceMap r ≡ f))
-      → _
-  cellMap→Hᶠᶜʷ-hom-coh p q with (finMap→cellHom m (fst p) (fst q) (snd p ∙ sym (snd q)))
-  ... | r = PT.rec (isSetGroupHom _ _)
-                   (λ r → ChainHomotopy→HomologyPath  _ _ (cellHom-to-ChainHomotopy r) n) r
-
-  Hᶠᶜʷ→ : GroupHom (Hᶠᶜʷ m C n) (Hᶠᶜʷ m D n)
+  Hᶠᶜʷ→ : GroupHom (Hᶠᶜʷ n C k) (Hᶠᶜʷ m D k)
   Hᶠᶜʷ→ = rec→Set isSetGroupHom
                   (cellMap→Hᶠᶜʷ-hom ∘ fst)
-                  cellMap→Hᶠᶜʷ-hom-coh
-                  (finMap→cellMap₁ m C D f)
+                  (cellMap→Hᶠᶜʷ-hom-coh)
+                  (finMap→cellMap₁ n m C D f)
 
 
-rewriteHᶠᶜʷ : (m : ℕ) (n : ℕ) {C D : finCW m} 
-     → (f : realise (finCW→CW m C) → realise (finCW→CW m D))
-     →  (g : cellMap (finCW→CW m C) (finCW→CW m D))
+rewriteHᶠᶜʷ : (k : ℕ) (n m : ℕ) {C : finCWskel ℓ n} {D : finCWskel ℓ' m}
+     → (f : realise (finCWskel→CWskel n C) → realise (finCWskel→CWskel m D))
+     → (g : cellMap (finCWskel→CWskel n C) (finCWskel→CWskel m D))
      → (realiseCellMap g ≡ f)
-     → Hᶠᶜʷ→ m n f ≡ cellMap→Hᶠᶜʷ-hom m n f g
-rewriteHᶠᶜʷ m n {C = C} {D = D} f g p = main
+     → Hᶠᶜʷ→ k n m f ≡ cellMap→Hᶠᶜʷ-hom k n m f g
+rewriteHᶠᶜʷ k n m {C = C} {D = D} f g p = main
   where
-  finMap→cellMap₁-path : finMap→cellMap₁ m C D f ≡ ∣ g , p ∣₁
+  finMap→cellMap₁-path : finMap→cellMap₁ n m C D f ≡ ∣ g , p ∣₁
   finMap→cellMap₁-path = squash₁ _ _
 
-  main : Hᶠᶜʷ→ m n f ≡ cellMap→Hᶠᶜʷ-hom m n f g
+  main : Hᶠᶜʷ→ k n m f ≡ cellMap→Hᶠᶜʷ-hom k n m f g
   main = cong (rec→Set isSetGroupHom
-              (cellMap→Hᶠᶜʷ-hom m n {C = C} {D} f ∘ fst)
-              (cellMap→Hᶠᶜʷ-hom-coh m n {C = C} {D} f))
+              (cellMap→Hᶠᶜʷ-hom k n m {C = C} {D} f ∘ fst)
+              (cellMap→Hᶠᶜʷ-hom-coh k n m {C = C} {D} f))
               finMap→cellMap₁-path
 
-cellMap-to-ChainComplexMapId : (C : CW) → cellMap-to-ChainComplexMap {C} (idCellMap C) ≡ idChainMap _
-cellMap-to-ChainComplexMapId C = ChainComplexMap≡ (chainFunct-id C)
+cellMap-to-ChainComplexMapId : (C : CWskel ℓ)
+  → cellMap-to-ChainComplexMap {C = C} (idCellMap C) ≡ idChainMap _
+cellMap-to-ChainComplexMapId C = ChainComplexMap≡ λ i _ → chainFunct-id C i
 
-cellMap-to-ChainComplexMapComp : {C D E : CW} (g : cellMap D E) (f : cellMap C D)
+cellMap-to-ChainComplexMapComp : {C : CWskel ℓ} {D : CWskel ℓ'} {E : CWskel ℓ''}
+  (g : cellMap D E) (f : cellMap C D)
   → cellMap-to-ChainComplexMap (composeCellMap g f)
   ≡ compChainMap (cellMap-to-ChainComplexMap f) (cellMap-to-ChainComplexMap g)
-cellMap-to-ChainComplexMapComp g f = ChainComplexMap≡ λ n → sym (chainFunct-comp g f n)
+cellMap-to-ChainComplexMapComp g f = ChainComplexMap≡ λ n _ → sym (chainFunct-comp g f n)
 
-Hᶠᶜʷ→-id : (m : ℕ) (n : ℕ) {C : finCW m}
-  → Hᶠᶜʷ→ m n {C = C} {D = C} (idfun _) ≡ idGroupHom
-Hᶠᶜʷ→-id m n {C = C} =
-    rewriteHᶠᶜʷ m n {C = C} (idfun _) (idCellMap _) realiseIdSequenceMap
-  ∙ cong (λ f → chainComplexMap→HomologyMap f n)
-      (cellMap-to-ChainComplexMapId _)
-  ∙ chainComplexMap→HomologyMapId n
+Hᶠᶜʷ→-id : (k : ℕ) (n : ℕ) {C : finCWskel ℓ n}
+  → Hᶠᶜʷ→ k n n {C = C} {D = C} (idfun _) ≡ idGroupHom
+Hᶠᶜʷ→-id k n {C = C} =
+    rewriteHᶠᶜʷ k n n {C = C} (idfun _) (idCellMap _) realiseIdSequenceMap
+  ∙ (λ j → chainComplexMap→HomologyMap
+             (cellMap-to-ChainComplexMapId
+               (finCWskel→CWskel n C) j) (k , ≠suc))
+  ∙ chainComplexMap→HomologyMapId (k , ≠suc)
 
-Hᶠᶜʷ→comp : (m : ℕ) (n : ℕ) {C D E : finCW m}
-  (g : realise (finCW→CW m D) → realise (finCW→CW m E))
-  (f : realise (finCW→CW m C) → realise (finCW→CW m D))
-  → Hᶠᶜʷ→ m n {C = C} {D = E} (g ∘ f)
-   ≡ compGroupHom (Hᶠᶜʷ→ m n f) (Hᶠᶜʷ→ m n g)
-Hᶠᶜʷ→comp m n {C = C} {D = D} {E = E} g f =
+Hᶠᶜʷ→comp : (k : ℕ) (n m r : ℕ)
+  {C : finCWskel ℓ n} {D : finCWskel ℓ' m} {E : finCWskel ℓ'' r}
+  (g : realise (finCWskel→CWskel m D) → realise (finCWskel→CWskel r E))
+  (f : realise (finCWskel→CWskel n C) → realise (finCWskel→CWskel m D))
+  → Hᶠᶜʷ→ k n r {C = C} {D = E} (g ∘ f)
+   ≡ compGroupHom (Hᶠᶜʷ→ k n m f) (Hᶠᶜʷ→ k m r g)
+Hᶠᶜʷ→comp k n m r {C = C} {D = D} {E = E} g f =
   PT.rec2 (isSetGroupHom _ _)
-          (λ {(F , fp) (G , gp)
-       → (rewriteHᶠᶜʷ m n (g ∘ f) (composeCellMap G F)
-                      (realiseCompSequenceMap G F
-                    ∙ (λ i x → gp i (fp i x)))
-        ∙ cong (λ f → chainComplexMap→HomologyMap f n)
+    (λ {(F , fp) (G , gp)
+   → rewriteHᶠᶜʷ k n r (g ∘ f) (composeCellMap G F)
+          (realiseCompSequenceMap G F ∙ (λ i x → gp i (fp i x)))
+    ∙ cong (λ f → chainComplexMap→HomologyMap f (k , ≠suc))
                (cellMap-to-ChainComplexMapComp G F)
-        ∙ chainComplexMap→HomologyMapComp _ _ n)
-        ∙ cong₂ compGroupHom (sym (rewriteHᶠᶜʷ m n f F fp))
-                             (sym (rewriteHᶠᶜʷ m n g G gp))})
-          (finMap→cellMap₁ m C D f)
-          (finMap→cellMap₁ m D E g)
+    ∙ chainComplexMap→HomologyMapComp _ _ (k , ≠suc)
+    ∙ cong₂ compGroupHom (sym (rewriteHᶠᶜʷ k n m f F fp))
+                         (sym (rewriteHᶠᶜʷ k m r g G gp))})
+    (finMap→cellMap₁ n m C D f)
+    (finMap→cellMap₁ m r D E g)
 
-finCW↑ : (n m : ℕ) → (m ≥ n) → finCW n → finCW m
-fst (finCW↑ m n p C) = fst C
-fst (snd (finCW↑ m n p C)) = snd C .fst
-snd (snd (finCW↑ m n p C)) k =
-  subst (λ r → isEquiv (CW↪ (fst C , snd C .fst) r))
-        (sym (+-assoc k (fst p) m) ∙ cong (k +ℕ_) (snd p))
-        (snd C .snd (k +ℕ fst p))
+Hᶠᶜʷ→≃ : (k : ℕ) (n m : ℕ) {C : finCWskel ℓ n} {D : finCWskel ℓ' m}
+  (f : realise (finCWskel→CWskel n C) ≃ realise (finCWskel→CWskel m D))
+  → GroupEquiv (Hᶠᶜʷ n C k) (Hᶠᶜʷ m D k)
+fst (Hᶠᶜʷ→≃ k n m {C = C} {D = D} f) = isoToEquiv ϕ
+  where
+  ϕ : Iso (Hᶠᶜʷ n C k .fst) (Hᶠᶜʷ m D k .fst)
+  Iso.fun ϕ = Hᶠᶜʷ→ k n m (fst f) .fst
+  Iso.inv ϕ = Hᶠᶜʷ→ k m n (invEq f) .fst
+  Iso.rightInv ϕ =
+    funExt⁻ (cong fst (sym (Hᶠᶜʷ→comp k m n m (fst f) (invEq f))
+          ∙ cong (Hᶠᶜʷ→ k m m) (funExt (secEq f))
+          ∙ Hᶠᶜʷ→-id k m))
+  Iso.leftInv ϕ =
+    funExt⁻ (cong fst (sym (Hᶠᶜʷ→comp k n m n (invEq f) (fst f))
+          ∙ cong (Hᶠᶜʷ→ k n n) (funExt (retEq f))
+          ∙ Hᶠᶜʷ→-id k n))
+snd (Hᶠᶜʷ→≃ k n m {C = C} {D = D} f) = Hᶠᶜʷ→ k n m (fst f) .snd
 
--- open import Cubical.Algebra.Group.GroupPath
--- H : fincw → ℕ → Group ℓ-zero
--- H (X , A) n =
---   rec→Gpd isGroupoidGroup
---            H-gr
---            (record { link = {!!}
---                     ; coh₁ = {!!} }) A
+open import Cubical.Algebra.Group.GroupPath
+
+module _ (X : Type ℓ) (n : ℕ) where
+  HᶠGr : isFinCW X → Group ℓ-zero
+  HᶠGr (m , C) = Hᶠᶜʷ m (C .fst) n
+
+  HᶠGr-eq : (XC YC : isFinCW X) → GroupEquiv (HᶠGr XC) (HᶠGr YC)
+  HᶠGr-eq (m , XC , e1) (k , YC , e2) =
+    Hᶠᶜʷ→≃ n m k {C = XC} {D = YC} (compEquiv (invEquiv e1) e2)
+
+  HᶠGr-eq-coh : (x y z : isFinCW X) →
+      fst (fst (HᶠGr-eq y z)) ∘ (fst (fst (HᶠGr-eq x y)))
+    ≡ fst (fst (HᶠGr-eq x z))
+  HᶠGr-eq-coh (m , XC , e1) (k , YC , e2) (r , ZC , e3) =
+    sym (cong fst (Hᶠᶜʷ→comp n _ _ _
+           (compEquiv (invEquiv e2) e3 .fst)
+           (compEquiv (invEquiv e1) e2 .fst)))
+    ∙ cong (fst ∘ Hᶠᶜʷ→ n m r)
+       (funExt λ y → cong (fst e3) (retEq e2 (invEquiv e1 .fst y)))
+
+Hᶠ : finCW ℓ → ℕ → Group₀
+Hᶠ (X , A) n =
+  PropTrunc→Group (HᶠGr X n)
+    (HᶠGr-eq X n)
+    (λ x y z → funExt⁻ (HᶠGr-eq-coh X n x y z))
+    A
+
+module _ (X : finCW ℓ) (Y : finCW ℓ') (n : ℕ) (f : fst X → fst Y) where
+  module Hᶠ→-constr where
+    X' = fst X
+    Y' = fst Y
+
+    ϕ₁-fun : (XC : isFinCW X') (YC : isFinCW Y')
+      → GroupHom (Hᶠ (X' , ∣ XC ∣₁) n) (Hᶠ (Y' , ∣ YC ∣₁) n)
+    ϕ₁-fun XC YC = Hᶠᶜʷ→ n (fst XC) (fst YC)
+                    (fst (snd (snd YC)) ∘ f ∘ invEq (snd (snd XC)))
+
+    ϕ₁-fun-coh : (XC : isFinCW X') (YC YC' : isFinCW Y')
+      → PathP (λ i → GroupHom (Hᶠ (X' , ∣ XC ∣₁) n)
+                                (Hᶠ (Y' , squash₁ ∣ YC ∣₁ ∣ YC' ∣₁ i) n))
+               (ϕ₁-fun XC YC) (ϕ₁-fun XC YC')
+    ϕ₁-fun-coh XC YC YC' =
+      toPathP (Σ≡Prop (λ _ → isPropIsGroupHom _ _)
+               ((λ i x → transportRefl ((Hᶠᶜʷ→ n (fst YC) (fst YC')
+                            (fst (snd (snd YC')) ∘ invEq (snd (snd YC)))) .fst
+                              (Hᶠᶜʷ→ n (fst XC) (fst YC)
+                               (λ x₁ → fst (snd (snd YC)) (f (invEq (snd (snd XC)) x₁)))
+                               .fst (transportRefl x i))) i)
+              ∙ cong fst (sym (Hᶠᶜʷ→comp n (fst XC) (fst YC) (fst YC')
+                             (fst (snd (snd YC')) ∘ invEq (snd (snd YC)))
+                             (fst (snd (snd YC)) ∘ f ∘ invEq (snd (snd XC))))
+                      ∙ cong (Hᶠᶜʷ→ n (fst XC) (fst YC'))
+                          (funExt (λ x → cong (fst (snd (snd YC')))
+                            (retEq (snd (snd YC)) (f (invEq (snd (snd XC)) x))))))))
+
+    ϕ₁ : (XC : isFinCW X') (YC : ∥ isFinCW Y' ∥₁)
+      → GroupHom (Hᶠ (X' , ∣ XC ∣₁) n) (Hᶠ (Y' , YC) n)
+    ϕ₁ XC = elim→Set (λ _ → isSetGroupHom)
+              (ϕ₁-fun XC)
+              (ϕ₁-fun-coh XC)
+
+    ϕ₁≡ : (XC : isFinCW X') (YC : isFinCW Y') → ϕ₁ XC ∣ YC ∣₁ ≡ ϕ₁-fun XC YC
+    ϕ₁≡ XC = elim→Setβ {P = λ YC → GroupHom (Hᶠ (X' , ∣ XC ∣₁) n) (Hᶠ (Y' , YC) n)}
+              (λ _ → isSetGroupHom)
+              (ϕ₁-fun XC)
+              (ϕ₁-fun-coh XC)
+
+    ϕ₂ : (XC XC' : isFinCW X') (YC : ∥ isFinCW Y' ∥₁)
+      → transport (λ z → GroupHom (Hᶠ (X' , squash₁ ∣ XC ∣₁ ∣ XC' ∣₁ z) n) (Hᶠ (Y' , YC) n))
+                    (ϕ₁ XC YC) .fst
+       ≡ ϕ₁ XC' YC .fst
+    ϕ₂ XC XC' = PT.elim
+      (λ YC → isOfHLevelPath' 1 (isSetΠ (λ _ → GroupStr.is-set (snd (Hᶠ (Y' , YC) n)))) _ _)
+      λ YC → funExt
+        (λ x → transportRefl (ϕ₁ XC ∣ YC ∣₁ .fst
+                 (transport (λ j → Hᶠ (X' , squash₁ ∣ XC ∣₁ ∣ XC' ∣₁ (~ j)) n .fst) x))
+             ∙ (cong (ϕ₁ XC ∣ YC ∣₁ .fst)
+               λ i → Hᶠᶜʷ→ n (fst XC') (fst XC)
+                       (fst (snd (snd XC)) ∘ invEq (snd (snd XC'))) .fst
+                       (transportRefl x i))
+            ∙ funExt⁻ (cong fst (ϕ₁≡ XC YC))
+               (Hᶠᶜʷ→ n (fst XC') (fst XC)
+                 (fst (snd (snd XC)) ∘ invEq (snd (snd XC'))) .fst x))
+      ∙ (sym (cong fst
+         (cong (Hᶠᶜʷ→ n (fst XC') (fst YC))
+            (funExt (λ a
+              → cong (fst (snd (snd YC)) ∘ f)
+                  (sym (retEq (snd (snd XC)) (invEq (snd (snd XC')) a)))))
+        ∙ Hᶠᶜʷ→comp n (fst XC') (fst XC) (fst YC)
+           (fst (snd (snd YC)) ∘ f ∘ invEq (snd (snd XC)))
+           (fst (snd (snd XC)) ∘ invEq (snd (snd XC'))))))
+      ∙ cong fst (sym (ϕ₁≡ XC' YC))
+
+    ϕ : (XC : ∥ isFinCW X' ∥₁) (YC : ∥ isFinCW Y' ∥₁)
+      → GroupHom (Hᶠ (X' , XC) n) (Hᶠ (Y' , YC) n)
+    ϕ = elim→Set (λ _ → isSetΠ λ _ → isSetGroupHom)
+         ϕ₁
+         λ XC XC' → funExt λ YC → toPathP (Σ≡Prop (λ _ → isPropIsGroupHom _ _)
+           (ϕ₂ XC XC' YC))
+
+  Hᶠ→ : GroupHom (Hᶠ X n) (Hᶠ Y n)
+  Hᶠ→ = Hᶠ→-constr.ϕ (X .snd) (Y .snd)
+
+Hᶠ→β : {X : Type ℓ} {Y : Type ℓ'} {XC : isFinCW X} {YC : isFinCW Y}  (n : ℕ) (f : X → Y)
+  → Hᶠ→ (X , ∣ XC ∣₁) (Y , ∣ YC ∣₁) n f
+   ≡ Hᶠᶜʷ→ n _ _ (fst (snd (snd YC)) ∘ f ∘ invEq (snd (snd XC)))
+Hᶠ→β {X = X} {Y = Y} {XC = XC} {YC} n f =
+    funExt⁻ (lem XC) ∣ YC ∣₁
+  ∙ Hᶠ→-constr.ϕ₁≡ _ _ n f XC YC
+  where
+  lem = elim→Setβ {P = λ XC → (YC : ∥ isFinCW Y ∥₁)
+                      → GroupHom (Hᶠ (X , XC) n) (Hᶠ (Y , YC) n)}
+        (λ _ → isSetΠ λ _ → isSetGroupHom)
+        (Hᶠ→-constr.ϕ₁ (X , ∣ XC ∣₁) (Y , ∣ YC ∣₁) n f)
+        λ XC XC' → funExt λ YC → toPathP (Σ≡Prop (λ _ → isPropIsGroupHom _ _)
+           (Hᶠ→-constr.ϕ₂ _ _ n f XC XC' YC))
+
+Hᶠ→id : {C : finCW ℓ} (n : ℕ) → Hᶠ→ C C n (idfun _) ≡ idGroupHom
+Hᶠ→id {C = C , XC} n =
+  PT.elim {P = λ XC → Hᶠ→ (C , XC) (C , XC) n (idfun C) ≡ idGroupHom}
+    (λ _ → isSetGroupHom _ _)
+    (λ XC → Hᶠ→β n (idfun C)
+          ∙ cong (Hᶠᶜʷ→ n (fst XC) (fst XC))
+               (funExt (secEq (snd (snd XC))))
+          ∙ Hᶠᶜʷ→-id n (fst XC)) XC
+
+Hᶠ→comp : {C : finCW ℓ} {D : finCW ℓ'} {E : finCW ℓ''} (n : ℕ)
+  (g : fst D → fst E) (f : fst C → fst D)
+  → compGroupHom (Hᶠ→ C D n f) (Hᶠ→ D E n g)
+   ≡ Hᶠ→ C E n (g ∘ f)
+Hᶠ→comp {C = C , XC} {D = D , XD} {E = E , XE} n g f =
+  PT.elim3 {P = λ XC XD XE
+    → compGroupHom (Hᶠ→ (C , XC) (D , XD) n f)
+                    (Hᶠ→ (D , XD) (E , XE) n g)
+     ≡ Hᶠ→ (C , XC) (E , XE) n (g ∘ f)}
+     (λ _ _ _ → isSetGroupHom _ _)
+     (λ XC XD XE
+     → cong₂ compGroupHom (Hᶠ→β n f) (Hᶠ→β n g)
+     ∙∙ sym (Hᶠᶜʷ→comp _ _ _ _ _ _)
+     ∙∙ cong (Hᶠᶜʷ→ n (fst XC) (fst XE))
+          (funExt (λ p → cong (fst (snd (snd XE)) ∘ g)
+            (retEq (snd (snd XD)) _)))
+      ∙ sym (Hᶠ→β n (g ∘ f)))
+     XC XD XE
+
+-- Hᶜʷ→ : (C : CWskel ℓ) (D : CWskel ℓ') (f : realise C → realise D) (m : ℕ)
+--   → GroupHom (Hᶜʷ C m) (Hᶜʷ D m)
+-- Hᶜʷ→ C D f m =
+--   compGroupHom ϕ₁
+--     (compGroupHom (Hᶠᶜʷ→ m (3 +ℕ m) (3 +ℕ m) {!Hᶜʷ→finite C D m f!}) -- (Hᶜʷ→finite C D m f)
+--       ϕ₂)
 --   where
---   isGroupoidGroup : isGroupoid (Group ℓ-zero)
---   isGroupoidGroup = {!!}
+--   ϕ₁≅ : GroupIso (Hᶜʷ C m) (Hᶜʷ (subComplex C (3 +ℕ m)) m)
+--   ϕ₁≅ = subComplexHomology C (3 +ℕ m) m (0 , refl)
 
---   H-gr : isFinCW X → Group ℓ-zero
---   H-gr (m , C) = Hᶠᶜʷ m (C .fst) n
+--   ϕ₂≅ : GroupIso (Hᶜʷ D m) (Hᶜʷ (subComplex D (3 +ℕ m)) m)
+--   ϕ₂≅ = subComplexHomology D (3 +ℕ m) m (0 , refl)
 
---   C↑ : {!!}
---   C↑ = {!!}
+--   ϕ₁ : GroupHom (Hᶜʷ C m) (Hᶜʷ (subComplex C (suc (suc (suc m)))) m)
+--   ϕ₁ = GroupIso→GroupHom ϕ₁≅
 
---   module _ (nc nd : ℕ) (C : finCW nc) (D : finCW nd)
---            (eC : X ≃ realise (finCW→CW nc C))
---            (eD : X ≃ realise (finCW→CW nd D))
---     where
---     Cup Dup : finCW (nc +ℕ nd)
---     Cup = finCW↑ nc (nc +ℕ nd) (nd , +-comm nd nc) C
---     Dup = finCW↑ nd (nc +ℕ nd) (nc , refl) D
+--   ϕ₂ : GroupHom (Hᶜʷ (subComplex D (3 +ℕ m)) m) (Hᶜʷ D m)
+--   ϕ₂ = GroupIso→GroupHom (invGroupIso ϕ₂≅)
 
---     H→ = Hᶠᶜʷ→ (nc +ℕ nd) n {C = Cup} {D = Dup} (invEq (compEquiv (invEquiv eD) eC))
+-- Hᶜʷ→id : {!Hᶠᶜʷ→!}
+-- Hᶜʷ→id = {!!}
 
---     2-Const : {!H→!} ≡ {!!} -- 2-Constant H-gr
---     2-Const =
---       (λ _ → Hᶜʷ ((C .fst) , (C .snd .fst)) n)
---       ∙ uaGroup ((H→ .fst
---                  , {!finCW↑ nc (nc +ℕ nd) (nd , +-comm nd nc) C!})
---                  , H→ .snd)
---       ∙ λ _ → Hᶜʷ ((D .fst) , (D .snd .fst)) n
+-- Hᶜʷ→comp : {!!}
+-- Hᶜʷ→comp = {!!}
 
--- -- Hᶜʷ→ : (C D : CW) (f : cellMap C D) (m : ℕ)
--- --   → GroupHom (Hᶜʷ C m) (Hᶜʷ D m) 
--- -- Hᶜʷ→ C D f m =
--- --   compGroupHom (GroupIso→GroupHom (subComplexHomology C (3 +ℕ m) m (0 , refl)))
--- --     (compGroupHom (Hᶜʷ→finite C D f m)
--- --       (GroupIso→GroupHom (invGroupIso (subComplexHomology D (3 +ℕ m) m (0 , refl)))))
+-- open import Cubical.HITs.SetTruncation as ST
+-- CW→finCW : ∀ {ℓ} (n : ℕ) → CW ℓ → Group₀
+-- CW→finCW n = uncurry λ X
+--   → PropTrunc→Group
+--        (λ XC → Hᶜʷ (fst XC) n)
+--        (λ XC YC → {! -- Hᶜʷ→ (fst XC) (fst YC) ? n!})
+--        {!!}
+
+

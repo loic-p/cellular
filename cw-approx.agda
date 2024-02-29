@@ -8,6 +8,7 @@ open import Cubical.Foundations.Univalence
 open import Cubical.Foundations.GroupoidLaws
 open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Function
+open import Cubical.Foundations.Path
 
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
 open import Cubical.Data.Nat.Order
@@ -16,6 +17,10 @@ open import Cubical.Data.Sigma
 open import Cubical.Data.Bool hiding (isProp≤ ; _≤_)
 open import Cubical.Data.Unit
 open import Cubical.Data.Empty as ⊥
+open import Cubical.Data.CW
+open import Cubical.Data.CW.Map
+
+open import Cubical.Data.Sequence
 
 open import Cubical.HITs.SequentialColimit
 open import Cubical.HITs.PropositionalTruncation as PT
@@ -23,42 +28,31 @@ open import Cubical.HITs.SetTruncation as ST
 open import Cubical.HITs.Truncation as TR
 open import Cubical.HITs.Sn
 open import Cubical.HITs.Pushout
+open import Cubical.Axiom.Choice
 
 open import Cubical.Homotopy.Connected
 open import Cubical.Homotopy.Group.Base
+open import Cubical.Algebra.ChainComplex
 
-open import prelude
-open import cw-complex
-open import choice
 open import cw-map
-open import freeabgroup
+
 
 
 module cw-approx where
 
 open Sequence
 
--- move
-sphereElim' : {ℓ : Level} (n : ℕ) {A : S₊ n → Type ℓ} →
-      ((x : S₊ n) → isOfHLevel n (A x)) →
-      A (ptSn n) → (x : S₊ n) → A x
-sphereElim' zero st _ x = st x .fst
-sphereElim' (suc n) = sphereElim n
-
-PathPIdTruncIso : ∀ {ℓ} {A : I → Type ℓ} {a : A i0} {b : A i1} (n : HLevel)
-  → Iso (PathP (λ i → ∥ A i ∥ suc n) ∣ a ∣ ∣ b ∣) (∥ PathP (λ i → A i) a b ∥ n)
-PathPIdTruncIso {A = A} n = help (A i0) (A i1) (λ i → A i) n
-  where
-  help : ∀ {ℓ} (A B : Type ℓ) (A' : A ≡ B) {a : A} {b : B} (n : HLevel)
-       → Iso (PathP (λ i → ∥ A' i ∥ suc n) ∣ a ∣ ∣ b ∣) (∥ PathP (λ i → A' i) a b ∥ n)
-  help A = J> PathIdTruncIso
+private
+  variable
+    ℓ ℓ' ℓ'' : Level
 
 -- The embedding of stage n into stage n+1 is (n+1)-connected
 -- 2 calls to univalence in there
-isConnected-CW↪ : (n : ℕ) (C : CW) → isConnectedFun n (CW↪ C n)
+isConnected-CW↪ : (n : ℕ) (C : CWskel ℓ) → isConnectedFun n (CW↪ C n)
 isConnected-CW↪ zero C x = isContrUnit*
-isConnected-CW↪ (suc n) C = EquivJ (λ X E → isConnectedFun (suc n) (λ x → invEq E (inl x)))
-                             inPushoutConnected (e₊ (suc n))
+isConnected-CW↪ (suc n) C =
+  EquivJ (λ X E → isConnectedFun (suc n) (λ x → invEq E (inl x)))
+                   inPushoutConnected (e₊ (suc n))
   where
     A = snd C .fst
     α = snd C .snd .fst
@@ -75,7 +69,7 @@ isConnected-CW↪ (suc n) C = EquivJ (λ X E → isConnectedFun (suc n) (λ x �
       λ b → subst (isConnected (suc n)) (fstProjPath b) (sphereConnected n)
 
 -- The embedding of stage n into the colimit is (n+1)-connected
-isConnected-CW↪∞ : (n : ℕ) (C : CW) → isConnectedFun n (CW↪∞ C n)
+isConnected-CW↪∞ : (n : ℕ) (C : CWskel ℓ) → isConnectedFun n (CW↪∞ C n)
 isConnected-CW↪∞ zero C b = isContrUnit*
 isConnected-CW↪∞ (suc n) C = isConnectedIncl∞ (realiseSeq C) (suc n) (suc n) subtr
   where
@@ -83,146 +77,157 @@ isConnected-CW↪∞ (suc n) C = isConnectedIncl∞ (realiseSeq C) (suc n) (suc 
     subtr k = isConnectedFunSubtr (suc n) k (CW↪ C (k +ℕ (suc n)))
                                    (isConnected-CW↪ (k +ℕ (suc n)) C)
 
--- We can merely fill n-spheres in (n+2)-connected spaces
-module connectedSpace {A : Type} where
-  contractSphere : (n : ℕ) (HA : isConnected (suc (suc n)) A)
-    → (f : S₊ n → A)
-    →  ∃[ a ∈ A ] ((s : S₊ n) → f s ≡ a)
-  contractSphere zero HA f =
-    TR.rec squash₁
-      (λ p → ∣ (f true) , (λ { false → sym p ; true → refl}) ∣₁)
-      (Iso.fun (PathIdTruncIso _) (isContr→isProp HA ∣ f true ∣ₕ ∣ f false ∣ₕ))
-  contractSphere (suc n) HA f =
-    PT.map (λ p → (f (ptSn (suc n))) , funExt⁻ p) main-path
-    where
-    A⋆ : Pointed₀
-    A⋆ = A , f (ptSn (suc n))
+-- -- We can merely fill n-spheres in (n+2)-connected spaces
+-- module connectedSpace {A : Type ℓ} where
+--   contractSphere : (n : ℕ) (HA : isConnected (suc (suc n)) A)
+--     → (f : S₊ n → A)
+--     →  ∃[ a ∈ A ] ((s : S₊ n) → f s ≡ a)
+--   contractSphere zero HA f =
+--     TR.rec squash₁
+--       (λ p → ∣ (f true) , (λ { false → sym p ; true → refl}) ∣₁)
+--       (Iso.fun (PathIdTruncIso _) (isContr→isProp HA ∣ f true ∣ₕ ∣ f false ∣ₕ))
+--   contractSphere (suc n) HA f =
+--     PT.map (λ p → (f (ptSn (suc n))) , funExt⁻ p) main-path
+--     where
+--     A⋆ : Pointed ℓ
+--     A⋆ = A , f (ptSn (suc n))
 
-    π-iso : Iso (π' (suc n) A⋆) (π' (suc n) (Unit , tt))
-    π-iso =
-       compIso (fst (π'Gr≅πGr n A⋆))
-      (compIso (πTruncIso (suc n))
-      (compIso (invIso (fst (π'Gr≅πGr n (hLevelTrunc∙ (3 +ℕ n) A⋆))))
-               (equivToIso (π'Iso n (isoToEquiv (isContr→Iso HA isContrUnit) , refl) .fst))))
+--     π-iso : Iso (π' (suc n) A⋆) (π' (suc n) (Unit* , tt*))
+--     π-iso =
+--        compIso (fst (π'Gr≅πGr n A⋆))
+--       (compIso (πTruncIso (suc n))
+--       (compIso (invIso (fst (π'Gr≅πGr n (hLevelTrunc∙ (3 +ℕ n) A⋆))))
+--                (equivToIso (π'Iso n (isoToEquiv (isContr→Iso HA isContrUnit*) , refl) .fst))))
 
-    contr-π : isContr (π' (suc n) A⋆)
-    contr-π = isOfHLevelRetractFromIso 0 π-iso
-             (∣ const∙ (S₊∙ (suc n)) _ ∣₂
-             , ST.elim (λ _ → isSetPathImplicit) λ f → refl)
+--     contr-π : isContr (π' (suc n) A⋆)
+--     contr-π = isOfHLevelRetractFromIso 0 π-iso
+--              (∣ const∙ (S₊∙ (suc n)) _ ∣₂
+--              , ST.elim (λ _ → isSetPathImplicit) λ f → refl)
 
-    main-path : ∥ f ≡ (λ _ → f (ptSn (suc n))) ∥₁
-    main-path =
-      PT.map (cong fst)
-      (Iso.fun PathIdTrunc₀Iso
-                 (isContr→isProp contr-π
-                   ∣ f , refl ∣₂ ∣ (λ _ → f (ptSn (suc n))) , refl ∣₂))
+--     main-path : ∥ f ≡ (λ _ → f (ptSn (suc n))) ∥₁
+--     main-path =
+--       PT.map (cong fst)
+--       (Iso.fun PathIdTrunc₀Iso
+--                  (isContr→isProp contr-π
+--                    ∣ f , refl ∣₂ ∣ (λ _ → f (ptSn (suc n))) , refl ∣₂))
 
--- Now we are going to prove that connectedness is enough to lift a map from
--- stage n of the CW approximation to stage n+1
-module connectedFunLifts {A B : Type}
-  (f : A → B) (n : ℕ) (Hf : isConnectedFun (suc (suc n)) f) where
+-- -- Now we are going to prove that connectedness is enough to lift a map from
+-- -- stage n of the CW approximation to stage n+1
+-- module connectedFunLifts {A : Type ℓ} {B : Type ℓ'}
+--   (f : A → B) (n : ℕ) (Hf : isConnectedFun (suc (suc n)) f) where
 
-  -- contractions of spheres can be (merely) lifted along connected maps
-  contractSphere : (g : S₊ n → A) (b : B)
-    → (diskB : (s : S₊ n) → f (g s) ≡ b)
-    → ∥ Σ[ a ∈ A ] (Σ[ Ha ∈ f a ≡ b ] (Σ[ diskA ∈ ((s : S₊ n) → g s ≡ a) ]
-           ((s : S₊ n) → diskB s ≡ (cong f (diskA s) ∙ Ha)))) ∥₁
-  contractSphere g b diskB = PT.map aux (connectedSpace.contractSphere n (Hf b) (λ s → (g s , diskB s)))
-    where
-      aux : (Σ[ a ∈ fiber f b ] ((s : S₊ n) → (g s , diskB s) ≡ a)) →
-            Σ[ a ∈ A ] (Σ[ Ha ∈ f a ≡ b ] (Σ[ diskA ∈ ((s : S₊ n) → g s ≡ a) ]
-              ((s : S₊ n) → diskB s ≡ (cong f (diskA s) ∙ Ha))))
-      aux ((a , Ha) , c) = a , Ha , (λ s → fst (pathFiber f b (c s)))
-                         , (λ s → snd (pathFiber f b (c s)))
+--   -- contractions of spheres can be (merely) lifted along connected maps
+--   contractSphere : (g : S₊ n → A) (b : B)
+--     → (diskB : (s : S₊ n) → f (g s) ≡ b)
+--     → ∥ Σ[ a ∈ A ] (Σ[ Ha ∈ f a ≡ b ] (Σ[ diskA ∈ ((s : S₊ n) → g s ≡ a) ]
+--            ((s : S₊ n) → diskB s ≡ (cong f (diskA s) ∙ Ha)))) ∥₁
+--   contractSphere g b diskB = PT.map aux (connectedSpace.contractSphere n (Hf b) (λ s → (g s , diskB s)))
+--     where
+--       aux : (Σ[ a ∈ fiber f b ] ((s : S₊ n) → (g s , diskB s) ≡ a)) →
+--             Σ[ a ∈ A ] (Σ[ Ha ∈ f a ≡ b ] (Σ[ diskA ∈ ((s : S₊ n) → g s ≡ a) ]
+--               ((s : S₊ n) → diskB s ≡ (cong f (diskA s) ∙ Ha))))
+--       aux ((a , Ha) , c) = a , Ha , (λ s → fst (pathFiber f b (c s)))
+--                          , (λ s → snd (pathFiber f b (c s)))
 
-  -- this also works for a finite amount of sphere contractions by Finite Choice
-  contractSpheres : (m : ℕ) (g : Fin m → S₊ n → A)
-    → (b : (k : Fin m) → B)
-    → (diskB : (k : Fin m) → (s : S₊ n) → f (g k s) ≡ b k)
-    → ∥ (Σ[ a ∈ (Fin m → A) ] ((k : Fin m) → Σ[ Ha ∈ f (a k) ≡ b k ]
-            (Σ[ diskA ∈ ((s : S₊ n) → g k s ≡ a k) ]
-            ((s : S₊ n) → diskB k s ≡ (cong f (diskA s) ∙ Ha))))) ∥₁
-  contractSpheres m g b diskB = invEq (_ , satAC∃Fin m (λ _ → A)
-    (λ k a → (Σ[ Ha ∈ f a ≡ b k ] (Σ[ diskA ∈ ((s : S₊ n) → g k s ≡ a) ]
-      ((s : S₊ n) → diskB k s ≡ (cong f (diskA s) ∙ Ha))))))
-    (λ k → contractSphere (g k) (b k) (diskB k))
+--   -- this also works for a finite amount of sphere contractions by Finite Choice
+--   contractSpheres : (m : ℕ) (g : Fin m → S₊ n → A)
+--     → (b : (k : Fin m) → B)
+--     → (diskB : (k : Fin m) → (s : S₊ n) → f (g k s) ≡ b k)
+--     → ∥ (Σ[ a ∈ (Fin m → A) ] ((k : Fin m) → Σ[ Ha ∈ f (a k) ≡ b k ]
+--             (Σ[ diskA ∈ ((s : S₊ n) → g k s ≡ a k) ]
+--             ((s : S₊ n) → diskB k s ≡ (cong f (diskA s) ∙ Ha))))) ∥₁
+--   contractSpheres m g b diskB = invEq (_ , satAC∃Fin m (λ _ → A)
+--     (λ k a → (Σ[ Ha ∈ f a ≡ b k ] (Σ[ diskA ∈ ((s : S₊ n) → g k s ≡ a) ]
+--       ((s : S₊ n) → diskB k s ≡ (cong f (diskA s) ∙ Ha))))))
+--     (λ k → contractSphere (g k) (b k) (diskB k))
 
-  -- this allows us to lift a map out of a pushout with spheres
-  module _ (X : Type) (g : X → A) (m : ℕ) (α : Fin m × S₊ n → X)
-    (h : Pushout α fst → B) (comm : (x : X) → f (g x) ≡ h (inl x)) where
+--   -- this allows us to lift a map out of a pushout with spheres
+--   module _ (X : Type ℓ'') (g : X → A) (m : ℕ) (α : Fin m × S₊ n → X)
+--     (h : Pushout α fst → B) (comm : (x : X) → f (g x) ≡ h (inl x)) where
 
-    module _ (spheresContr : (Σ[ a ∈ (Fin m → A) ] ((k : Fin m) → Σ[ Ha ∈ f (a k) ≡ h (inr k) ]
-      (Σ[ diskA ∈ ((s : S₊ n) → g (α (k , s)) ≡ a k) ]
-      ((s : S₊ n) → comm (α (k , s)) ∙ (cong h (push (k , s))) ≡ (cong f (diskA s) ∙ Ha)))))) where
+--     module _ (spheresContr : (Σ[ a ∈ (Fin m → A) ] ((k : Fin m) → Σ[ Ha ∈ f (a k) ≡ h (inr k) ]
+--       (Σ[ diskA ∈ ((s : S₊ n) → g (α (k , s)) ≡ a k) ]
+--       ((s : S₊ n) → comm (α (k , s)) ∙ (cong h (push (k , s))) ≡ (cong f (diskA s) ∙ Ha)))))) where
 
-      centerA : Fin m → A
-      centerA = fst spheresContr
+--       centerA : Fin m → A
+--       centerA = fst spheresContr
 
-      HcenterA : (k : Fin m) → f (centerA k) ≡ h (inr k)
-      HcenterA = λ k → fst (snd spheresContr k)
+--       HcenterA : (k : Fin m) → f (centerA k) ≡ h (inr k)
+--       HcenterA = λ k → fst (snd spheresContr k)
 
-      diskA : (k : Fin m) → (s : S₊ n) → g (α (k , s)) ≡ centerA k
-      diskA = λ k → fst (snd (snd spheresContr k))
+--       diskA : (k : Fin m) → (s : S₊ n) → g (α (k , s)) ≡ centerA k
+--       diskA = λ k → fst (snd (snd spheresContr k))
 
-      HdiskA : (k : Fin m) → (s : S₊ n) → comm (α (k , s)) ∙ (cong h (push (k , s))) ≡ (cong f (diskA k s) ∙' (HcenterA k))
-      HdiskA = λ k s → (snd (snd (snd spheresContr k)) s) ∙ (compPath≡compPath' (cong f (diskA k s)) (HcenterA k))
+--       HdiskA : (k : Fin m) → (s : S₊ n) → comm (α (k , s)) ∙ (cong h (push (k , s))) ≡ (cong f (diskA k s) ∙' (HcenterA k))
+--       HdiskA = λ k s → (snd (snd (snd spheresContr k)) s) ∙ (compPath≡compPath' (cong f (diskA k s)) (HcenterA k))
 
-      liftPushout-fun : Pushout α fst → A
-      liftPushout-fun (inl x) = g x
-      liftPushout-fun (inr a) = centerA a
-      liftPushout-fun (push (a , s) i) = diskA a s i
+--       liftPushout-fun : Pushout α fst → A
+--       liftPushout-fun (inl x) = g x
+--       liftPushout-fun (inr a) = centerA a
+--       liftPushout-fun (push (a , s) i) = diskA a s i
 
-      liftPushout-H1 : (x : X) → (g x ≡ liftPushout-fun (inl x))
-      liftPushout-H1 x = refl
+--       liftPushout-H1 : (x : X) → (g x ≡ liftPushout-fun (inl x))
+--       liftPushout-H1 x = refl
 
-      liftPushout-H2 : (x : Pushout α fst) → f (liftPushout-fun x) ≡ h x
-      liftPushout-H2 (inl x) = comm x
-      liftPushout-H2 (inr a) = HcenterA a
-      liftPushout-H2 (push (a , s) i) j =
-        hcomp (λ k → λ { (i = i0) → compPath-filler (comm (α (a , s))) (cong h (push (a , s))) (~ k) j
-                       ; (i = i1) → compPath'-filler (cong f (diskA a s)) (HcenterA a) (~ k) j
-                       ; (j = i0) → f (diskA a s (i ∧ k))
-                       ; (j = i1) → h (push (a , s) (i ∨ (~ k))) })
-              (HdiskA a s i j)
+--       liftPushout-H2 : (x : Pushout α fst) → f (liftPushout-fun x) ≡ h x
+--       liftPushout-H2 (inl x) = comm x
+--       liftPushout-H2 (inr a) = HcenterA a
+--       liftPushout-H2 (push (a , s) i) j =
+--         hcomp (λ k → λ { (i = i0) → compPath-filler (comm (α (a , s))) (cong h (push (a , s))) (~ k) j
+--                        ; (i = i1) → compPath'-filler (cong f (diskA a s)) (HcenterA a) (~ k) j
+--                        ; (j = i0) → f (diskA a s (i ∧ k))
+--                        ; (j = i1) → h (push (a , s) (i ∨ (~ k))) })
+--               (HdiskA a s i j)
 
-      -- pasting the two commutativity triangles gives the commutativity of the outer square
-      -- unused for now, probably useful later
-      liftPushout-H12 : (x : X) → comm x ≡ (cong f (liftPushout-H1 x) ∙ liftPushout-H2 (inl x))
-      liftPushout-H12 x = lUnit (comm x)
+--       -- pasting the two commutativity triangles gives the commutativity of the outer square
+--       -- unused for now, probably useful later
+--       liftPushout-H12 : (x : X) → comm x ≡ (cong f (liftPushout-H1 x) ∙ liftPushout-H2 (inl x))
+--       liftPushout-H12 x = lUnit (comm x)
 
-      liftPushout-aux : Σ[ lift ∈ (Pushout α fst → A) ]
-        ((x : X) → g x ≡ lift (inl x)) × ((x : Pushout α fst) → f (lift x) ≡ h x)
-      liftPushout-aux = liftPushout-fun , liftPushout-H1 , liftPushout-H2
+--       liftPushout-aux : Σ[ lift ∈ (Pushout α fst → A) ]
+--         ((x : X) → g x ≡ lift (inl x)) × ((x : Pushout α fst) → f (lift x) ≡ h x)
+--       liftPushout-aux = liftPushout-fun , liftPushout-H1 , liftPushout-H2
 
-    liftPushout : ∃[ lift ∈ (Pushout α fst → A) ]
-      ((x : X) → g x ≡ lift (inl x)) × ((x : Pushout α fst) → f (lift x) ≡ h x)
-    liftPushout = PT.map liftPushout-aux
-      (contractSpheres m (λ a s → g (α (a , s)))
-                         (λ k → h (inr k))
-                         (λ k s → comm (α (k , s)) ∙ cong h (push (k , s))))
+--     liftPushout : ∃[ lift ∈ (Pushout α fst → A) ]
+--       ((x : X) → g x ≡ lift (inl x)) × ((x : Pushout α fst) → f (lift x) ≡ h x)
+--     liftPushout = PT.map liftPushout-aux
+--       (contractSpheres m (λ a s → g (α (a , s)))
+--                          (λ k → h (inr k))
+--                          (λ k s → comm (α (k , s)) ∙ cong h (push (k , s))))
 
-  -- which in turn, allows us to lift maps from a CW stage to the next one
-  module _ (C : CW) (g : fst C (suc n) → A) where
-    An = snd C .fst
-    α = snd C .snd .fst
-    e₊ = snd C .snd .snd .snd
+--   -- which in turn, allows us to lift maps from a CW stage to the next one
+--   module _ (C : CWskel ℓ'') (g : fst C (suc n) → A) where
+--     An = snd C .fst
+--     α = snd C .snd .fst
+--     e₊ = snd C .snd .snd .snd
 
-    lifting-prop : (Y : Type) (E : Y ≃ Pushout (α (suc n)) fst) → Type
-    lifting-prop Y E = (h : Y → B) (comm : (x : fst C (suc n)) → f (g x) ≡ h (invEq E (inl x)))
-      → ∃[ lift ∈ (Y → A) ] ((x : fst C (suc n)) → g x ≡ lift (invEq E (inl x)))
-                            × ((x : Y) → f (lift x) ≡ h x)
+--     lifting-prop : (Y : Type ℓ'') (E : Y ≃ Pushout (α (suc n)) fst) → Type _
+--     lifting-prop Y E = (h : Y → B) (comm : (x : fst C (suc n)) → f (g x) ≡ h (invEq E (inl x)))
+--       → ∃[ lift ∈ (Y → A) ] ((x : fst C (suc n)) → g x ≡ lift (invEq E (inl x)))
+--                             × ((x : Y) → f (lift x) ≡ h x)
 
-    liftCW : (h : fst C (suc (suc n)) → B)
-      (comm : (x : fst C (suc n)) → f (g x) ≡ h (CW↪ C (suc n) x))
-      → ∃[ lift ∈ (fst C (suc (suc n)) → A) ] ((x : fst C (suc n)) → g x ≡ lift (CW↪ C (suc n) x))
-                                        × ((x : fst C (suc (suc n))) → f (lift x) ≡ h x)
-    liftCW = EquivJ lifting-prop (liftPushout (fst C (suc n)) g (An (suc n)) (α (suc n))) (e₊ (suc n))
+--     liftCW : (h : fst C (suc (suc n)) → B)
+--       (comm : (x : fst C (suc n)) → f (g x) ≡ h (CW↪ C (suc n) x))
+--       → ∃[ lift ∈ (fst C (suc (suc n)) → A) ] ((x : fst C (suc n)) → g x ≡ lift (CW↪ C (suc n) x))
+--                                         × ((x : fst C (suc (suc n))) → f (lift x) ≡ h x)
+--     liftCW = EquivJ lifting-prop (liftPushout (fst C (suc n)) g (An (suc n)) (α (suc n))) (e₊ (suc n))
 
 -- Cellular approximation
-satAC∃Fin-C0 : ∀ {ℓ ℓ'} → (C : CW) → satAC∃ ℓ ℓ' (fst C 1)
-satAC∃Fin-C0 {ℓ} {ℓ'} C = subst (satAC∃ ℓ ℓ') (sym (ua (CW₁-discrete C))) (satAC∃Fin _)
+satAC∃Fin-C0 : (C : CWskel ℓ) → satAC∃ ℓ' ℓ'' (fst C 1)
+satAC∃Fin-C0 {ℓ} {ℓ'} C = subst (satAC∃ _ _)
+  (ua (compEquiv (invEquiv LiftEquiv) (invEquiv (CW₁-discrete C))))
+    λ T c → isoToIsEquiv (iso _
+      (λ f → PT.map (λ p → (λ { (lift x) → p .fst x})
+                            , λ { (lift x) → p .snd x})
+              (invEq (_ , t (T ∘ lift) (c ∘ lift)) (f ∘ lift)))
+      (λ _ → (isPropΠ λ _ → squash₁) _ _)
+      λ _ → squash₁ _ _)
+  where
+  open import Cubical.Foundations.Equiv
+  asd = Lift
+  t = satAC∃Fin (snd C .fst 0)
 
-module _ (C D : CW) (f : realise C → realise D) where
+module _ (C : CWskel ℓ) (D : CWskel ℓ') (f : realise C → realise D) where
   find-connected-component : (d : realise D) → ∃[ d0 ∈ fst D 1 ] incl d0 ≡ d
   find-connected-component = CW→Prop D (λ _ → squash₁) λ a → ∣ a , refl ∣₁
 
@@ -240,7 +245,7 @@ module _ (C D : CW) (f : realise C → realise D) where
     → ∃[ fₙ ∈ ((n : Fin (suc m)) → Σ[ h ∈ (fst C (fst n) → fst D (fst n)) ]
             ((c : _) → incl (h c) ≡ f (incl c))) ]
         ((n : Fin m) (c : fst C (fst n))
-          → fₙ (fsuc n) .fst (CW↪ C (fst n) c) ≡ CW↪ D (fst n) (fₙ (Fin↑ n) .fst c))
+          → fₙ (fsuc n) .fst (CW↪ C (fst n) c) ≡ CW↪ D (fst n) (fₙ (injectSuc n) .fst c))
   approx zero =
     ∣ (λ { (zero , p) → (λ x → ⊥.rec (CW₀-empty C x))
                       , (λ x → ⊥.rec (CW₀-empty C x))
@@ -287,7 +292,7 @@ module _ (C D : CW) (f : realise C → realise D) where
                      (p (suc m , 0 , refl) .snd))})
       (approx (suc m))
     where
-    open CW-fields C
+    open CWskel-fields C
     F↓-big-ty : (n : ℕ) → Type _
     F↓-big-ty n = (c : fst C n) → Σ[ x ∈ fst D n ] incl x ≡ f (incl c)
 
@@ -298,26 +303,25 @@ module _ (C D : CW) (f : realise C → realise D) where
                      ≡ CW↪ D (suc m) (fm (α (suc m) (x , ptSn m)))) ∥₁
     fst-lem fm fh =
       invEq propTrunc≃Trunc1
-       (invEq (_ , FinSatAC 1 (CW-fields.card C (suc m)) _) λ a →
+       (invEq (_ , FinSatAC 1 (CWskel-fields.card C (suc m)) _) λ a →
          fst propTrunc≃Trunc1
            (sphereToTrunc m λ y →
              TR.map fst (isConnectedCong _ _ (isConnected-CW↪∞ (suc (suc m)) D)
                      (sym (push _)
-                     ∙ (fh (CW-fields.α C (suc m) (a , y))
+                     ∙ (fh (CWskel-fields.α C (suc m) (a , y))
                      ∙ cong f (push _
-                            ∙ cong incl (cong (invEq (CW-fields.e C (suc m)))
+                            ∙ cong incl (cong (invEq (CWskel-fields.e C (suc m)))
                                (push (a , y) ∙ sym (push (a , ptSn m))))
                             ∙ sym (push _))
-                     ∙ sym (fh (CW-fields.α C (suc m) (a , ptSn m))))
+                     ∙ sym (fh (CWskel-fields.α C (suc m) (a , ptSn m))))
                      ∙ push _) .fst)))
-
     module _ (fm : fst C (suc m) → fst D (suc m))
              (fm-coh : (x : A (suc m)) (y : S₊ m) →
                        CW↪ D (suc m) (fm (α (suc m) (x , y)))
                      ≡ CW↪ D (suc m) (fm (α (suc m) (x , ptSn m))))
              where
       F↓ : fst C (suc (suc m)) → fst D (suc (suc m))
-      F↓ = CW-elim C (suc m) (CW↪ D (suc m) ∘ fm) (λ x → CW↪ D (suc m) (fm (α (suc m) (x , ptSn m))))
+      F↓ = CWskel-elim C (suc m) (CW↪ D (suc m) ∘ fm) (λ x → CW↪ D (suc m) (fm (α (suc m) (x , ptSn m))))
                    fm-coh
 
       module _ (ind : ((c : fst C (suc m)) → incl (fm c) ≡ f (incl c))) where
@@ -365,10 +369,10 @@ module _ (C D : CW) (f : realise C → realise D) where
                                   (fib-f-r ind x)))
         where
         F↓-big : F↓-big-ty (suc (suc m))
-        F↓-big = CW-elim C (suc m) (fib-f-l ind) (fib-f-r ind) ind2
+        F↓-big = CWskel-elim C (suc m) (fib-f-l ind) (fib-f-r ind) ind2
 
         F↓' : (c : fst C (suc m)) → F↓-big (CW↪ C (suc m) c) ≡ fib-f-l ind c
-        F↓' = CW-elim-inl C (suc m) (fib-f-l ind) (fib-f-r ind) ind2
+        F↓' = CWskel-elim-inl C (suc m) (fib-f-l ind) (fib-f-r ind) ind2
 
         F↓'-gen : (n : ℕ) (p : suc (suc m) ≡ n) → F↓-big-ty n
         F↓'-gen = J> F↓-big
@@ -415,123 +419,146 @@ module _ (C D : CW) (f : realise C → realise D) where
   --     (approx (suc n))
 
 open import Cubical.Data.Sum
-module _ (m : ℕ) (C D : finCW m) (f : realise (finCW→CW m C) → realise (finCW→CW m D)) where
-
-  approxFinCw : ∃[ fₙ ∈ ((n : ℕ) → Σ[ f' ∈ (fst C n → fst D n) ] ((c : _) → incl (f' c) ≡ f (incl c))) ]
-                 ((n : ℕ) (c : fst C n) → fₙ (suc n) .fst (CW↪ (finCW→CW m C) n c)
-                                           ≡ CW↪ (finCW→CW m D) n (fₙ n .fst c))
-  approxFinCw =
-    PT.map (λ appr → (λ n → (f-full (fst ∘ fst appr) (snd appr) n )
-                            , f-full-coh' _ _ (snd ∘ fst appr) n)
-                            , (f-coh-full (fst ∘ fst appr) (snd appr)))
-           (approx (finCW→CW m C) (finCW→CW m D) f (suc m))
-    where
-    module _ (fbase : (n : Fin (suc (suc m))) → fst C (fst n) → fst D (fst n))
-             (fcoh : (n : Fin (suc m)) (c : fst C (fst n))
-                  → fbase (fsuc n) (CW↪ (finCW→CW m C) (fst n) c)
-                   ≡ CW↪ (finCW→CW m D) (fst n) (fbase (Fin↑ n) c)) where
-
-      C≃ : (a : ℕ) → fst C (a +ℕ m) ≃ fst C (suc (a +ℕ m))
-      C≃ a = _ , C .snd .snd a
-
-      D≃ : (a : ℕ) → fst D (a +ℕ m) ≃ fst D (suc (a +ℕ m))
-      D≃ a = _ , D .snd .snd a
-
-      f-extend : (a : ℕ) → fst C (a +ℕ m) → fst D (a +ℕ m)
-      f-extend zero = fbase (m , (1 , refl))
-      f-extend (suc a) c = fst (D≃ a) (f-extend a (invEq (C≃ a) c))
-
-      f-extend-comm : (x n : ℕ) (p : x +ℕ m ≡ n) (t : fst C n)
-        → subst (fst D) (cong suc p)
-                (f-extend (suc x)
-                  (subst (fst C) (sym (cong suc p)) (CW↪ (finCW→CW m C) n t)))
-         ≡ CW↪ (finCW→CW m D) n (subst (fst D) p (f-extend x (subst (fst C) (sym p) t)))
-      f-extend-comm x = J> λ t →
-          transportRefl _
-        ∙ cong (CW↪ (finCW→CW m D) (x +ℕ m))
-            (sym (transportRefl _
-            ∙ cong (f-extend x) (transportRefl _
-              ∙ sym (cong (invEq (C≃ x)) (transportRefl _)
-                    ∙ retEq (C≃ x) t))))
-
-      ≤-lem : (n : ℕ) → suc n ≤ m → suc n ≤ suc (suc m)
-      ≤-lem n x = suc (suc (fst x)) , (cong (2 +ℕ_) (snd x))
-
-      f-full : (n : ℕ) → fst C n → fst D n
-      f-full n with (Dichotomyℕ m n)
-      ... | inl x = subst (λ n → fst C n → fst D n) (snd x)
-                          (f-extend (fst x))
-      ... | inr x = fbase (n , ≤-lem n x)
-
-      f-full-coh' : (ind : (a : Fin (suc (suc m))) (c : fst (finCW→CW m C) (fst a))
-                    → incl (fbase a c) ≡ f (incl c))
-            (n : ℕ) (c : fst C n) → incl (f-full n c) ≡ f (incl c)
-      f-full-coh' ind n c with Dichotomyℕ m n
-      ... | inl (a , p) = help2 a n p c
-        where
-        lem2 : (a : ℕ) (c : fst C (a +ℕ m))
-          → incl (f-extend a c) ≡ f (incl c)
-        lem2 zero c = ind (m , 1 , refl) c
-        lem2 (suc a) c =
-            sym (push _)
-          ∙ lem2 a (invEq (C≃ a) c)
-          ∙ cong f (push (invEq (C≃ a) c)
-          ∙ cong incl (secEq (C≃ a) c))
-
-        help2 : (a n : ℕ) (p : a +ℕ m ≡ n) (c : fst C n)
-              → incl (subst (λ n₁ → fst C n₁ → fst D n₁) p (f-extend a) c)
-               ≡ f (incl c)
-        help2 a = J> λ c → cong incl (λ j → transportRefl (f-extend a) j c)
-                ∙ lem2 a c
-      ... | inr x = ind (n , ≤-lem n x) c
-
-      f-coh-full : (n : ℕ) (c : fst C n)
-        → f-full (suc n) (CW↪ (finCW→CW m C) n c)
-         ≡ CW↪ (finCW→CW m D) n (f-full n c)
-      f-coh-full n c with (Dichotomyℕ m n) | (Dichotomyℕ m (suc n))
-      ... | inl x | inl x₁ =
-           cong (λ x₁ → subst (λ n₁ → fst C n₁ → fst D n₁) (snd x₁) (f-extend (fst x₁))
-                (CW↪ (finCW→CW m C) n c)) (isProp≤ x₁ (suc (fst x) , cong suc (snd x)))
-         ∙ f-extend-comm _ _ (snd x) c
-      ... | inl x | inr x₁ = ⊥.rec (¬-suc-n<n (<≤-trans x₁ x))
-      ... | inr x | inl (zero , p) =
-          (λ i → transp (λ j → fst D (p (j ∨ i))) i
-                  (fbase (p i , 1 , (λ j → suc (suc (p (~ j ∧ i)))))
-                   (transp (λ j → fst C (p (~ j ∨ i))) i
-                     (CW↪ (finCW→CW m C) n c))))
-        ∙ cong (λ w → fbase (suc n , w) (CW↪ (finCW→CW m C) n c))
-               (isProp≤ _ _)
-        ∙ fcoh (n , suc (fst x) , cong suc (snd x)) c
-        ∙ cong (CW↪ (finCW→CW m D) n)
-            (cong (λ w → fbase (n , w) c) (isProp≤ _ _))
-      ... | inr x | inl (suc diff , p) = ⊥.rec (¬m<m (<≤-trans x (diff , cong predℕ p)))
-      ... | inr x | inr x₁ = cong (λ w → fbase (suc n , w) (CW↪ (finCW→CW m C) n c)) (isProp≤ _ _)
-                          ∙∙ fcoh (n , ≤-trans x (1 , refl)) c
-                          ∙∙ cong (CW↪ (finCW→CW m D) n)
-                              (cong (λ w → fbase (n , w) c) (isProp≤ _ _))
 
 
-module SeqHomotopyTypes {ℓ} {C D : Sequence ℓ}
-  (f-c g-c : SequenceMap C D)
+open import Cubical.Algebra.ChainComplex
+open import Cubical.Data.FinSequence
+open FinSequenceMap
+
+finCellApprox : (C : CWskel ℓ) (D : CWskel ℓ') (f : realise C → realise D) (m : ℕ) → Type (ℓ-max ℓ ℓ') 
+finCellApprox C D f m =
+  Σ[ ϕ ∈ finCellMap m C D ]
+    ((n : Fin (suc m)) (c : fst C (fst n)) → incl (fmap ϕ n c) ≡ f (incl c))
+
+module _ (C : CWskel ℓ) (D : CWskel ℓ') (f : realise C → realise D) where
+  CWmap→finCellMap : (m : ℕ)
+    → ∃[ ϕ ∈ finCellMap m C D ]
+        ((n : Fin (suc m)) (c : fst C (fst n)) → incl (fmap ϕ n c) ≡ f (incl c))
+  CWmap→finCellMap m = PT.map (λ {(g , hom)
+    → (record { fmap = fst ∘ g
+              ; fcomm = λ r x → sym (hom r x) })
+              , snd ∘ g})
+       (approx C D f m)
+
+
+-- module _ (m : ℕ) (C : finCWskel ℓ m) (D : finCWskel ℓ' m)
+--   (f : realise (finCWskel→CWskel m C) → realise (finCWskel→CWskel m D)) where
+
+--   approxFinCw : ∃[ fₙ ∈ ((n : ℕ) → Σ[ f' ∈ (fst C n → fst D n) ] ((c : _) → incl (f' c) ≡ f (incl c))) ]
+--                  ((n : ℕ) (c : fst C n) → fₙ (suc n) .fst (CW↪ (finCWskel→CWskel m C) n c)
+--                                            ≡ CW↪ (finCWskel→CWskel m D) n (fₙ n .fst c))
+--   approxFinCw =
+--     PT.map (λ appr → (λ n → (f-full (fst ∘ fst appr) (snd appr) n )
+--                             , f-full-coh' _ _ (snd ∘ fst appr) n)
+--                             , (f-coh-full (fst ∘ fst appr) (snd appr)))
+--            (approx (finCWskel→CWskel m C) (finCWskel→CWskel m D) f (suc m))
+--     where
+--     module _ (fbase : (n : Fin (suc (suc m))) → fst C (fst n) → fst D (fst n))
+--              (fcoh : (n : Fin (suc m)) (c : fst C (fst n))
+--                   → fbase (fsuc n) (CW↪ (finCWskel→CWskel m C) (fst n) c)
+--                    ≡ CW↪ (finCWskel→CWskel m D) (fst n) (fbase (injectSuc n) c)) where
+
+--       C≃ : (a : ℕ) → fst C (a +ℕ m) ≃ fst C (suc (a +ℕ m))
+--       C≃ a = _ , C .snd .snd a
+
+--       D≃ : (a : ℕ) → fst D (a +ℕ m) ≃ fst D (suc (a +ℕ m))
+--       D≃ a = _ , D .snd .snd a
+
+--       f-extend : (a : ℕ) → fst C (a +ℕ m) → fst D (a +ℕ m)
+--       f-extend zero = fbase (m , (1 , refl))
+--       f-extend (suc a) c = fst (D≃ a) (f-extend a (invEq (C≃ a) c))
+
+--       f-extend-comm : (x n : ℕ) (p : x +ℕ m ≡ n) (t : fst C n)
+--         → subst (fst D) (cong suc p)
+--                 (f-extend (suc x)
+--                   (subst (fst C) (sym (cong suc p)) (CW↪ (finCWskel→CWskel m C) n t)))
+--          ≡ CW↪ (finCWskel→CWskel m D) n (subst (fst D) p (f-extend x (subst (fst C) (sym p) t)))
+--       f-extend-comm x = J> λ t →
+--           transportRefl _
+--         ∙ cong (CW↪ (finCWskel→CWskel m D) (x +ℕ m))
+--             (sym (transportRefl _
+--             ∙ cong (f-extend x) (transportRefl _
+--               ∙ sym (cong (invEq (C≃ x)) (transportRefl _)
+--                     ∙ retEq (C≃ x) t))))
+
+--       ≤-lem : (n : ℕ) → suc n ≤ m → suc n ≤ suc (suc m)
+--       ≤-lem n x = suc (suc (fst x)) , (cong (2 +ℕ_) (snd x))
+
+--       f-full : (n : ℕ) → fst C n → fst D n
+--       f-full n with (Dichotomyℕ m n)
+--       ... | inl x = subst (λ n → fst C n → fst D n) (snd x)
+--                           (f-extend (fst x))
+--       ... | inr x = fbase (n , ≤-lem n x)
+
+--       f-full-coh' : (ind : (a : Fin (suc (suc m))) (c : fst (finCWskel→CWskel m C) (fst a))
+--                     → incl (fbase a c) ≡ f (incl c))
+--             (n : ℕ) (c : fst C n) → incl (f-full n c) ≡ f (incl c)
+--       f-full-coh' ind n c with Dichotomyℕ m n
+--       ... | inl (a , p) = help2 a n p c
+--         where
+--         lem2 : (a : ℕ) (c : fst C (a +ℕ m))
+--           → incl (f-extend a c) ≡ f (incl c)
+--         lem2 zero c = ind (m , 1 , refl) c
+--         lem2 (suc a) c =
+--             sym (push _)
+--           ∙ lem2 a (invEq (C≃ a) c)
+--           ∙ cong f (push (invEq (C≃ a) c)
+--           ∙ cong incl (secEq (C≃ a) c))
+
+--         help2 : (a n : ℕ) (p : a +ℕ m ≡ n) (c : fst C n)
+--               → incl (subst (λ n₁ → fst C n₁ → fst D n₁) p (f-extend a) c)
+--                ≡ f (incl c)
+--         help2 a = J> λ c → cong incl (λ j → transportRefl (f-extend a) j c)
+--                 ∙ lem2 a c
+--       ... | inr x = ind (n , ≤-lem n x) c
+
+--       f-coh-full : (n : ℕ) (c : fst C n)
+--         → f-full (suc n) (CW↪ (finCWskel→CWskel m C) n c)
+--          ≡ CW↪ (finCWskel→CWskel m D) n (f-full n c)
+--       f-coh-full n c with (Dichotomyℕ m n) | (Dichotomyℕ m (suc n))
+--       ... | inl x | inl x₁ =
+--            cong (λ x₁ → subst (λ n₁ → fst C n₁ → fst D n₁) (snd x₁) (f-extend (fst x₁))
+--                 (CW↪ (finCWskel→CWskel m C) n c)) (isProp≤ x₁ (suc (fst x) , cong suc (snd x)))
+--          ∙ f-extend-comm _ _ (snd x) c
+--       ... | inl x | inr x₁ = ⊥.rec (¬-suc-n<n (<≤-trans x₁ x))
+--       ... | inr x | inl (zero , p) =
+--           (λ i → transp (λ j → fst D (p (j ∨ i))) i
+--                   (fbase (p i , 1 , (λ j → suc (suc (p (~ j ∧ i)))))
+--                    (transp (λ j → fst C (p (~ j ∨ i))) i
+--                      (CW↪ (finCWskel→CWskel m C) n c))))
+--         ∙ cong (λ w → fbase (suc n , w) (CW↪ (finCWskel→CWskel m C) n c))
+--                (isProp≤ _ _)
+--         ∙ fcoh (n , suc (fst x) , cong suc (snd x)) c
+--         ∙ cong (CW↪ (finCWskel→CWskel m D) n)
+--             (cong (λ w → fbase (n , w) c) (isProp≤ _ _))
+--       ... | inr x | inl (suc diff , p) = ⊥.rec (¬m<m (<≤-trans x (diff , cong predℕ p)))
+--       ... | inr x | inr x₁ = cong (λ w → fbase (suc n , w) (CW↪ (finCWskel→CWskel m C) n c)) (isProp≤ _ _)
+--                           ∙∙ fcoh (n , ≤-trans x (1 , refl)) c
+--                           ∙∙ cong (CW↪ (finCWskel→CWskel m D) n)
+--                               (cong (λ w → fbase (n , w) c) (isProp≤ _ _))
+
+
+module SeqHomotopyTypes {ℓ ℓ'} {C : Sequence ℓ} {D : Sequence ℓ'} (m : ℕ)
+  (f-c g-c : FinSequenceMap (Sequence→FinSequence m C) (Sequence→FinSequence m D))
   where
 
-  f = SequenceMap.map f-c
-  g = SequenceMap.map g-c
-  f-hom = SequenceMap.comm f-c
-  g-hom = SequenceMap.comm g-c
+  f = fmap f-c
+  g = fmap g-c
+  f-hom = fcomm f-c
+  g-hom = fcomm g-c
 
-  cell-hom : (n : ℕ) (c : obj C n) → Type ℓ
+  cell-hom : (n : ℕ) (c : obj C n) → Type ℓ'
   cell-hom n c = Sequence.map D (f n c) ≡ Sequence.map D (g n c)
 
   cell-hom-coh : (n : ℕ) (c : obj C n)
-    → cell-hom n c → cell-hom (suc n) (Sequence.map C c) → Type ℓ
+    → cell-hom n c → cell-hom (suc n) (Sequence.map C c) → Type ℓ'
   cell-hom-coh n c h h' =
     Square (cong (Sequence.map D) h) h'
            (cong (Sequence.map D) (f-hom n c))
            (cong (Sequence.map D) (g-hom n c))
 
   agrees-in-lim : (h∞ : realiseSequenceMap f-c ≡ realiseSequenceMap g-c)
-    → {n : ℕ} (x : obj C n) (h : cell-hom n x) → Type ℓ
+    → {n : ℕ} (x : obj C n) (h : cell-hom n x) → Type ℓ'
   agrees-in-lim  h∞ {n = n} x h =
      Square (funExt⁻ h∞ (incl x)) (cong incl h)
             (push (f n x)) (push (g n x))
@@ -541,7 +568,7 @@ module SeqHomotopyTypes {ℓ} {C D : Sequence ℓ}
     Σ[ hₙ ∈ ((n : Fin (suc m)) (c : obj C (fst n)) → cell-hom (fst n) c) ]
        ((n : Fin m) (c : obj C (fst n))
          → cell-hom-coh (fst n) c
-             (hₙ (Fin↑ n) c)
+             (hₙ (injectSuc n) c)
              (hₙ (fsuc n) (Sequence.map C c)))
 
   goalType : Type _
@@ -553,10 +580,10 @@ module SeqHomotopyTypes {ℓ} {C D : Sequence ℓ}
                 (hₙ n c) (hₙ (suc n) (Sequence.map C c)))
 
 -- homotopy in colimit → cellular homotopy
-module _ {C D : CW} (f-c g-c : cellMap C D)
+module _ {C : CWskel ℓ} {D : CWskel ℓ'} (f-c g-c : cellMap C D)
          (h∞ : realiseCellMap f-c ≡ realiseCellMap g-c) where
   open SeqHomotopyTypes f-c g-c
-  open CW-fields C
+  open CWskel-fields C
 
   -- base case
   pathToCellularHomotopy₁ : (c : fst C 1) → ∃[ h ∈ cell-hom 1 c ] agrees-in-lim h∞ c h
@@ -640,7 +667,7 @@ module _ {C D : CW} (f-c g-c : cellMap C D)
              (inl (α (suc n) (x , ptSn n)))
       push-path j = push-path-filler i1 j
 
-      D∞PushSquare : Type
+      D∞PushSquare : Type ℓ'
       D∞PushSquare =
         Square {A = realise D}
           (cong (CW↪∞ D (suc (suc (suc n))))
@@ -739,7 +766,7 @@ module _ {C D : CW} (f-c g-c : cellMap C D)
 
       hₙ₊₁ : (c : fst C (suc (suc n)))
         → Σ (cell-hom (suc (suc n)) c) (agrees-in-lim h∞ c)
-      hₙ₊₁ = CW-elim' C n main-inl main-push
+      hₙ₊₁ = CWskel-elim' C n main-inl main-push
 
       hₙ₊₁-coh-pre : (c : fst C (suc n)) →
         Square (cong (CW↪ D (suc (suc n))) (ind c .fst))
@@ -754,7 +781,7 @@ module _ {C D : CW} (f-c g-c : cellMap C D)
                (cong (CW↪ D (suc (suc n))) (f-hom (suc n) c))
                (cong (CW↪ D (suc (suc n))) (g-hom (suc n) c))
       hₙ₊₁-coh c = hₙ₊₁-coh-pre c
-        ▷ λ i → CW-elim'-inl C n
+        ▷ λ i → CWskel-elim'-inl C n
                   {B = λ c → Σ (cell-hom (suc (suc n)) c) (agrees-in-lim h∞ c)}
                   main-inl main-push c (~ i) .fst
 
@@ -764,7 +791,7 @@ module _ {C D : CW} (f-c g-c : cellMap C D)
             → Σ[ h ∈ cell-hom (fst n) c ] agrees-in-lim h∞ c h ) ]
          ((n : Fin m) (c : fst C (fst n))
            → cell-hom-coh (fst n) c
-                (hₙ (Fin↑ n) c .fst)
+                (hₙ (injectSuc n) c .fst)
                 (hₙ (fsuc n) (CW↪ C (fst n) c) .fst))
   pathToCellularHomotopy {m = zero} = ∣ hom₀ , (λ n → ⊥.rec (¬Fin0 n)) ∣₁
     where
@@ -803,7 +830,7 @@ module _ {C D : CW} (f-c g-c : cellMap C D)
                 → Σ (cell-hom (fst n) c) (agrees-in-lim h∞ c))
              (h-coh : (n : Fin (suc m)) (c : fst C (fst n))
                     → cell-hom-coh (fst n) c
-                         (h (Fin↑ n) c .fst)
+                         (h (injectSuc n) c .fst)
                          (h (fsuc n) (CW↪ C (fst n) c) .fst))
              (h-max : (c : fst C (suc (suc m)))
                    → Σ (cell-hom (suc (suc m)) c) (agrees-in-lim h∞ c))
@@ -832,12 +859,12 @@ module _ {C D : CW} (f-c g-c : cellMap C D)
 
       hom-coh : (n : Fin (suc (suc m))) (c : fst C (fst n)) →
                    cell-hom-coh (fst n) c
-                     (hom (Fin↑ n) c .fst)
+                     (hom (injectSuc n) c .fst)
                      (hom (fsuc n) (CW↪ C (fst n) c) .fst)
       hom-coh (n , zero , p) =
         transport (λ j → (c : fst C (predℕ (p (~ j))))
                → cell-hom-coh (predℕ (p (~ j))) c
-                    (hom (Fin↑ (predℕ (p (~ j)) , zero , p-coh j)) c .fst)
+                    (hom (injectSuc (predℕ (p (~ j)) , zero , p-coh j)) c .fst)
                     (hom (fsuc (predℕ (p (~ j)) , zero , p-coh j))
                       (CW↪ C (predℕ (p (~ j))) c) .fst))
            (λ c → cong (cong (CW↪ D (suc (suc m)))) h-help
@@ -852,14 +879,14 @@ module _ {C D : CW} (f-c g-c : cellMap C D)
         ◁ h-coh (n , diff , cong predℕ p) c
         ▷ h-help
 
-module _ (m : ℕ) {C D : finCW m}
-  (f-c g-c : cellMap (finCW→CW m C) (finCW→CW m D))
+module _ (m : ℕ) {C : finCWskel ℓ m} {D : finCWskel ℓ' m}
+  (f-c g-c : cellMap (finCWskel→CWskel m C) (finCWskel→CWskel m D))
   (h∞ : realiseCellMap f-c ≡ realiseCellMap g-c) where
   open SeqHomotopyTypes f-c g-c
-  C' = finCW→CW m C
-  D' = finCW→CW m D
+  C' = finCWskel→CWskel m C
+  D' = finCWskel→CWskel m D
 
-  open CW-fields C'
+  open CWskel-fields C'
 
   private
     GoalTy =
@@ -880,12 +907,12 @@ module _ (m : ℕ) {C D : finCW m}
       (pathToCellularHomotopy f-c g-c h∞ {m = suc m})
     where
     module _ (ind : Σ
-      ((c : Fin (suc (suc m))) (n : fst (finCW→CW m C) (fst c)) →
+      ((c : Fin (suc (suc m))) (n : fst (finCWskel→CWskel m C) (fst c)) →
        Σ (cell-hom (fst c) n) (agrees-in-lim h∞ n))
       (λ hₙ →
-         (n : Fin (suc m)) (c : fst (finCW→CW m C) (fst n)) →
-         cell-hom-coh (fst n) c (hₙ (Fin↑ n) c .fst)
-         (hₙ (fsuc n) (CW↪ (finCW→CW m C) (fst n) c) .fst)))
+         (n : Fin (suc m)) (c : fst (finCWskel→CWskel m C) (fst n)) →
+         cell-hom-coh (fst n) c (hₙ (injectSuc n) c .fst)
+         (hₙ (fsuc n) (CW↪ (finCWskel→CWskel m C) (fst n) c) .fst)))
       where
       open import Cubical.Foundations.Equiv.HalfAdjoint
       cEq : (a : ℕ) → fst C' (a +ℕ suc m) ≃ fst C' (suc (a +ℕ suc m))
@@ -900,14 +927,14 @@ module _ (m : ℕ) {C D : finCW m}
       baz : (a : ℕ) → (c : fst C' (a +ℕ suc m)) → cell-hom (a +ℕ suc m) c
       baz zero c = fst ind (suc m , 0 , refl) c .fst
       baz (suc a) c =
-        cong (CW↪ (finCW→CW m D) (suc (a +ℕ suc m))
+        cong (CW↪ (finCWskel→CWskel m D) (suc (a +ℕ suc m))
              ∘ SequenceMap.map f-c (suc (a +ℕ suc m)))
              (sym (rinv (cEq' a .snd) c))
-        ∙∙ cong (CW↪ (finCW→CW m D) (suc (a +ℕ suc m)))
+        ∙∙ cong (CW↪ (finCWskel→CWskel m D) (suc (a +ℕ suc m)))
                 (sym (SequenceMap.comm f-c (a +ℕ suc m) (haInv (cEq' a .snd) c))
              ∙∙ baz a (haInv (cEq' a .snd) c)
-             ∙∙ SequenceMap.comm g-c (a +ℕ suc m) (haInv (cEq' a .snd) c)) 
-        ∙∙ cong (CW↪ (finCW→CW m D) (suc (a +ℕ suc m))
+             ∙∙ SequenceMap.comm g-c (a +ℕ suc m) (haInv (cEq' a .snd) c))
+        ∙∙ cong (CW↪ (finCWskel→CWskel m D) (suc (a +ℕ suc m))
              ∘ SequenceMap.map g-c (suc (a +ℕ suc m)))
              (rinv (cEq' a .snd) c) -- (linv (cEq' a) c)
 
@@ -919,10 +946,10 @@ module _ (m : ℕ) {C D : finCW m}
       main₂* : (x1 n : ℕ) (c : fst C' (x1 +ℕ suc m))
         → cell-hom-coh (x1 +ℕ suc m) c (baz x1 c) (baz (suc x1) (CW↪ C' (x1 +ℕ suc m) c))
       main₂* x1 n c i j =
-        hcomp (λ k → λ {(i = i0) → CW↪ (finCW→CW m D) (suc (x1 +ℕ suc m)) (baz x1 (linv (cEq' x1 .snd) c k) j)
-                       ; (j = i0) → CW↪ (finCW→CW m D) (suc (x1 +ℕ suc m)) (help' i k)
-                       ; (j = i1) → CW↪ (finCW→CW m D) (suc (x1 +ℕ suc m)) (help i k)})
-          (CW↪ (finCW→CW m D) (suc (x1 +ℕ suc m))
+        hcomp (λ k → λ {(i = i0) → CW↪ (finCWskel→CWskel m D) (suc (x1 +ℕ suc m)) (baz x1 (linv (cEq' x1 .snd) c k) j)
+                       ; (j = i0) → CW↪ (finCWskel→CWskel m D) (suc (x1 +ℕ suc m)) (help' i k)
+                       ; (j = i1) → CW↪ (finCWskel→CWskel m D) (suc (x1 +ℕ suc m)) (help i k)})
+          (CW↪ (finCWskel→CWskel m D) (suc (x1 +ℕ suc m))
             (hcomp (λ k → λ {(i = i0) → baz x1 (haInv (cEq' x1 .snd) (fst (cEq' x1) c)) j
                             ; (j = i0) → SequenceMap.comm f-c (x1 +ℕ suc m)
                                             (haInv (cEq' x1 .snd) (fst (cEq' x1) c)) (i ∧ k)
@@ -930,7 +957,7 @@ module _ (m : ℕ) {C D : finCW m}
                                             (haInv (cEq' x1 .snd) (fst (cEq' x1) c)) (i ∧ k)})
                    (baz x1 (haInv (cEq' x1 .snd) (fst (cEq' x1) c)) j)))
           where
-          help' : Square (cong (CW↪ (finCW→CW m D) (x1 +ℕ suc m))
+          help' : Square (cong (CW↪ (finCWskel→CWskel m D) (x1 +ℕ suc m))
                                (cong (f (x1 +ℕ suc m)) (linv (cEq' x1 .snd) c)))
                          (cong (f (suc (x1 +ℕ suc m)))
                          (rinv (cEq' x1 .snd) (CW↪ C' (x1 +ℕ suc m) c)))
@@ -939,7 +966,7 @@ module _ (m : ℕ) {C D : finCW m}
           help' = (λ i j → f-hom (x1 +ℕ suc m) (linv (cEq' x1 .snd) c j) i)
                 ▷ cong (cong (f (suc (x1 +ℕ suc m)))) (com (cEq' x1 .snd) c)
 
-          help : Square (cong (CW↪ (finCW→CW m D) (x1 +ℕ suc m) ∘ SequenceMap.map g-c (x1 +ℕ suc m))
+          help : Square (cong (CW↪ (finCWskel→CWskel m D) (x1 +ℕ suc m) ∘ SequenceMap.map g-c (x1 +ℕ suc m))
                         (linv (cEq' x1 .snd) c))
                    (cong (SequenceMap.map g-c (suc (x1 +ℕ suc m)))
                      (rinv (cEq' x1 .snd) (CW↪ C' (x1 +ℕ suc m) c)))
@@ -953,12 +980,12 @@ module _ (m : ℕ) {C D : finCW m}
         → cell-hom-coh n c
             (subst (λ n → (c : fst C' n) → cell-hom n c) p (baz x1) c)
             (subst (λ n → (c : fst C' n) → cell-hom n c) (snd x₁) (baz (fst x₁))
-                   (CW↪ (finCW→CW m C) n c))
+                   (CW↪ (finCWskel→CWskel m C) n c))
       main₂-inl x1 =
         J> λ r c → subst2 (cell-hom-coh (x1 +ℕ suc m) c)
           (λ j → transportRefl (baz x1) (~ j) c)
           (cong (λ path → subst (λ n → (c₁ : fst C' n) → cell-hom n c₁) path (baz (fst r))
-                 (CW↪ (finCW→CW m C) (x1 +ℕ suc m) c))
+                 (CW↪ (finCWskel→CWskel m C) (x1 +ℕ suc m) c))
                  (isSetℕ _ _ (cong (_+ℕ suc m) (inj-+m {n = suc x1} (snd r))) (snd r)))
           (main₂-inl' (fst r) (sym (inj-+m {n = suc x1} (snd r))) c)
         where
@@ -966,11 +993,11 @@ module _ (m : ℕ) {C D : finCW m}
           → cell-hom-coh (x1 +ℕ suc m) c (baz x1 c)
               (subst (λ n → (c₁ : fst C' n) → cell-hom n c₁)
                (λ i → r2 (~ i) +ℕ suc m) (baz r1)
-               (CW↪ (finCW→CW m C) (x1 +ℕ suc m) c))
+               (CW↪ (finCWskel→CWskel m C) (x1 +ℕ suc m) c))
         main₂-inl' = J> λ c
           → subst (cell-hom-coh (x1 +ℕ suc m) c (baz x1 c))
                   (λ j → transportRefl (baz (suc x1)) (~ j)
-                           (CW↪ (finCW→CW m C) (x1 +ℕ suc m) c))
+                           (CW↪ (finCWskel→CWskel m C) (x1 +ℕ suc m) c))
                   (main₂* x1 m c)
 
       main₂ : (n : ℕ) (c : fst C' n) →
@@ -995,13 +1022,13 @@ module _ (m : ℕ) {C D : finCW m}
       ... | inr x | inl (suc diff , x₁) =
         ⊥.rec (⊥.rec (¬m<m (≤<-trans x (diff , +-suc diff (suc m) ∙ x₁))))
       ... | inr x | inr x₁ = λ c → snd ind (n , x) c
-        ▷ cong (λ p → fst ind (suc n , p) (CW↪ (finCW→CW m C) n c) .fst) (isProp≤ _ _)
+        ▷ cong (λ p → fst ind (suc n , p) (CW↪ (finCWskel→CWskel m C) n c) .fst) (isProp≤ _ _)
 
 
 
--- module _ (m : ℕ) (C D : finCW m) (f : realise (finCW→CW m C) → realise (finCW→CW m D)) where
---   finMap→cellMap : ∥ cellMap (finCW→CW m C) (finCW→CW m D) ∥₂
---   finMap→cellMap = elim→Set {P = λ _ → ∥ cellMap (finCW→CW m C) (finCW→CW m D) ∥₂}
+-- module _ (m : ℕ) (C D : finCWskel m) (f : realise (finCWskel→CWskel m C) → realise (finCWskel→CWskel m D)) where
+--   finMap→cellMap : ∥ cellMap (finCWskel→CWskel m C) (finCWskel→CWskel m D) ∥₂
+--   finMap→cellMap = elim→Set {P = λ _ → ∥ cellMap (finCWskel→CWskel m C) (finCWskel→CWskel m D) ∥₂}
 --                               (λ _ → squash₂)
 --                               ∣_∣₂
 --                               {!!}

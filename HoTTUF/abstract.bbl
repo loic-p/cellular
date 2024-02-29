@@ -1,0 +1,491 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.2 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{nty/global//global/global}
+    \entry{SerreFiniteness}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=d9b0f1dcc9ebc5fb765939bbc200c283}{%
+           family={Barton},
+           familyi={B\bibinitperiod},
+           given={Reid},
+           giveni={R\bibinitperiod}}}%
+      }
+      \strng{namehash}{d9b0f1dcc9ebc5fb765939bbc200c283}
+      \strng{fullhash}{d9b0f1dcc9ebc5fb765939bbc200c283}
+      \strng{bibnamehash}{d9b0f1dcc9ebc5fb765939bbc200c283}
+      \strng{authorbibnamehash}{d9b0f1dcc9ebc5fb765939bbc200c283}
+      \strng{authornamehash}{d9b0f1dcc9ebc5fb765939bbc200c283}
+      \strng{authorfullhash}{d9b0f1dcc9ebc5fb765939bbc200c283}
+      \field{labelalpha}{Bar22}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{Talk at the Seminar on Homotopy Type Theory at CMU, presenting joint work with Tim Campion}
+      \field{title}{Finite presentability of homotopy groups of spheres}
+      \field{year}{2022}
+      \verb{urlraw}
+      \verb https://www.cmu.edu/dietrich/philosophy/hott/seminars/previous.html
+      \endverb
+      \verb{url}
+      \verb https://www.cmu.edu/dietrich/philosophy/hott/seminars/previous.html
+      \endverb
+    \endentry
+    \entry{BLM22}{inproceedings}{}
+      \name{author}{3}{}{%
+        {{hash=53dc8f3c495b26c98e56971f67e8e71c}{%
+           family={Brunerie},
+           familyi={B\bibinitperiod},
+           given={Guillaume},
+           giveni={G\bibinitperiod}}}%
+        {{hash=e34ee708579aa75cb641c497433797f2}{%
+           family={Ljungström},
+           familyi={L\bibinitperiod},
+           given={Axel},
+           giveni={A\bibinitperiod}}}%
+        {{hash=324585bd6e55e1a2fb4eaa984c14da0b}{%
+           family={Mörtberg},
+           familyi={M\bibinitperiod},
+           given={Anders},
+           giveni={A\bibinitperiod}}}%
+      }
+      \name{editor}{2}{}{%
+        {{hash=3010768803c9ed1be1a0bfa45348997e}{%
+           family={Manea},
+           familyi={M\bibinitperiod},
+           given={Florin},
+           giveni={F\bibinitperiod}}}%
+        {{hash=cc9647d73dc394bd5705733781cb9b90}{%
+           family={Simpson},
+           familyi={S\bibinitperiod},
+           given={Alex},
+           giveni={A\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Dagstuhl, Germany}%
+      }
+      \list{publisher}{1}{%
+        {Schloss Dagstuhl -- Leibniz-Zentrum für Informatik}%
+      }
+      \strng{namehash}{cb529f0f03fc54a4fa623fb46f28673c}
+      \strng{fullhash}{cb529f0f03fc54a4fa623fb46f28673c}
+      \strng{bibnamehash}{cb529f0f03fc54a4fa623fb46f28673c}
+      \strng{authorbibnamehash}{cb529f0f03fc54a4fa623fb46f28673c}
+      \strng{authornamehash}{cb529f0f03fc54a4fa623fb46f28673c}
+      \strng{authorfullhash}{cb529f0f03fc54a4fa623fb46f28673c}
+      \strng{editorbibnamehash}{afd8dedd90f09b836679282fb7e30f6b}
+      \strng{editornamehash}{afd8dedd90f09b836679282fb7e30f6b}
+      \strng{editorfullhash}{afd8dedd90f09b836679282fb7e30f6b}
+      \field{labelalpha}{BLM22}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{annotation}{Keywords: Synthetic Homotopy Theory, Cohomology Theory, Cubical Agda}
+      \field{booktitle}{30th EACSL Annual Conference on Computer Science Logic (CSL 2022)}
+      \field{isbn}{978-3-95977-218-1}
+      \field{issn}{1868-8969}
+      \field{series}{Leibniz International Proceedings in Informatics (LIPIcs)}
+      \field{title}{{Synthetic Integral Cohomology in Cubical Agda}}
+      \field{volume}{216}
+      \field{year}{2022}
+      \field{pages}{11:1\bibrangedash 11:19}
+      \range{pages}{-1}
+      \verb{doi}
+      \verb 10.4230/LIPIcs.CSL.2022.11
+      \endverb
+    \endentry
+    \entry{BuchholtzFavonia18}{inproceedings}{}
+      \name{author}{2}{}{%
+        {{hash=409448cb828eda10650d18b18b2f0d08}{%
+           family={Buchholtz},
+           familyi={B\bibinitperiod},
+           given={Ulrik},
+           giveni={U\bibinitperiod}}}%
+        {{hash=09eae828e2cdfdf8033574edc9be535d}{%
+           family={Hou\bibnamedelima Favonia},
+           familyi={H\bibinitperiod\bibinitdelim F\bibinitperiod},
+           given={Kuen-Bang},
+           giveni={K\bibinithyphendelim B\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Oxford, United Kingdom}%
+      }
+      \list{publisher}{1}{%
+        {Association for Computing Machinery}%
+      }
+      \strng{namehash}{72f0ff5fb66401a816425c2c1361db78}
+      \strng{fullhash}{72f0ff5fb66401a816425c2c1361db78}
+      \strng{bibnamehash}{72f0ff5fb66401a816425c2c1361db78}
+      \strng{authorbibnamehash}{72f0ff5fb66401a816425c2c1361db78}
+      \strng{authornamehash}{72f0ff5fb66401a816425c2c1361db78}
+      \strng{authorfullhash}{72f0ff5fb66401a816425c2c1361db78}
+      \field{labelalpha}{BH18}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the 33rd Annual ACM/IEEE Symposium on Logic in Computer Science}
+      \field{isbn}{9781450355834}
+      \field{series}{LICS '18}
+      \field{title}{{Cellular Cohomology in Homotopy Type Theory}}
+      \field{year}{2018}
+      \field{pages}{521\bibrangedash 529}
+      \range{pages}{9}
+      \verb{doi}
+      \verb 10.1145/3209108.3209188
+      \endverb
+    \endentry
+    \entry{CavalloMsc15}{thesis}{}
+      \name{author}{1}{}{%
+        {{hash=8948108e4d23939b1818cd45a2651ae9}{%
+           family={Cavallo},
+           familyi={C\bibinitperiod},
+           given={Evan},
+           giveni={E\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {Carnegie Mellon University}%
+      }
+      \strng{namehash}{8948108e4d23939b1818cd45a2651ae9}
+      \strng{fullhash}{8948108e4d23939b1818cd45a2651ae9}
+      \strng{bibnamehash}{8948108e4d23939b1818cd45a2651ae9}
+      \strng{authorbibnamehash}{8948108e4d23939b1818cd45a2651ae9}
+      \strng{authornamehash}{8948108e4d23939b1818cd45a2651ae9}
+      \strng{authorfullhash}{8948108e4d23939b1818cd45a2651ae9}
+      \field{labelalpha}{Cav15}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{{Synthetic Cohomology in Homotopy Type Theory}}
+      \field{type}{mathesis}
+      \field{year}{2015}
+    \endentry
+    \entry{christensen2020hurewicz}{article}{}
+      \name{author}{2}{}{%
+        {{hash=6f97339e753cd08aeeb6cac7e49cf44c}{%
+           family={Christensen},
+           familyi={C\bibinitperiod},
+           given={J.\bibnamedelimi Daniel},
+           giveni={J\bibinitperiod\bibinitdelim D\bibinitperiod}}}%
+        {{hash=87996b1689e10b76574197fff913b5fb}{%
+           family={Scoccola},
+           familyi={S\bibinitperiod},
+           given={Luis},
+           giveni={L\bibinitperiod}}}%
+      }
+      \strng{namehash}{77510f9259dbb29856292643dec5ac89}
+      \strng{fullhash}{77510f9259dbb29856292643dec5ac89}
+      \strng{bibnamehash}{77510f9259dbb29856292643dec5ac89}
+      \strng{authorbibnamehash}{77510f9259dbb29856292643dec5ac89}
+      \strng{authornamehash}{77510f9259dbb29856292643dec5ac89}
+      \strng{authorfullhash}{77510f9259dbb29856292643dec5ac89}
+      \field{labelalpha}{CS23}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{issue}{5}
+      \field{journaltitle}{Algebraic \& Geometric Topology}
+      \field{title}{{The Hurewicz theorem in Homotopy Type Theory}}
+      \field{volume}{23}
+      \field{year}{2023}
+      \field{pages}{2107\bibrangedash 2140}
+      \range{pages}{34}
+    \endentry
+    \entry{FlorisPhd}{thesis}{}
+      \name{author}{1}{}{%
+        {{hash=241ef3eeb33e764da3482b74049133fa}{%
+           family={Doorn},
+           familyi={D\bibinitperiod},
+           given={Floris},
+           giveni={F\bibinitperiod},
+           prefix={van},
+           prefixi={v\bibinitperiod}}}%
+      }
+      \list{institution}{1}{%
+        {Carnegie Mellon University}%
+      }
+      \strng{namehash}{241ef3eeb33e764da3482b74049133fa}
+      \strng{fullhash}{241ef3eeb33e764da3482b74049133fa}
+      \strng{bibnamehash}{241ef3eeb33e764da3482b74049133fa}
+      \strng{authorbibnamehash}{241ef3eeb33e764da3482b74049133fa}
+      \strng{authornamehash}{241ef3eeb33e764da3482b74049133fa}
+      \strng{authorfullhash}{241ef3eeb33e764da3482b74049133fa}
+      \field{labelalpha}{Doo18}
+      \field{sortinit}{D}
+      \field{sortinithash}{6f385f66841fb5e82009dc833c761848}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{month}{5}
+      \field{title}{{On the Formalization of Higher Inductive Types and Synthetic Homotopy Theory}}
+      \field{type}{phdthesis}
+      \field{year}{2018}
+      \verb{urlraw}
+      \verb https://arxiv.org/abs/1808.10690
+      \endverb
+      \verb{url}
+      \verb https://arxiv.org/abs/1808.10690
+      \endverb
+    \endentry
+    \entry{graham18}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=62651ed85ea431c2900ce1b89c53e38c}{%
+           family={Graham},
+           familyi={G\bibinitperiod},
+           given={Robert},
+           giveni={R\bibinitperiod}}}%
+      }
+      \strng{namehash}{62651ed85ea431c2900ce1b89c53e38c}
+      \strng{fullhash}{62651ed85ea431c2900ce1b89c53e38c}
+      \strng{bibnamehash}{62651ed85ea431c2900ce1b89c53e38c}
+      \strng{authorbibnamehash}{62651ed85ea431c2900ce1b89c53e38c}
+      \strng{authornamehash}{62651ed85ea431c2900ce1b89c53e38c}
+      \strng{authorfullhash}{62651ed85ea431c2900ce1b89c53e38c}
+      \field{labelalpha}{Gra18}
+      \field{sortinit}{G}
+      \field{sortinithash}{32d67eca0634bf53703493fb1090a2e8}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{eprintclass}{math.LO}
+      \field{eprinttype}{arXiv}
+      \field{note}{Preprint}
+      \field{title}{{Synthetic Homology in Homotopy Type Theory}}
+      \field{year}{2018}
+      \verb{eprint}
+      \verb 1706.01540
+      \endverb
+    \endentry
+    \entry{KrausTruncation}{inproceedings}{}
+      \name{author}{1}{}{%
+        {{hash=b3f5382feec7de06619a7160fc059ee8}{%
+           family={Kraus},
+           familyi={K\bibinitperiod},
+           given={Nicolai},
+           giveni={N\bibinitperiod}}}%
+      }
+      \name{editor}{3}{}{%
+        {{hash=a1b024a09e1c0f1b613e89250b795719}{%
+           family={Herbelin},
+           familyi={H\bibinitperiod},
+           given={Hugo},
+           giveni={H\bibinitperiod}}}%
+        {{hash=ce547601c9b81c1d8ce996851cccb458}{%
+           family={Letouzey},
+           familyi={L\bibinitperiod},
+           given={Pierre},
+           giveni={P\bibinitperiod}}}%
+        {{hash=589663bc0518f0e965fe86c4bfafc9f5}{%
+           family={Sozeau},
+           familyi={S\bibinitperiod},
+           given={Matthieu},
+           giveni={M\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Dagstuhl, Germany}%
+      }
+      \list{publisher}{1}{%
+        {Schloss Dagstuhl -- Leibniz-Zentrum für Informatik}%
+      }
+      \strng{namehash}{b3f5382feec7de06619a7160fc059ee8}
+      \strng{fullhash}{b3f5382feec7de06619a7160fc059ee8}
+      \strng{bibnamehash}{b3f5382feec7de06619a7160fc059ee8}
+      \strng{authorbibnamehash}{b3f5382feec7de06619a7160fc059ee8}
+      \strng{authornamehash}{b3f5382feec7de06619a7160fc059ee8}
+      \strng{authorfullhash}{b3f5382feec7de06619a7160fc059ee8}
+      \strng{editorbibnamehash}{9fad62c86aaed28254968e3bf608fec3}
+      \strng{editornamehash}{9fad62c86aaed28254968e3bf608fec3}
+      \strng{editorfullhash}{9fad62c86aaed28254968e3bf608fec3}
+      \field{labelalpha}{Kra15}
+      \field{sortinit}{K}
+      \field{sortinithash}{c02bf6bff1c488450c352b40f5d853ab}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{annotation}{Keywords: coherence conditions, propositional truncation, Reedy limits, universal property, well-behaved constancy}
+      \field{booktitle}{20th International Conference on Types for Proofs and Programs (TYPES 2014)}
+      \field{isbn}{978-3-939897-88-0}
+      \field{issn}{1868-8969}
+      \field{series}{Leibniz International Proceedings in Informatics (LIPIcs)}
+      \field{title}{{The General Universal Property of the Propositional Truncation}}
+      \field{volume}{39}
+      \field{year}{2015}
+      \field{pages}{111\bibrangedash 145}
+      \range{pages}{35}
+      \verb{doi}
+      \verb 10.4230/LIPIcs.TYPES.2014.111
+      \endverb
+    \endentry
+    \entry{LicataFinster14}{inproceedings}{}
+      \name{author}{2}{}{%
+        {{hash=ca5689112ca04c45bc58fbf25144a438}{%
+           family={Licata},
+           familyi={L\bibinitperiod},
+           given={Daniel\bibnamedelima R.},
+           giveni={D\bibinitperiod\bibinitdelim R\bibinitperiod}}}%
+        {{hash=f21181ec68032ce5db3ed51c5380b793}{%
+           family={Finster},
+           familyi={F\bibinitperiod},
+           given={Eric},
+           giveni={E\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Vienna, Austria}%
+      }
+      \list{publisher}{1}{%
+        {Association for Computing Machinery}%
+      }
+      \strng{namehash}{b186cb4567729d662319ba8e9631133b}
+      \strng{fullhash}{b186cb4567729d662319ba8e9631133b}
+      \strng{bibnamehash}{b186cb4567729d662319ba8e9631133b}
+      \strng{authorbibnamehash}{b186cb4567729d662319ba8e9631133b}
+      \strng{authornamehash}{b186cb4567729d662319ba8e9631133b}
+      \strng{authorfullhash}{b186cb4567729d662319ba8e9631133b}
+      \field{labelalpha}{LF14}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the Joint Meeting of the Twenty-Third EACSL Annual Conference on Computer Science Logic (CSL) and the Twenty-Ninth Annual ACM/IEEE Symposium on Logic in Computer Science (LICS)}
+      \field{isbn}{9781450328869}
+      \field{series}{CSL-LICS '14}
+      \field{title}{{Eilenberg-MacLane Spaces in Homotopy Type Theory}}
+      \field{year}{2014}
+      \verb{doi}
+      \verb 10.1145/2603088.2603153
+      \endverb
+    \endentry
+    \entry{May1999}{book}{}
+      \name{author}{1}{}{%
+        {{hash=11149a42a90779df0bd6b6539568f5ed}{%
+           family={May},
+           familyi={M\bibinitperiod},
+           given={J.P.},
+           giveni={J\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {University of Chicago Press}%
+      }
+      \strng{namehash}{11149a42a90779df0bd6b6539568f5ed}
+      \strng{fullhash}{11149a42a90779df0bd6b6539568f5ed}
+      \strng{bibnamehash}{11149a42a90779df0bd6b6539568f5ed}
+      \strng{authorbibnamehash}{11149a42a90779df0bd6b6539568f5ed}
+      \strng{authornamehash}{11149a42a90779df0bd6b6539568f5ed}
+      \strng{authorfullhash}{11149a42a90779df0bd6b6539568f5ed}
+      \field{labelalpha}{May99}
+      \field{sortinit}{M}
+      \field{sortinithash}{4625c616857f13d17ce56f7d4f97d451}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{isbn}{9780226511832}
+      \field{series}{Chicago Lectures in Mathematics}
+      \field{title}{A Concise Course in Algebraic Topology}
+      \field{year}{1999}
+    \endentry
+    \entry{ShulmanBlog13}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=a49cc4742950659ae680e1c40f2295a9}{%
+           family={Shulman},
+           familyi={S\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod}}}%
+      }
+      \strng{namehash}{a49cc4742950659ae680e1c40f2295a9}
+      \strng{fullhash}{a49cc4742950659ae680e1c40f2295a9}
+      \strng{bibnamehash}{a49cc4742950659ae680e1c40f2295a9}
+      \strng{authorbibnamehash}{a49cc4742950659ae680e1c40f2295a9}
+      \strng{authornamehash}{a49cc4742950659ae680e1c40f2295a9}
+      \strng{authorfullhash}{a49cc4742950659ae680e1c40f2295a9}
+      \field{labelalpha}{Shu13}
+      \field{sortinit}{S}
+      \field{sortinithash}{b164b07b29984b41daf1e85279fbc5ab}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{post on the Homotopy Type Theory blog: \url{http://homotopytypetheory.org/2013/07/24/}}
+      \field{title}{Cohomology}
+      \field{year}{2013}
+    \endentry
+    \entry{spectralsequences}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=4bc5287c9086d7afec7eac8def3e7c43}{%
+           family={{Spectral Sequence Project}},
+           familyi={S\bibinitperiod},
+           given={The},
+           giveni={T\bibinitperiod}}}%
+      }
+      \strng{namehash}{4bc5287c9086d7afec7eac8def3e7c43}
+      \strng{fullhash}{4bc5287c9086d7afec7eac8def3e7c43}
+      \strng{bibnamehash}{4bc5287c9086d7afec7eac8def3e7c43}
+      \strng{authorbibnamehash}{4bc5287c9086d7afec7eac8def3e7c43}
+      \strng{authornamehash}{4bc5287c9086d7afec7eac8def3e7c43}
+      \strng{authorfullhash}{4bc5287c9086d7afec7eac8def3e7c43}
+      \field{labelalpha}{Spe18}
+      \field{sortinit}{S}
+      \field{sortinithash}{b164b07b29984b41daf1e85279fbc5ab}
+      \field{labelnamesource}{author}
+      \field{note}{\url{https://github.com/cmu-phil/Spectral}}
+      \field{year}{2018}
+    \endentry
+    \entry{cubicalagda2}{article}{}
+      \name{author}{3}{}{%
+        {{hash=38b551d0b5ec5e2b4c915bd08649e102}{%
+           family={Vezzosi},
+           familyi={V\bibinitperiod},
+           given={Andrea},
+           giveni={A\bibinitperiod}}}%
+        {{hash=324585bd6e55e1a2fb4eaa984c14da0b}{%
+           family={Mörtberg},
+           familyi={M\bibinitperiod},
+           given={Anders},
+           giveni={A\bibinitperiod}}}%
+        {{hash=492fee9410a0fd601511d2201c985f28}{%
+           family={Abel},
+           familyi={A\bibinitperiod},
+           given={Andreas},
+           giveni={A\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Cambridge University Press}%
+      }
+      \strng{namehash}{e6ae212e716173f7523e0f1dde3bc4a7}
+      \strng{fullhash}{e6ae212e716173f7523e0f1dde3bc4a7}
+      \strng{bibnamehash}{e6ae212e716173f7523e0f1dde3bc4a7}
+      \strng{authorbibnamehash}{e6ae212e716173f7523e0f1dde3bc4a7}
+      \strng{authornamehash}{e6ae212e716173f7523e0f1dde3bc4a7}
+      \strng{authorfullhash}{e6ae212e716173f7523e0f1dde3bc4a7}
+      \field{labelalpha}{VMA21}
+      \field{sortinit}{V}
+      \field{sortinithash}{afb52128e5b4dc4b843768c0113d673b}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Functional Programming}
+      \field{title}{Cubical Agda: A dependently typed programming language with univalence and higher inductive types}
+      \field{volume}{31}
+      \field{year}{2021}
+      \field{pages}{e8}
+      \range{pages}{-1}
+      \verb{doi}
+      \verb 10.1017/S0956796821000034
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
