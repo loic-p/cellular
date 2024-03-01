@@ -12,7 +12,8 @@ open import Cubical.Foundations.GroupoidLaws
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
 open import Cubical.Data.Nat.Order
 open import Cubical.Data.Int renaming (_·_ to _·ℤ_ ; -_ to -ℤ_)
-open import Cubical.Data.Fin
+open import Cubical.Data.Fin.Inductive.Base
+open import Cubical.Data.Fin.Inductive.Properties
 open import Cubical.Data.Sigma
 open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.Bool hiding (_≟_ ; isProp≤)
@@ -105,7 +106,8 @@ module _ (m : ℕ) (g : finCellMap m D E) (f : finCellMap m C D) (n' : Fin m) wh
   module pf3 = prefunctoriality m (composeFinCellMap m g f) n'
   open FinSequenceMap
   open CWskel-fields
-  n = fst n'
+  private
+    n = fst n'
 
   fn+1/fn-comp : pf2.fn+1/fn ∘ pf1.fn+1/fn ≡ pf3.fn+1/fn
   fn+1/fn-comp = funExt
@@ -227,7 +229,7 @@ module functoriality (m : ℕ) (f : finCellMap (suc m) C D) where
                           (δ (suc (fst n)) C (inv (iso2 C (suc (fst n))) x))))
           where
           p : fsuc (injectSuc n) ≡ injectSuc (fsuc n)
-          p = Σ≡Prop (λ _ → isProp≤) refl
+          p = Σ≡Prop (λ _ → isProp<ᵗ) refl
 
         step6 = cong ((suspFun (fun (iso2 D (fst n)))) ∘ (suspFun (to_cofibCW (fst n) D)))
                  (sym (commδ (fsuc n) (inv (iso2 C (suc (fst n))) x)))
@@ -263,76 +265,76 @@ fbdrycomm (finCellMap→finChainComplexMap m f) n = functoriality.comm∂Funct m
 finCellMap→HomologyMap : (m : ℕ) (f : finCellMap (suc (suc (suc m))) C D)
   → GroupHom (Hᶜʷ C m) (Hᶜʷ D m)
 finCellMap→HomologyMap {C = C} {D = D} m f =
-  finChainComplexMap→HomologyMap (suc m) (finCellMap→finChainComplexMap _ f)
-    (m , 0 , refl)
+  finChainComplexMap→HomologyMap (suc m)
+    (finCellMap→finChainComplexMap _ f) flast
 
--- -- sanity check: chainFunct of a cellular map fₙ : Cₙ → Dₙ
--- -- is just functoriality of ℤ[-] when n = 1.
--- module _ (m : ℕ) (f : finCellMap (suc (suc (suc m))) C D) where
---   open CWskel-fields
---   open SequenceMap
---   open prefunctoriality _ f
+-- sanity check: chainFunct of a cellular map fₙ : Cₙ → Dₙ
+-- is just functoriality of ℤ[-] when n = 1.
+module _ (m : ℕ) (f : finCellMap (suc (suc (suc m))) C D) where
+  open CWskel-fields
+  open FinSequenceMap
+  open prefunctoriality _ f
 
---   cellMap↾₁ : Fin (card C 0) → Fin (card D 0)
---   cellMap↾₁ = fst (CW₁-discrete D) ∘ map f 1 ∘ invEq (CW₁-discrete C)
+  cellMap↾₁ : Fin (card C 0) → Fin (card D 0)
+  cellMap↾₁ = fst (CW₁-discrete D) ∘ fmap f (1 , tt) ∘ invEq (CW₁-discrete C)
 
---   chainFunct' : AbGroupHom (ℤ[A C ] 0) (ℤ[A D ] 0)
---   chainFunct' = ℤFinFunct cellMap↾₁
+  chainFunct' : AbGroupHom (ℤ[A C ] 0) (ℤ[A D ] 0)
+  chainFunct' = ℤFinFunct cellMap↾₁
 
---   chainFunct₀ : chainFunct' ≡ chainFunct 0
---   chainFunct₀ =
---     agreeOnℤFinGenerator→≡ λ t → funExt λ x
---     → sumFin-choose _+_ 0 (λ _ → refl) +Comm
---         (λ a → ℤFinFunctGenerator cellMap↾₁ (ℤFinGenerator t) a x)
---         (S⁰×S⁰→ℤ true (pickPetal x (bouquetFunct 0 (inr (t , false)))))
---         t (ℤFinFunctGenerator≡ cellMap↾₁ t x ∙ main₁ t x)
---         (main₂ cellMap↾₁ x t)
---     ∙ isGeneratorℤFinGenerator'
---         (λ a → degree 0 λ s
---              → pickPetal x (bouquetFunct 0 (inr (a , s)))) t
---     where
---     F = Pushout→Bouquet 0 (card D 0) (α D 0) (e D 0)
+  chainFunct₀ : chainFunct' ≡ chainFunct fzero
+  chainFunct₀ =
+    agreeOnℤFinGenerator→≡ λ t → funExt λ x
+    → sumFin-choose _+_ 0 (λ _ → refl) +Comm
+        (λ a → ℤFinFunctGenerator cellMap↾₁ (ℤFinGenerator t) a x)
+        (S⁰×S⁰→ℤ true (pickPetal x (bouquetFunct fzero (inr (t , false)))))
+        t (ℤFinFunctGenerator≡ cellMap↾₁ t x ∙ main₁ t x)
+        (main₂ cellMap↾₁ x t)
+    ∙ isGeneratorℤFinGenerator'
+        (λ a → degree 0 λ s
+             → pickPetal x (bouquetFunct fzero (inr (a , s)))) t
+    where
+    F = Pushout→Bouquet 0 (card D 0) (α D 0) (e D 0)
 
---     main₁ : (t : _) (x : _)
---       → ℤFinGenerator (cellMap↾₁ t) x
---        ≡ S⁰×S⁰→ℤ true
---           (pickPetal x (F (fst (e D 0) (f .map 1 (invEq (CW₁-discrete C) t)))))
---     main₁ t x = (ℤFinGeneratorComm (cellMap↾₁ t) x
---       ∙ lem₂ (cellMap↾₁ t) x)
---       ∙ cong (S⁰×S⁰→ℤ true ∘ pickPetal x ∘ F)
---              (lem₁ _)
---       where
---       lem₀ : (x : Pushout (α D 0) fst)
---         → inr (CW₁-discrete D .fst (invEq (e D 0) x)) ≡ x
---       lem₀ (inl x) = ⊥.rec (CW₀-empty D x)
---       lem₀ (inr x) j = inr (secEq (CW₁-discrete D) x j)
 
---       lem₁ : (x : _)
---         → inr (CW₁-discrete D .fst x) ≡ fst (e D 0) x
---       lem₁ x = (λ i → inr (CW₁-discrete D .fst
---                             (retEq (e D 0) x (~ i))))
---               ∙ lem₀ (fst (e D 0) x)
+    lem₂ : {k : ℕ} (t : Fin k) (x : Fin k)
+      → ℤFinGenerator x t ≡ S⁰×S⁰→ℤ true (pickPetal x (inr (t , false)))
+    lem₂ {k = suc k} t x with (fst x ≟ᵗ fst t)
+    ... | lt x₁ = refl
+    ... | eq x₁ = refl
+    ... | gt x₁ = refl
 
---       lem₂ : (t : _) (x : _)
---         → ℤFinGenerator x t ≡ S⁰×S⁰→ℤ true (pickPetal x (inr (t , false)))
---       lem₂ t x with (fst x ≟ fst t)
---       ... | lt x₁ = refl
---       ... | eq x₁ = refl
---       ... | gt x₁ = refl
+    main₁ : (t : _) (x : _)
+      → ℤFinGenerator (cellMap↾₁ t) x
+       ≡ S⁰×S⁰→ℤ true
+          (pickPetal x (F (fst (e D 0) (f .fmap (1 , tt) (invEq (CW₁-discrete C) t)))))
+    main₁ t x = (ℤFinGeneratorComm (cellMap↾₁ t) x
+      ∙ lem₂ (cellMap↾₁ t) x)
+      ∙ cong (S⁰×S⁰→ℤ true ∘ pickPetal x ∘ F)
+             (lem₁ _)
+      where
+      lem₀ : (x : Pushout (α D 0) fst)
+        → inr (CW₁-discrete D .fst (invEq (e D 0) x)) ≡ x
+      lem₀ (inl x) = ⊥.rec (CW₀-empty D x)
+      lem₀ (inr x) j = inr (secEq (CW₁-discrete D) x j)
 
---     main₂ : (f' : _) (x : _) (t : _) (x' : Fin (card C zero))
---       → ¬ x' ≡ t
---       → ℤFinFunctGenerator {n = card C zero} {m = card D zero}
---                         f' (ℤFinGenerator t) x' x
---        ≡ pos 0
---     main₂ f' x t x' p with (f' x' .fst ≟ x .fst) | (fst t ≟ fst x')
---     ... | lt x₁ | r = refl
---     ... | eq x₂ | r = lem
---       where
---       lem : _
---       lem with (fst t ≟ fst x')
---       ... | lt x = refl
---       ... | eq x = ⊥.rec (p (Σ≡Prop (λ _ → isProp≤) (sym x)))
---       ... | gt x = refl
---     ... | gt x₁ | r = refl
+      lem₁ : (x : _)
+        → inr (CW₁-discrete D .fst x) ≡ fst (e D 0) x
+      lem₁ x = (λ i → inr (CW₁-discrete D .fst
+                            (retEq (e D 0) x (~ i))))
+              ∙ lem₀ (fst (e D 0) x)
 
+    main₂ : (f' : _) (x : _) (t : _) (x' : Fin (card C zero))
+      → ¬ x' ≡ t
+      → ℤFinFunctGenerator {n = card C zero} {m = card D zero}
+                        f' (ℤFinGenerator t) x' x
+       ≡ pos 0
+    main₂ f' x t x' p with (f' x' .fst ≟ᵗ x .fst) | (fst t ≟ᵗ fst x')
+    ... | lt x₁ | r = refl
+    ... | eq x₂ | r = lem
+      where
+      lem : _
+      lem with (fst t ≟ᵗ fst x')
+      ... | lt x = refl
+      ... | eq x = ⊥.rec (p (Σ≡Prop (λ _ → isProp<ᵗ) (sym x)))
+      ... | gt x = refl
+    ... | gt x₁ | r = refl

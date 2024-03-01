@@ -12,7 +12,8 @@ open import Cubical.Foundations.Path
 
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
 open import Cubical.Data.Nat.Order
-open import Cubical.Data.Fin
+open import Cubical.Data.Fin.Inductive.Base
+open import Cubical.Data.Fin.Inductive.Properties
 open import Cubical.Data.Sigma
 open import Cubical.Data.Bool hiding (isProp≤ ; _≤_)
 open import Cubical.Data.Unit
@@ -23,7 +24,7 @@ open import Cubical.Data.CW.Map
 open import Cubical.Data.Sequence
 
 open import Cubical.HITs.SequentialColimit
-open import Cubical.HITs.PropositionalTruncation as PT
+open import Cubical.HITs.PropositionalTruncation as PT hiding (elimFin)
 open import Cubical.HITs.SetTruncation as ST
 open import Cubical.HITs.Truncation as TR
 open import Cubical.HITs.Sn
@@ -34,7 +35,7 @@ open import Cubical.Homotopy.Connected
 open import Cubical.Homotopy.Group.Base
 open import Cubical.Algebra.ChainComplex
 
-open import cw-map
+open import fin-cw-map
 
 
 
@@ -45,6 +46,30 @@ open Sequence
 private
   variable
     ℓ ℓ' ℓ'' : Level
+
+
+open import Cubical.Data.Sequence
+open import Cubical.Data.FinSequence
+
+open FinSequenceMap
+record finiteCellHom {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (f g : finCellMap m C D) : Type (ℓ-max ℓ ℓ') where
+  field
+    hom : (n : Fin (suc m)) → (x : C .fst (fst n)) → CW↪ D (fst n) (f .fmap n x) ≡ CW↪ D (fst n) (g .fmap n x)
+    coh : (n : Fin m) → (c : C .fst (fst n)) → Square (cong (CW↪ D (suc (fst n))) (hom (injectSuc n) c))
+                                            (hom (fsuc n) (CW↪ C (fst n) c))
+                                            (cong (CW↪ D (suc (fst n))) (f .fcomm n c))
+                                            (cong (CW↪ D (suc (fst n))) (g .fcomm n c))
+
+finiteCellHom-rel : {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ)
+  (f g : finCellMap m C D)
+  (h∞ : (n : Fin (suc m)) (c : fst C (fst n))
+    → Path (realise D) (incl (f .fmap n c)) (incl (g .fmap n c)))
+  → Type (ℓ-max ℓ ℓ')
+finiteCellHom-rel {C = C} {D = D} m f g h∞ =
+  Σ[ ϕ ∈ finiteCellHom m f g ] ((n : Fin (suc m)) (x : fst C (fst n)) →
+  Square (h∞ n x)
+         (cong incl (finiteCellHom.hom ϕ n x))
+         (push (f .fmap n x)) (push (g .fmap n x)))
 
 -- The embedding of stage n into stage n+1 is (n+1)-connected
 -- 2 calls to univalence in there
@@ -214,7 +239,8 @@ isConnected-CW↪∞ (suc n) C = isConnectedIncl∞ (realiseSeq C) (suc n) (suc 
 
 -- Cellular approximation
 satAC∃Fin-C0 : (C : CWskel ℓ) → satAC∃ ℓ' ℓ'' (fst C 1)
-satAC∃Fin-C0 {ℓ} {ℓ'} C = subst (satAC∃ _ _)
+satAC∃Fin-C0 {ℓ} {ℓ'} C =
+  subst (satAC∃ _ _)
   (ua (compEquiv (invEquiv LiftEquiv) (invEquiv (CW₁-discrete C))))
     λ T c → isoToIsEquiv (iso _
       (λ f → PT.map (λ p → (λ { (lift x) → p .fst x})
@@ -225,7 +251,7 @@ satAC∃Fin-C0 {ℓ} {ℓ'} C = subst (satAC∃ _ _)
   where
   open import Cubical.Foundations.Equiv
   asd = Lift
-  t = satAC∃Fin (snd C .fst 0)
+  t = InductiveFinSatAC∃ (snd C .fst 0)
 
 module _ (C : CWskel ℓ) (D : CWskel ℓ') (f : realise C → realise D) where
   find-connected-component : (d : realise D) → ∃[ d0 ∈ fst D 1 ] incl d0 ≡ d
@@ -246,50 +272,29 @@ module _ (C : CWskel ℓ) (D : CWskel ℓ') (f : realise C → realise D) where
             ((c : _) → incl (h c) ≡ f (incl c))) ]
         ((n : Fin m) (c : fst C (fst n))
           → fₙ (fsuc n) .fst (CW↪ C (fst n) c) ≡ CW↪ D (fst n) (fₙ (injectSuc n) .fst c))
-  approx zero =
-    ∣ (λ { (zero , p) → (λ x → ⊥.rec (CW₀-empty C x))
-                      , (λ x → ⊥.rec (CW₀-empty C x))
-        ; (suc x , p) → ⊥.rec (¬-<-zero (pred-≤-pred p))})
-        , (λ n → ⊥.rec (¬Fin0 n)) ∣₁
+  approx zero = ∣ (λ { (zero , p)
+    → (λ x → ⊥.rec (CW₀-empty C x))
+     , λ x → ⊥.rec (CW₀-empty C x)})
+     , (λ {()}) ∣₁
+
   approx (suc zero) =
-    PT.map (λ a1 →
-     (λ { (zero , p) → (λ x → ⊥.rec (CW₀-empty C x))
-                      , (λ x → ⊥.rec (CW₀-empty C x))
-         ; (suc zero , p) → a1
-         ; (suc (suc x) , p) → ⊥.rec (¬-<-zero (pred-≤-pred (pred-≤-pred p)))})
-    , λ { (zero , p) → λ c → ⊥.rec (CW₀-empty C c)
-        ; (suc x , p) → ⊥.rec (¬-<-zero (pred-≤-pred p))})
+      PT.map (λ a1 →
+        (λ { (zero , p) → (λ x → ⊥.rec (CW₀-empty C x))
+                          , λ x → ⊥.rec (CW₀-empty C x)
+           ; (suc zero , p) → a1})
+           , λ {(zero , p) c → ⊥.rec (CW₀-empty C c)})
     approx₁
   approx (suc (suc m)) =
-    PT.rec
+      PT.rec
       squash₁
       (λ {(p , f')
       → PT.rec squash₁ (λ r
-        → PT.map (λ ind
-        → (λ { (n , zero , q) → fst ∘ F↓'-gen _ _ _ ind n (sym (cong predℕ q))
-                                , snd ∘ F↓'-gen _ _ _ ind n (sym (cong predℕ q))
-              ; (n , suc diff , q) → p (n , diff , cong predℕ q)})
-          , λ { (n , zero , q) c →
-                   cong (λ w → F↓'-gen (p (suc m , 0 , (λ _ → suc (suc m))) .fst) r
-                        (p (suc m , 0 , (λ _ → suc (suc m))) .snd) ind (suc n) w (CW↪ C n c) .fst)
-                        (isSetℕ _ _ _ _)
-                   ∙∙ (F↓'-gen-coh _ _ _ ind n (cong predℕ (sym q)) c)
-                   ∙∙ cong (CW↪ D n)
-                       ((λ j → transp (λ i → fst D (predℕ (q (~ i ∧ ~ j)))) j
-                                 (p (predℕ (q (~ j)) , 0 , λ i → suc (predℕ (q (~ j ∨ i)))) .fst
-                                  (transp (λ i → fst C (predℕ (q (~ i ∨ ~ j)))) (~ j)
-                                   (subst (fst C) (cong predℕ q) c))))
-                      ∙ cong (p (n , 0 , (λ i → suc (predℕ (q i)))) .fst)
-                          (subst⁻Subst (fst C) (cong predℕ q) c)
-                      ∙ cong (λ w → p (n , w) .fst c) (isProp≤ _ _))
-              ; (n , suc diff , q) c
-                → cong (λ w → p (suc n , w) .fst (CW↪ C n c)) (isProp≤ _ _)
-                 ∙∙ f' (n , diff , cong predℕ q) c
-                 ∙∙ cong (λ w → CW↪ D n (p (n , w) .fst c)) (isProp≤ _ _)})
-          (mere-fib-f-coh (p (suc m , 0 , refl) .fst)
-            r (p (suc m , 0 , refl) .snd)))
-            (fst-lem (p (suc m , 0 , refl) .fst)
-                     (p (suc m , 0 , refl) .snd))})
+        → PT.map (λ ind → FST p f' r ind
+                          , SND p f' r ind)
+          (mere-fib-f-coh (p flast .fst)
+            r (p (suc m , <ᵗsucm) .snd)))
+            (fst-lem (p flast .fst)
+                     (p flast .snd))})
       (approx (suc m))
     where
     open CWskel-fields C
@@ -303,7 +308,7 @@ module _ (C : CWskel ℓ) (D : CWskel ℓ') (f : realise C → realise D) where
                      ≡ CW↪ D (suc m) (fm (α (suc m) (x , ptSn m)))) ∥₁
     fst-lem fm fh =
       invEq propTrunc≃Trunc1
-       (invEq (_ , FinSatAC 1 (CWskel-fields.card C (suc m)) _) λ a →
+       (invEq (_ , InductiveFinSatAC 1 (CWskel-fields.card C (suc m)) _) λ a →
          fst propTrunc≃Trunc1
            (sphereToTrunc m λ y →
              TR.map fst (isConnectedCong _ _ (isConnected-CW↪∞ (suc (suc m)) D)
@@ -352,7 +357,7 @@ module _ (C : CWskel ℓ) (D : CWskel ℓ') (f : realise C → realise D) where
                                   (fib-f-l (α (suc m) (x , y)))
                                   (fib-f-r x)) ∥₁
         mere-fib-f-coh = invEq propTrunc≃Trunc1
-          (invEq (_ , FinSatAC 1 (card (suc m)) _)
+          (invEq (_ , InductiveFinSatAC 1 (card (suc m)) _)
             λ a → fst propTrunc≃Trunc1 (sphereToTrunc m
               (sphereElim' m
                 (λ x → isOfHLevelRetractFromIso m
@@ -374,37 +379,57 @@ module _ (C : CWskel ℓ) (D : CWskel ℓ') (f : realise C → realise D) where
         F↓' : (c : fst C (suc m)) → F↓-big (CW↪ C (suc m) c) ≡ fib-f-l ind c
         F↓' = CWskel-elim-inl C (suc m) (fib-f-l ind) (fib-f-r ind) ind2
 
-        F↓'-gen : (n : ℕ) (p : suc (suc m) ≡ n) → F↓-big-ty n
-        F↓'-gen = J> F↓-big
+        F↓'-gen-coh : (c : fst C (suc m))
+          → F↓-big (CW↪ C (suc m) c) .fst
+          ≡ CW↪ D (suc m) (fm c)
+        F↓'-gen-coh c = cong fst (F↓' c)
 
-        F↓'-gen-coh : (n : ℕ) (p : suc m ≡ n) → (c : fst C n)
-          → F↓'-gen (suc n) (cong suc p) (CW↪ C n c) .fst
-          ≡ CW↪ D n (subst (fst D) p
-                       (fm (subst (fst C) (sym p) c)))
-        F↓'-gen-coh = J> λ c
-          → cong fst (funExt⁻ (transportRefl F↓-big) (CW↪ C (suc m) c))
-           ∙ cong fst (F↓' c)
-           ∙ sym (cong (CW↪ D (suc m))
-                 (transportRefl _
-                ∙ cong fm (transportRefl c)))
+    module _ (p : (n : Fin (suc (suc m)))
+        → Σ[ h ∈ (fst C (fst n) → fst D (fst n)) ]
+            ((c : fst C (fst n)) → incl (h c) ≡ f (incl c)))
+      (f' : (n : Fin (suc m)) (c : fst C (fst n))
+         → p (fsuc n) .fst (CW↪ C (fst n) c) ≡
+            CW↪ D (fst n) (p (injectSuc n) .fst c))
+      (r : (n : A (suc m)) (y : S₊ m) →
+            CW↪ D (suc m) (p flast .fst (α (suc m) (n , y)))
+          ≡ CW↪ D (suc m) (p flast .fst (α (suc m) (n , ptSn m))))
+      (ind : (n : Fin _) (y : S₊ m) →
+             PathP
+             (λ i →
+                fib-f-incl (p flast .fst) r (p flast .snd)
+                (invEq (e (suc m)) (push (n , y) i)))
+             (fib-f-l (p flast .fst) r (p flast .snd)
+              (α (suc m) (n , y)))
+             (fib-f-r (p flast .fst) r (p flast .snd) n)) where
 
-        F↓-gen-typ : (n : ℕ) (p : suc (suc m) ≡ suc n) → Type _
-        F↓-gen-typ n p =
-          Σ[ F ∈ F↓-big-ty (suc n) ]
-               ((c : fst C n)
-               → F (CW↪ C n c) .fst
-                ≡ CW↪ D n (subst (fst D) (cong predℕ p)
-                            (fm (subst (fst C) (cong predℕ (sym p)) c))))
+      FST-base : Σ[ h ∈ (fst C (suc (suc m)) → fst D (suc (suc m))) ]
+          ((c : fst C (suc (suc m))) → incl (h c) ≡ f (incl c))
+      fst FST-base = fst ∘ F↓-big _ _ _ ind
+      snd FST-base = snd ∘ F↓-big _ _ _ ind
 
-        F↓-gen : (n : ℕ) (p : suc m ≡ n) → F↓-gen-typ n (cong suc p)
-        F↓-gen = J> (F↓-big
-          , (λ c → cong fst (F↓' c)
-                  ∙ cong (CW↪ D (suc m))
-                     (sym (transportRefl _
-                        ∙ cong fm (transportRefl c)))))
+      GT : (n : Fin (suc (suc (suc m)))) → Type _
+      GT n = Σ[ h ∈ (fst C (fst n) → fst D (fst n)) ]
+          ((c : fst C (fst n)) → incl (h c) ≡ f (incl c))
 
-        F↓-gener : (n : ℕ) (p : suc (suc m) ≡ suc n) → F↓-gen-typ n p
-        F↓-gener n p = subst (F↓-gen-typ n) (isSetℕ _ _ _ _) (F↓-gen n (cong predℕ p))
+      FST : (n : Fin (suc (suc (suc m)))) → GT n
+      FST = elimFin FST-base p
+
+      SND : (n : Fin (suc (suc m))) (c : fst C (fst n))
+        → FST (fsuc n) .fst (CW↪ C (fst n) c)
+        ≡ CW↪ D (fst n) (FST (injectSuc n) .fst c)
+      SND = elimFin (λ c
+        → funExt⁻ (cong fst (elimFinβ {A = GT} FST-base p .fst)) (CW↪ C (suc m) c)
+        ∙ F↓'-gen-coh _ _ _ ind c
+        ∙ cong (CW↪ D (suc m))
+          (sym (funExt⁻ (cong fst (elimFinβ {A = GT} FST-base p .snd flast)) c)))
+        λ x c
+         → funExt⁻ (cong fst (elimFinβ {A = GT}
+              FST-base p .snd (fsuc x))) (CW↪ C (fst x) c)
+          ∙ f' x c
+          ∙ cong (CW↪ D (fst x))
+              (sym (funExt⁻ (cong fst
+               ((elimFinβ {A = GT} FST-base p .snd) (injectSuc x))) c))
+
 
   -- approx : (n : ℕ)
   --   → ∃[ fₙ ∈ (fst C n → fst D n) ] ((c : _) → incl (fₙ c) ≡ f (incl c))
@@ -427,8 +452,9 @@ open FinSequenceMap
 
 finCellMap→FinSeqColim : (C : CWskel ℓ) (D : CWskel ℓ')
   {m : ℕ} → finCellMap m C D → FinSeqColim m (realiseSeq C) → FinSeqColim m (realiseSeq D) 
-finCellMap→FinSeqColim C D {m = m} f (fincl {n = n} x) = fincl {n = n} (fmap f n x)
-finCellMap→FinSeqColim C D {m = m} f (fpush {n = n} x i) = (fpush {n = n} (fmap f (injectSuc n) x) ∙ cong fincl (fcomm f n x)) i
+finCellMap→FinSeqColim C D {m = m} f (fincl n x) = fincl n (fmap f n x)
+finCellMap→FinSeqColim C D {m = m} f (fpush n x i) =
+  (fpush n (fmap f (injectSuc n) x) ∙ cong (fincl (fsuc n)) (fcomm f n x)) i
 
 
 finCellApprox : (C : CWskel ℓ) (D : CWskel ℓ') (f : realise C → realise D) (m : ℕ) → Type (ℓ-max ℓ ℓ') 
@@ -618,29 +644,28 @@ module SeqHomotopyTypes {ℓ ℓ'} {C : Sequence ℓ} {D : Sequence ℓ'} (m : �
 -- fst (finCellMap→goodApprox C D f m f-c g-c) a c = snd f-c a c ∙∙ refl ∙∙ sym (snd g-c a c)
 -- snd (finCellMap→goodApprox C D f m f-c g-c) n c = {!isConnected!}
 
-module _ {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (1<m : 1 < m) (f-c g-c : finCellMap m C D)
-         (h∞' : ((c : fst C m)
-        → Path (realise D) (incl (fmap f-c flast c)) (incl (fmap g-c flast c)))) where
+module approkz {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (f-c g-c : finCellMap m C D)
+         (h∞-lift : FinSeqColim→Colim m ∘ finCellMap→FinSeqColim C D f-c
+          ≡ FinSeqColim→Colim m ∘ finCellMap→FinSeqColim C D g-c) where
   open SeqHomotopyTypes m f-c g-c
   open CWskel-fields C
 
-  abstract
-    h∞-lift : FinSeqColim→Colim m ∘ finCellMap→FinSeqColim C D f-c
-            ≡ FinSeqColim→Colim m ∘ finCellMap→FinSeqColim C D g-c
-    h∞-lift = →FinSeqColimHomotopy _ _ λ s → h∞' _
+
+  -- h∞-lift : FinSeqColim→Colim m ∘ finCellMap→FinSeqColim C D f-c
+  --         ≡ FinSeqColim→Colim m ∘ finCellMap→FinSeqColim C D g-c
+  -- h∞-lift = →FinSeqColimHomotopy _ _ λ s → h∞' _
 
   h∞ : (n : Fin (suc m)) (c : fst C (fst n))
         → Path (realise D) (incl (fmap f-c n c)) (incl (fmap g-c n c))
-  h∞ n c = funExt⁻ h∞-lift (fincl {n = n} c)
+  h∞ n c = funExt⁻ h∞-lift (fincl n c)
 
-  -- base case
-  pathToCellularHomotopy₁ : (c : fst C 1) (t : 1 < suc m)
+  pathToCellularHomotopy₁ : (t : 1 <ᵗ suc m) (c : fst C 1) 
     → ∃[ h ∈ cell-hom (1 , t) c ]
          Square (h∞ (1 , t) c)
                 (cong incl h)
                 (push (f (1 , t) c))
                 (push (g (1 , t) c))
-  pathToCellularHomotopy₁ c t =
+  pathToCellularHomotopy₁ t c =
     TR.rec squash₁
       (λ {(d , p)
       → ∣ d
@@ -660,9 +685,6 @@ module _ {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (1<m : 1 < m) (f-c g-c : f
     h∞* : CW↪∞ D 2 (CW↪ D 1 (f (1 , t) c)) ≡ CW↪∞ D 2 (CW↪ D 1 (g (1 , t) c))
     h∞* = sym (push (f (1 , t) c)) ∙∙ h∞ _ c ∙∙ push (g (1 , t) c)
 
-  pathToCellularHomotopy₁-improved : ∥ {!(c : !} ∥₁
-  pathToCellularHomotopy₁-improved = {!!}
-    
   -- induction step
   pathToCellularHomotopy-ind : (n : Fin m)
     → (hₙ : (c : fst C (fst n)) → Σ[ h ∈ cell-hom (injectSuc n) c ]
@@ -678,15 +700,17 @@ module _ {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (1<m : 1 < m) (f-c g-c : f
                              (push (g (fsuc n) c)))) ]
                     ((c : _) → cell-hom-coh n c (hₙ c .fst)
                                   (hₙ₊₁ (CW↪ C (fst n) c) .fst))
-  pathToCellularHomotopy-ind (zero , zero , p) ind = ⊥.rec (¬m<m (subst (_< m) p 1<m))
-  pathToCellularHomotopy-ind (zero , suc diff , p) ind = {!p!}
-  {-
-     PT.map (λ ϕ →  (λ c → {!preInd.hₙ₊₁-inl-coh (zero , w) ind!} , {!m!})
-    , (λ c → ⊥.rec (CW₀-empty C c))) {!pathToCellularHomotopy₁ !}
-     where
-     help : {!!}
-     help = {!!}
-     -}
+  
+  pathToCellularHomotopy-ind (zero ,  q) ind =
+    fst (propTrunc≃ (isoToEquiv (compIso (invIso rUnit×Iso)
+      (Σ-cong-iso-snd
+        λ _ → isContr→Iso isContrUnit
+        ((λ x → ⊥.rec (CW₀-empty C x))
+       , λ t → funExt λ x → ⊥.rec (CW₀-empty C x))))))
+       (invEq propTrunc≃Trunc1
+         (invEq (_ , satAC-CW₁ 1 C _)
+           λ c → fst propTrunc≃Trunc1
+             (pathToCellularHomotopy₁ (fsuc (zero , q) .snd) c)))
   pathToCellularHomotopy-ind (suc n' , w) ind =
     PT.map (λ q → hₙ₊₁ q , hₙ₊₁-coh q) Πfiber-cong²-hₙ₊₁-push∞
     where
@@ -718,15 +742,15 @@ module _ {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (1<m : 1 < m) (f-c g-c : f
                 (push (g (injectSuc n) x) ∙ (λ i₁ → incl (g-hom n x i₁)))
     h∞-push-coh x i j =
       hcomp (λ k
-        → λ {(i = i0) → h∞-lift j (fincl {n = injectSuc n} x)
-            ; (i = i1) → h∞-lift j (fincl {n = fsuc n} (CW↪ C (fst n) x))
+        → λ {(i = i0) → h∞-lift j (fincl (injectSuc n) x)
+            ; (i = i1) → h∞-lift j (fincl (fsuc n) (CW↪ C (fst n) x))
             ; (j = i0) → cong-∙ (FinSeqColim→Colim m)
-                                 (fpush {n = n} (f (injectSuc n) x))
-                                 (λ i₁ → fincl {n = fsuc n} (f-hom n x i₁)) k i
+                                 (fpush n (f (injectSuc n) x))
+                                 (λ i₁ → fincl (fsuc n) (f-hom n x i₁)) k i
             ; (j = i1) → cong-∙ (FinSeqColim→Colim m)
-                                 (fpush {n = n} (g (injectSuc n) x))
-                                 (λ i₁ → fincl {n = fsuc n} (g-hom n x i₁)) k i})
-            (h∞-lift j (fpush {n = n} x i))
+                                 (fpush n (g (injectSuc n) x))
+                                 (λ i₁ → fincl (fsuc n) (g-hom n x i₁)) k i})
+            (h∞-lift j (fpush n x i))
 
     hₙ₊₁-inl-coh : (x : fst C (fst n))
       → Square (h∞ (fsuc n) (invEq (e (fst n)) (inl x)))
@@ -793,15 +817,15 @@ module _ {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (1<m : 1 < m) (f-c g-c : f
             ; (j = i0) → push (f (fsuc n) (Pushout→C (push-path i))) k
             ; (j = i1) → push (g (fsuc n) (Pushout→C (push-path i))) k})
         (hcomp (λ k
-         → λ {(i = i0) → h∞-lift j (fincl {n = fsuc n}
+         → λ {(i = i0) → h∞-lift j (fincl (fsuc n)
                             (Pushout→C (push (x , y) (~ k))))
-             ; (i = i1) → h∞-lift j (fincl {n = fsuc n}
+             ; (i = i1) → h∞-lift j (fincl (fsuc n)
                             (Pushout→C (push (x , ptSn n') (~ k))))
              ; (j = i0) → incl (f (fsuc n)
                                  (Pushout→C (push-path-filler k i)))
              ; (j = i1) → incl (g (fsuc n)
                                  (Pushout→C (push-path-filler k i)))})
-         (h∞-lift j (fincl {n = fsuc n} (Pushout→C (inr x)))))
+         (h∞-lift j (fincl (fsuc n) (Pushout→C (inr x)))))
 
       fiber-cong²-hₙ₊₁-push∞ : hLevelTrunc (suc n') (fiber cong² hₙ₊₁-push∞)
       fiber-cong²-hₙ₊₁-push∞ = isConnected-cong² hₙ₊₁-push∞ .fst
@@ -809,20 +833,20 @@ module _ {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (1<m : 1 < m) (f-c g-c : f
       hₙ₊₁-coh∞ : (q : fiber cong² hₙ₊₁-push∞)
         → Cube (hₙ₊₁-inl-coh (α (suc n') (x , y)))
                 (hₙ₊₁-inl-coh (α (suc n') (x , ptSn n')))
-                (λ j k → h∞-lift k (fincl {n = fsuc n} (Pushout→C (push-path j))))
+                (λ j k → h∞-lift k (fincl (fsuc n) (Pushout→C (push-path j))))
                 (λ j k → incl (fst q j k))
                 (λ j i → push (f (fsuc n) (Pushout→C (push-path j))) i)
                 λ j i → push (g (fsuc n) (Pushout→C (push-path j))) i
       hₙ₊₁-coh∞ q j i k =
         hcomp (λ r
-          → λ {(i = i0) → h∞-lift k (fincl {n = fsuc n} (Pushout→C (push-path j)))
+          → λ {(i = i0) → h∞-lift k (fincl (fsuc n) (Pushout→C (push-path j)))
               ; (i = i1) → q .snd (~ r) j k
               ; (j = i0) → hₙ₊₁-inl-coh (α (suc n') (x , y)) i k
               ; (j = i1) → hₙ₊₁-inl-coh (α (suc n') (x , ptSn n')) i k
               ; (k = i0) → push (f (fsuc n) (Pushout→C (push-path j))) i
               ; (k = i1) → push (g (fsuc n) (Pushout→C (push-path j))) i})
          (hcomp (λ r
-           → λ {(i = i0) → h∞-lift k (fincl {n = fsuc n} (Pushout→C (push-path j)))
+           → λ {(i = i0) → h∞-lift k (fincl (fsuc n) (Pushout→C (push-path j)))
                ; (j = i0) → hₙ₊₁-inl-coh (α (suc n') (x , y)) (i ∧ r) k
                ; (j = i1) → hₙ₊₁-inl-coh (α (suc n') (x , ptSn n')) (i ∧ r) k
                ; (k = i0) → push (f (fsuc n)
@@ -830,22 +854,22 @@ module _ {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (1<m : 1 < m) (f-c g-c : f
                ; (k = i1) → push (g (fsuc n)
                                (Pushout→C (push-path j))) (i ∧ r)})
           (hcomp (λ r
-            → λ {(i = i0) → h∞-lift k (fincl {n = fsuc n} (Pushout→C (push-path-filler r j)))
-                ; (j = i0) → h∞-lift k (fincl {n = fsuc n} (invEq (e (suc n'))
+            → λ {(i = i0) → h∞-lift k (fincl (fsuc n) (Pushout→C (push-path-filler r j)))
+                ; (j = i0) → h∞-lift k (fincl (fsuc n) (invEq (e (suc n'))
                                     (push (x , y) (~ r))))
-                ; (j = i1) → h∞-lift k (fincl {n = fsuc n} (invEq (e (suc n'))
+                ; (j = i1) → h∞-lift k (fincl (fsuc n) (invEq (e (suc n'))
                                     (push (x , ptSn n') (~ r))))
                 ; (k = i0) → incl (f (fsuc n)
                                (Pushout→C (push-path-filler r j)))
                 ; (k = i1) → incl (g (fsuc n)
                                (Pushout→C (push-path-filler r j)))})
-            (h∞-lift k (fincl {n = fsuc n} (Pushout→C (inr x))))))
+            (h∞-lift k (fincl (fsuc n) (Pushout→C (inr x))))))
 
     Πfiber-cong²-hₙ₊₁-push∞ :
       ∥ ((x : _) (y : _) → fiber (cong² x y) (hₙ₊₁-push∞ x y)) ∥₁
     Πfiber-cong²-hₙ₊₁-push∞ =
       Iso.inv propTruncTrunc1Iso
-        (invEq (_ , FinSatAC 1 _ _)
+        (invEq (_ , InductiveFinSatAC 1 _ _)
         λ x → Iso.fun propTruncTrunc1Iso
                 (sphereToTrunc n' (fiber-cong²-hₙ₊₁-push∞ x)))
 
@@ -900,187 +924,158 @@ module _ {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (1<m : 1 < m) (f-c g-c : f
                       (push (f (fsuc n) c)) (push (g (fsuc n) c))}
                   main-inl main-push c (~ i) .fst
 
+-- finiteCellHom-rel
 
---     PT.map (λ q → hₙ₊₁ q , hₙ₊₁-coh q)
---            Πfiber-cong²-hₙ₊₁-push∞
---     where
---     Pushout→C = invEq (e (suc n))
+fsuc-agree : {m : ℕ} (n : Fin m)
+  → Path (Fin (suc (suc m))) (fsuc (injectSuc n)) (injectSuc (fsuc n))
+fsuc-agree = λ _ → Σ≡Prop (λ _ → isProp<ᵗ) refl
 
---     hₙ'-filler : (x : fst C (suc n)) → _
---     hₙ'-filler x =
---       doubleCompPath-filler
---             (sym (f-hom (suc n) x))
---             (ind x .fst)
---             (g-hom (suc n) x)
+finCellMapLower : {C : CWskel ℓ} {D : CWskel ℓ'} {m : ℕ}
+  (f : finCellMap (suc m) C D) → finCellMap m C D
+fmap (finCellMapLower {m = m} f) n = fmap f (injectSuc n)
+fcomm (finCellMapLower {C = C} {D = D} {m = suc m} f) n x = fcomm f (injectSuc n) x
 
---     hₙ' : (x : fst C (suc n))
---       → f (suc (suc n)) (CW↪ C (suc n) x)
---        ≡ g (suc (suc n)) (CW↪ C (suc n) x)
---     hₙ' x = hₙ'-filler x i1
 
---     -- homotopy for inl
---     hₙ₊₁-inl : (x : fst C (suc n))
---       → cell-hom (suc (suc n)) (invEq (e (suc n)) (inl x))
---     hₙ₊₁-inl x = cong (CW↪ D (suc (suc n))) (hₙ' x)
+pathToCellularHomotopy-main :
+  {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (f-c g-c : finCellMap m C D)
+  (h∞-lift : FinSeqColim→Colim m ∘ finCellMap→FinSeqColim C D f-c
+          ≡ FinSeqColim→Colim m ∘ finCellMap→FinSeqColim C D g-c)
+  → ∥ finiteCellHom-rel m f-c g-c (approkz.h∞ m f-c g-c h∞-lift) ∥₁
+pathToCellularHomotopy-main {C = C} zero f-c g-c h∞' =
+  ∣ (record { hom = λ {(zero , p) x → ⊥.rec (CW₀-empty C x)}
+            ; coh = λ {()} })
+            , (λ { (zero , p) x → ⊥.rec (CW₀-empty C x)}) ∣₁
+pathToCellularHomotopy-main {C = C} {D = D} (suc zero) f-c g-c h∞' =
+  PT.map (λ {(d , h) → (record { hom = λ {(zero , p) x → ⊥.rec (CW₀-empty C x)
+                    ; (suc zero , p) → d}
+            ; coh = λ {(zero , p) → λ x → ⊥.rec (CW₀-empty C x)} })
+            , (λ {(zero , p) x → ⊥.rec (CW₀-empty C x)
+                ; (suc zero , tt) → h})}) (invEq (_ , satAC∃Fin-C0 C _ _) k)
+  where
+  k : (c : _) → _
+  k c = (approkz.pathToCellularHomotopy₁ (suc zero) f-c g-c
+                 h∞' tt c)
+pathToCellularHomotopy-main {C = C} {D = D} (suc (suc m)) f-c g-c h∞' =
+  PT.rec squash₁
+    (λ ind → PT.map
+      (λ {(f , p) →
+       (record { hom = main-hom ind f p
+               ; coh = main-coh ind f p })
+               , ∞coh ind f p})
+      (pathToCellularHomotopy-ind flast
+        λ c → (finiteCellHom.hom (ind .fst) flast c)
+            , (ind .snd flast c)))
+    (pathToCellularHomotopy-main {C = C} {D = D} (suc m)
+          (finCellMapLower f-c)
+          (finCellMapLower g-c)
+          h')
+  where
+  open approkz _ f-c g-c h∞'
+  finSeqColim↑ : ∀ {ℓ} {X : Sequence ℓ} {m : ℕ} → FinSeqColim m X → FinSeqColim (suc m) X
+  finSeqColim↑ (fincl n x) = fincl (injectSuc n) x
+  finSeqColim↑ {m = suc m} (fpush n x i) = fpush (injectSuc n) x i
 
---     -- hₙ₊₁-inl coherent with h∞
---     hₙ₊₁-inl-coh : (x : fst C (suc n))
---       → agrees-in-lim h∞ (invEq (e (suc n)) (inl x)) (hₙ₊₁-inl x)
---     hₙ₊₁-inl-coh x i j =
---       hcomp (λ k
---         → λ {(i = i0) → h∞ j (incl (CW↪ C (suc n) x))
---             ; (i = i1) → push (hₙ' x j) k
---             ; (j = i0) → push (f (suc (suc n)) (CW↪ C (suc n) x)) (k ∧ i)
---             ; (j = i1) → push (g (suc (suc n)) (CW↪ C (suc n) x)) (k ∧ i)})
---        (hcomp (λ k
---          → λ {(i = i0) → h∞ j (push x k)
---              ; (i = i1) → incl (hₙ'-filler x k j)
---              ; (j = i0) → compPath-filler'
---                              (push (f (suc n) x))
---                              ((λ i₁ → incl (f-hom (suc n) x i₁))) (~ i) k
---              ; (j = i1) → compPath-filler'
---                              (push (g (suc n) x))
---                              ((λ i₁ → incl (g-hom (suc n) x i₁))) (~ i) k})
---            (ind x .snd i j))
+  h' : FinSeqColim→Colim (suc m) ∘
+      finCellMap→FinSeqColim C D (finCellMapLower f-c)
+      ≡
+      FinSeqColim→Colim (suc m) ∘
+      finCellMap→FinSeqColim C D (finCellMapLower g-c)
+  h' = funExt λ { (fincl n x) j → h∞' j (fincl (injectSuc n) x)
+                ; (fpush n x i) j → h∞' j (fpush (injectSuc n) x i)}
 
---     module _ (x : A (suc n)) (y : S₊ n) where
---       push-path-filler : I → I → Pushout (α (suc n)) fst
---       push-path-filler i j =
---         compPath-filler'' (push (x , y)) (sym (push (x , ptSn n))) i j
+  open SeqHomotopyTypes
 
---       push-path :
---         Path (Pushout (α (suc n)) fst)
---              (inl (α (suc n) (x , y)))
---              (inl (α (suc n) (x , ptSn n)))
---       push-path j = push-path-filler i1 j
+  module _
+    (ind : finiteCellHom-rel (suc m)
+            (finCellMapLower f-c) (finCellMapLower g-c)
+              ((approkz.h∞ (suc m) (finCellMapLower f-c) (finCellMapLower g-c) h')))
+    (f : (c : fst C (suc (suc m))) →
+        Σ[ h ∈ (cell-hom (suc (suc m)) f-c g-c flast c) ]
+        (Square (h∞ flast c) (cong incl h)
+           (push (fmap f-c flast c)) (push (fmap g-c flast c))))
+    (fp : (c : fst C (suc m)) →
+      cell-hom-coh (suc (suc m)) f-c g-c flast c
+      (finiteCellHom.hom (ind .fst) flast c)
+      (f (CW↪ C (suc m) c) .fst)) where
 
---       D∞PushSquare : Type ℓ'
---       D∞PushSquare =
---         Square {A = realise D}
---           (cong (CW↪∞ D (suc (suc (suc n))))
---             (hₙ₊₁-inl (snd C .snd .fst (suc n) (x , y))))
---           (cong (CW↪∞ D (suc (suc (suc n))))
---             (hₙ₊₁-inl (snd C .snd .fst (suc n) (x , ptSn n))))
---           (λ i → incl (CW↪ D (suc (suc n))
---                         (f (suc (suc n)) (Pushout→C (push-path i)))))
---           (λ i → incl (CW↪ D (suc (suc n))
---                         (g (suc (suc n)) (Pushout→C (push-path i)))))
+    main-hom-typ : (n : Fin (suc (suc (suc m))))
+      → Type _
+    main-hom-typ n =
+      (x : C .fst (fst n))
+        → CW↪ D (fst n) (f-c .fmap n x)
+         ≡ CW↪ D (fst n) (g-c .fmap n x)
 
---       cong² : PathP (λ i → cell-hom (suc (suc n))
---                              (Pushout→C (push-path i)))
---                     (hₙ₊₁-inl (α (suc n) (x , y)))
---                     (hₙ₊₁-inl (α (suc n) (x , ptSn n)))
---             → D∞PushSquare
---       cong² p i j = incl (p i j)
+    main-hom : (n : Fin (suc (suc (suc m)))) → main-hom-typ n
+    main-hom = elimFin (fst ∘ f) (finiteCellHom.hom (fst ind))
 
---       isConnected-cong² : isConnectedFun (suc n) cong²
---       isConnected-cong² =
---         isConnectedCong² (suc n) (CW↪∞ D (3 +ℕ n))
---           (isConnected-CW↪∞ (3 +ℕ n) D)
+    main-homβ = elimFinβ {A = main-hom-typ} (fst ∘ f) (finiteCellHom.hom (fst ind))
 
---       hₙ₊₁-push∞ : D∞PushSquare
---       hₙ₊₁-push∞ i j =
---         hcomp (λ k
---         → λ {(i = i0) → hₙ₊₁-inl-coh (α (suc n) (x , y)) k j
---             ; (i = i1) → hₙ₊₁-inl-coh (α (suc n) (x , ptSn n)) k j
---             ; (j = i0) → push (f (suc (suc n)) (Pushout→C (push-path i))) k
---             ; (j = i1) → push (g (suc (suc n)) (Pushout→C (push-path i))) k})
---         (hcomp (λ k
---          → λ {(i = i0) → h∞ j (incl (Pushout→C (push (x , y) (~ k))))
---              ; (i = i1) → h∞ j (incl (Pushout→C (push (x , ptSn n) (~ k))))
---              ; (j = i0) → incl (f (suc (suc n))
---                                  (Pushout→C (push-path-filler k i)))
---              ; (j = i1) → incl (g (suc (suc n))
---                                  (Pushout→C (push-path-filler k i)))})
---          (h∞ j (incl (Pushout→C (inr x)))))
+    main-coh : (n : Fin (suc (suc m))) (c : C .fst (fst n))
+      → Square
+        (cong (CW↪ D (suc (fst n)))
+         (main-hom (injectSuc n) c))
+        (main-hom (fsuc n)
+         (CW↪ C (fst n) c))
+        (cong (CW↪ D (suc (fst n))) (fcomm f-c n c))
+        (cong (CW↪ D (suc (fst n))) (fcomm g-c n c))
+    main-coh =
+      elimFin
+        (λ c → cong (cong (CW↪ D (suc (suc m))))
+                     (funExt⁻ (main-homβ .snd flast) c)
+              ◁ fp c
+              ▷ sym (funExt⁻ (main-homβ .fst) (CW↪ C (suc m) c)))
+        λ n c
+         → cong (cong (CW↪ D (suc (fst n))))
+             (funExt⁻ (main-homβ .snd (injectSuc n)) c)
+          ◁ finiteCellHom.coh (fst ind) n c
+          ▷ sym (funExt⁻ (main-homβ .snd (fsuc n)) (CW↪ C (fst n) c))
 
---       fiber-cong²-hₙ₊₁-push∞ : hLevelTrunc (suc n) (fiber cong² hₙ₊₁-push∞)
---       fiber-cong²-hₙ₊₁-push∞ = isConnected-cong² hₙ₊₁-push∞ .fst
+    ∞coh : (n : Fin (suc (suc (suc m)))) (x : fst C (fst n))
+        → Square (h∞ n x) (λ i → incl (main-hom n x i))
+                  (push (f-c .fmap n x)) (push (g-c .fmap n x))
+    ∞coh = elimFin
+      (λ c → f c .snd ▷ λ i j → incl (main-homβ .fst (~ i) c j))
+      λ n c → ind .snd n c ▷ λ i j → incl (main-homβ .snd n (~ i) c j)
 
---       hₙ₊₁-coh∞ : (q : fiber cong² hₙ₊₁-push∞)
---         → PathP (λ i → agrees-in-lim h∞ (Pushout→C (push-path i)) (q .fst i))
---                  (hₙ₊₁-inl-coh (α (suc n) (x , y)))
---                  (hₙ₊₁-inl-coh (α (suc n) (x , ptSn n)))
---       hₙ₊₁-coh∞ q j i k =
---         hcomp (λ r
---           → λ {(i = i0) → h∞ k (incl (Pushout→C (push-path j)))
---               ; (i = i1) → q .snd (~ r) j k
---               ; (j = i0) → hₙ₊₁-inl-coh (α (suc n) (x , y)) i k
---               ; (j = i1) → hₙ₊₁-inl-coh (α (suc n) (x , ptSn n)) i k
---               ; (k = i0) → push (f (suc (suc n)) (Pushout→C (push-path j))) i
---               ; (k = i1) → push (g (suc (suc n)) (Pushout→C (push-path j))) i})
---          (hcomp (λ r
---            → λ {(i = i0) → h∞ k (incl (Pushout→C (push-path j)))
---                ; (j = i0) → hₙ₊₁-inl-coh (α (suc n) (x , y)) (i ∧ r) k
---                ; (j = i1) → hₙ₊₁-inl-coh (α (suc n) (x , ptSn n)) (i ∧ r) k
---                ; (k = i0) → push (f (suc (suc n))
---                                (Pushout→C (push-path j))) (i ∧ r)
---                ; (k = i1) → push (g (suc (suc n))
---                                (Pushout→C (push-path j))) (i ∧ r)})
---           (hcomp (λ r
---             → λ {(i = i0) → h∞ k (incl (Pushout→C (push-path-filler r j)))
---                 ; (j = i0) → h∞ k (incl (invEq (e (suc n))
---                                     (push (x , y) (~ r))))
---                 ; (j = i1) → h∞ k (incl (invEq (e (suc n))
---                                     (push (x , ptSn n) (~ r))))
---                 ; (k = i0) → incl (f (suc (suc n))
---                                (Pushout→C (push-path-filler r j)))
---                 ; (k = i1) → incl (g (suc (suc n))
---                                (Pushout→C (push-path-filler r j)))})
---             (h∞ k (incl (Pushout→C (inr x))))))
+ -- pathToCellularHomotopy-ind
 
---     Πfiber-cong²-hₙ₊₁-push∞ :
---       ∥ ((x : _) (y : _) → fiber (cong² x y) (hₙ₊₁-push∞ x y)) ∥₁
---     Πfiber-cong²-hₙ₊₁-push∞ =
---       Iso.inv propTruncTrunc1Iso
---         (invEq (_ , FinSatAC 1 _ _)
---         λ x → Iso.fun propTruncTrunc1Iso
---                 (sphereToTrunc n (fiber-cong²-hₙ₊₁-push∞ x)))
+{-
+  PT.rec {!!} (λ ind →
+     ∣ (record { hom = {!!}
+     ; coh = {!!} }) , {!!} ∣₁)
+    (pathToCellularHomotopy-main m
+      (finCellMapLower f-c) (finCellMapLower g-c) λ s → h∞' (injectSuc s))
+  where
+  module _ (ind : finiteCellHom-rel m (finCellMapLower f-c)
+      (finCellMapLower g-c)
+      (approkz.h∞ m (finCellMapLower f-c) (finCellMapLower g-c)
+       (h∞' (injectSuc flast)))) where
 
---     module _ (q : (x : Fin (fst (snd C) (suc n))) (y : S₊ n)
---                 → fiber (cong² x y) (hₙ₊₁-push∞ x y)) where
---       main-inl : (x : fst C (suc n))
---         → Σ (cell-hom (suc (suc n)) (CW↪ C (suc n) x))
---              (agrees-in-lim h∞ (CW↪ C (suc n) x))
---       main-inl x = hₙ₊₁-inl x , hₙ₊₁-inl-coh x
+    ind* = approkz.pathToCellularHomotopy-ind (suc m) f-c g-c (h∞' flast)
+            flast λ c → {!!}
 
---       main-push : (x : A (suc n)) (y : S₊ n)
---         → PathP (λ i → Σ (cell-hom (suc (suc n)) (Pushout→C (push-path x y i)))
---                            (agrees-in-lim h∞ (Pushout→C (push-path x y i))))
---                  (main-inl (α (suc n) (x , y)))
---                  (main-inl (α (suc n) (x , ptSn n)))
---       main-push x y = ΣPathP (fst (q x y) , hₙ₊₁-coh∞ x y (q x y))
+    ham : (n : Fin (suc (suc m))) (x : C .fst (fst n)) →
+        CW↪ D (fst n) (f-c .fmap n x) ≡ CW↪ D (fst n) (g-c .fmap n x)
+    ham (n , zero , p) = {!!}
+    ham (n , suc diff , p) x =
+         {!!}
+      ∙∙ finiteCellHom.hom (ind .fst) (n , diff , cong predℕ p) x
+      ∙∙ {!!} -- finiteCellHom.hom {!ind .fst!} {!!} 
+-}  
 
---       hₙ₊₁ : (c : fst C (suc (suc n)))
---         → Σ (cell-hom (suc (suc n)) c) (agrees-in-lim h∞ c)
---       hₙ₊₁ = CWskel-elim' C n main-inl main-push
-
---       hₙ₊₁-coh-pre : (c : fst C (suc n)) →
---         Square (cong (CW↪ D (suc (suc n))) (ind c .fst))
---                (hₙ₊₁-inl c)
---                (cong (CW↪ D (suc (suc n))) (f-hom (suc n) c))
---                (cong (CW↪ D (suc (suc n))) (g-hom (suc n) c))
---       hₙ₊₁-coh-pre c i j = CW↪ D (suc (suc n)) (hₙ'-filler c i j)
-
---       hₙ₊₁-coh : (c : fst C (suc n)) →
---         Square (cong (CW↪ D (suc (suc n))) (ind c .fst))
---                (hₙ₊₁ (CW↪ C (suc n) c) .fst)
---                (cong (CW↪ D (suc (suc n))) (f-hom (suc n) c))
---                (cong (CW↪ D (suc (suc n))) (g-hom (suc n) c))
---       hₙ₊₁-coh c = hₙ₊₁-coh-pre c
---         ▷ λ i → CWskel-elim'-inl C n
---                   {B = λ c → Σ (cell-hom (suc (suc n)) c) (agrees-in-lim h∞ c)}
---                   main-inl main-push c (~ i) .fst
-
---   -- main theorem
---   pathToCellularHomotopy : {m : ℕ}
---     → ∃[ hₙ ∈ ((n : Fin (suc m)) (c : fst C (fst n))
---             → Σ[ h ∈ cell-hom (fst n) c ] agrees-in-lim h∞ c h ) ]
---          ((n : Fin m) (c : fst C (fst n))
---            → cell-hom-coh (fst n) c
---                 (hₙ (injectSuc n) c .fst)
---                 (hₙ (fsuc n) (CW↪ C (fst n) c) .fst))
---   pathToCellularHomotopy {m = zero} = ∣ hom₀ , (λ n → ⊥.rec (¬Fin0 n)) ∣₁
+  -- -- main theorem
+  -- pathToCellularHomotopy-main : (n : Fin m)
+  --   → ∃[ hₙ₊₁ ∈ ((c : fst C (suc (fst n)))
+  --               → Σ[ h ∈ cell-hom (fsuc n) c ]
+  --                    (Square (h∞ (fsuc n) c)
+  --                            (cong incl h)
+  --                            (push (f (fsuc n) c))
+  --                            (push (g (fsuc n) c)))) ]
+  --                   ((c : _) → cell-hom-coh n c (hₙ c .fst)
+  --                                 (hₙ₊₁ (CW↪ C (fst n) c) .fst))
+  -- pathToCellularHomotopy-main = ?
+  
+--   pathToCellularHomotopy-main {m = zero} = ∣ hom₀ , (λ n → ⊥.rec (¬Fin0 n)) ∣₁
 --     where
 --     hom₀ : (n : Fin 1) (c : fst C (fst n)) → Σ (cell-hom (fst n) c) (agrees-in-lim h∞ c)
 --     hom₀ (zero , p) c = ⊥.rec (CW₀-empty C c)
@@ -1092,7 +1087,7 @@ module _ {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (1<m : 1 < m) (f-c g-c : f
 --       (λ hom → ∣ hom
 --       , (λ { (zero , p) c → ⊥.rec (CW₀-empty C c)
 --            ; (suc n , p) → ⊥.rec (¬-<-zero (pred-≤-pred p))}) ∣₁)
---       (invEq (_ , FinSatAC 1 _ _) hom₁)
+--       (invEq (_ , InductiveFinSatAC 1 _ _) hom₁)
 --     where
 --     hom₁ : (n : Fin 2)
 --       → hLevelTrunc 1 ((c : fst C (fst n))
@@ -1312,11 +1307,25 @@ module _ {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (1<m : 1 < m) (f-c g-c : f
 --         ▷ cong (λ p → fst ind (suc n , p) (CW↪ (finCWskel→CWskel m C) n c) .fst) (isProp≤ _ _)
 
 
+pathToCellularHomotopy :
+  {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (f-c g-c : finCellMap m C D)
+  → ((x : fst C m) → Path (realise D) (incl (fmap f-c flast x)) (incl (fmap g-c flast x)))
+  → ∥ finiteCellHom m f-c g-c ∥₁
+pathToCellularHomotopy {C} {D} m f-c g-c h =
+  PT.map fst
+    (pathToCellularHomotopy-main m f-c g-c
+      (→FinSeqColimHomotopy _ _ h))
 
--- -- module _ (m : ℕ) (C D : finCWskel m) (f : realise (finCWskel→CWskel m C) → realise (finCWskel→CWskel m D)) where
--- --   finMap→cellMap : ∥ cellMap (finCWskel→CWskel m C) (finCWskel→CWskel m D) ∥₂
--- --   finMap→cellMap = elim→Set {P = λ _ → ∥ cellMap (finCWskel→CWskel m C) (finCWskel→CWskel m D) ∥₂}
--- --                               (λ _ → squash₂)
--- --                               ∣_∣₂
--- --                               {!!}
--- --                               (finMap→cellMap₁ m C D f)
+-- module _ (m : ℕ) (C D : CWskel ℓ) (f : realise C → realise D) where
+--   finMap→cellMap : ∥ finCellMap m C D ∥₂
+--   finMap→cellMap =
+--     elim→Set (λ _ → squash₂)
+--     (∣_∣₂ ∘ fst)
+--     {!λ !}
+--     (CWmap→finCellMap C D f m)
+--   {- elim→Set {P = λ _ → ∥ cellMap (finCWskel→CWskel m C) (finCWskel→CWskel m D) ∥₂}
+--                               (λ _ → squash₂)
+--                               ∣_∣₂
+--                               {!!}
+--                               (finMap→cellMap₁ m C D f)
+-- -}
