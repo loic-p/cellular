@@ -36,6 +36,7 @@ open import Cubical.Homotopy.Group.Base
 open import Cubical.Algebra.ChainComplex
 
 open import fin-cw-map
+open import CWHomotopy
 
 
 
@@ -52,23 +53,15 @@ open import Cubical.Data.Sequence
 open import Cubical.Data.FinSequence
 
 open FinSequenceMap
-record finiteCellHom {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (f g : finCellMap m C D) : Type (ℓ-max ℓ ℓ') where
-  field
-    hom : (n : Fin (suc m)) → (x : C .fst (fst n)) → CW↪ D (fst n) (f .fmap n x) ≡ CW↪ D (fst n) (g .fmap n x)
-    coh : (n : Fin m) → (c : C .fst (fst n)) → Square (cong (CW↪ D (suc (fst n))) (hom (injectSuc n) c))
-                                            (hom (fsuc n) (CW↪ C (fst n) c))
-                                            (cong (CW↪ D (suc (fst n))) (f .fcomm n c))
-                                            (cong (CW↪ D (suc (fst n))) (g .fcomm n c))
-
-finiteCellHom-rel : {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ)
+finCellHom-rel : {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ)
   (f g : finCellMap m C D)
   (h∞ : (n : Fin (suc m)) (c : fst C (fst n))
     → Path (realise D) (incl (f .fmap n c)) (incl (g .fmap n c)))
   → Type (ℓ-max ℓ ℓ')
-finiteCellHom-rel {C = C} {D = D} m f g h∞ =
-  Σ[ ϕ ∈ finiteCellHom m f g ] ((n : Fin (suc m)) (x : fst C (fst n)) →
+finCellHom-rel {C = C} {D = D} m f g h∞ =
+  Σ[ ϕ ∈ finCellHom m f g ] ((n : Fin (suc m)) (x : fst C (fst n)) →
   Square (h∞ n x)
-         (cong incl (finiteCellHom.hom ϕ n x))
+         (cong incl (finCellHom.fhom ϕ n x))
          (push (f .fmap n x)) (push (g .fmap n x)))
 
 -- The embedding of stage n into stage n+1 is (n+1)-connected
@@ -462,6 +455,18 @@ finCellApprox C D f m =
   Σ[ ϕ ∈ finCellMap m C D ]
     (FinSeqColim→Colim m {X = realiseSeq D} ∘ finCellMap→FinSeqColim C D ϕ
        ≡ f ∘ FinSeqColim→Colim m {X = realiseSeq C})
+
+compFinCellApprox : (m : ℕ)
+  {C : CWskel ℓ} {D : CWskel ℓ'} {E : CWskel ℓ''}
+  {g : realise D → realise E}
+  {f : realise C → realise D}
+  → finCellApprox D E g m → finCellApprox C D f m
+  → finCellApprox C E (g ∘ f) m
+fst (compFinCellApprox m {g = g} {f} (F , p) (G , q)) = composeFinCellMap m F G
+snd (compFinCellApprox m {C = C} {g = g} {f} (F , p) (G , q)) =
+  →FinSeqColimHomotopy _ _ λ x
+    → funExt⁻ p _
+     ∙ cong g (funExt⁻ q (fincl _ x))
 
 -- realiseFinCellMap : {C : CWskel ℓ} {D : CWskel ℓ'}
 --   (m : ℕ) (ϕ : finCellMap m C D)
@@ -924,7 +929,7 @@ module approkz {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (f-c g-c : finCellMa
                       (push (f (fsuc n) c)) (push (g (fsuc n) c))}
                   main-inl main-push c (~ i) .fst
 
--- finiteCellHom-rel
+-- finCellHom-rel
 
 fsuc-agree : {m : ℕ} (n : Fin m)
   → Path (Fin (suc (suc m))) (fsuc (injectSuc n)) (injectSuc (fsuc n))
@@ -940,15 +945,15 @@ pathToCellularHomotopy-main :
   {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (f-c g-c : finCellMap m C D)
   (h∞-lift : FinSeqColim→Colim m ∘ finCellMap→FinSeqColim C D f-c
           ≡ FinSeqColim→Colim m ∘ finCellMap→FinSeqColim C D g-c)
-  → ∥ finiteCellHom-rel m f-c g-c (approkz.h∞ m f-c g-c h∞-lift) ∥₁
+  → ∥ finCellHom-rel m f-c g-c (approkz.h∞ m f-c g-c h∞-lift) ∥₁
 pathToCellularHomotopy-main {C = C} zero f-c g-c h∞' =
-  ∣ (record { hom = λ {(zero , p) x → ⊥.rec (CW₀-empty C x)}
-            ; coh = λ {()} })
+  ∣ (record { fhom = λ {(zero , p) x → ⊥.rec (CW₀-empty C x)}
+            ; fcoh = λ {()} })
             , (λ { (zero , p) x → ⊥.rec (CW₀-empty C x)}) ∣₁
 pathToCellularHomotopy-main {C = C} {D = D} (suc zero) f-c g-c h∞' =
-  PT.map (λ {(d , h) → (record { hom = λ {(zero , p) x → ⊥.rec (CW₀-empty C x)
+  PT.map (λ {(d , h) → (record { fhom = λ {(zero , p) x → ⊥.rec (CW₀-empty C x)
                     ; (suc zero , p) → d}
-            ; coh = λ {(zero , p) → λ x → ⊥.rec (CW₀-empty C x)} })
+            ; fcoh = λ {(zero , p) → λ x → ⊥.rec (CW₀-empty C x)} })
             , (λ {(zero , p) x → ⊥.rec (CW₀-empty C x)
                 ; (suc zero , tt) → h})}) (invEq (_ , satAC∃Fin-C0 C _ _) k)
   where
@@ -959,11 +964,11 @@ pathToCellularHomotopy-main {C = C} {D = D} (suc (suc m)) f-c g-c h∞' =
   PT.rec squash₁
     (λ ind → PT.map
       (λ {(f , p) →
-       (record { hom = main-hom ind f p
-               ; coh = main-coh ind f p })
+       (record { fhom = main-hom ind f p
+               ; fcoh = main-coh ind f p })
                , ∞coh ind f p})
       (pathToCellularHomotopy-ind flast
-        λ c → (finiteCellHom.hom (ind .fst) flast c)
+        λ c → (finCellHom.fhom (ind .fst) flast c)
             , (ind .snd flast c)))
     (pathToCellularHomotopy-main {C = C} {D = D} (suc m)
           (finCellMapLower f-c)
@@ -986,7 +991,7 @@ pathToCellularHomotopy-main {C = C} {D = D} (suc (suc m)) f-c g-c h∞' =
   open SeqHomotopyTypes
 
   module _
-    (ind : finiteCellHom-rel (suc m)
+    (ind : finCellHom-rel (suc m)
             (finCellMapLower f-c) (finCellMapLower g-c)
               ((approkz.h∞ (suc m) (finCellMapLower f-c) (finCellMapLower g-c) h')))
     (f : (c : fst C (suc (suc m))) →
@@ -995,7 +1000,7 @@ pathToCellularHomotopy-main {C = C} {D = D} (suc (suc m)) f-c g-c h∞' =
            (push (fmap f-c flast c)) (push (fmap g-c flast c))))
     (fp : (c : fst C (suc m)) →
       cell-hom-coh (suc (suc m)) f-c g-c flast c
-      (finiteCellHom.hom (ind .fst) flast c)
+      (finCellHom.fhom (ind .fst) flast c)
       (f (CW↪ C (suc m) c) .fst)) where
 
     main-hom-typ : (n : Fin (suc (suc (suc m))))
@@ -1006,9 +1011,9 @@ pathToCellularHomotopy-main {C = C} {D = D} (suc (suc m)) f-c g-c h∞' =
          ≡ CW↪ D (fst n) (g-c .fmap n x)
 
     main-hom : (n : Fin (suc (suc (suc m)))) → main-hom-typ n
-    main-hom = elimFin (fst ∘ f) (finiteCellHom.hom (fst ind))
+    main-hom = elimFin (fst ∘ f) (finCellHom.fhom (fst ind))
 
-    main-homβ = elimFinβ {A = main-hom-typ} (fst ∘ f) (finiteCellHom.hom (fst ind))
+    main-homβ = elimFinβ {A = main-hom-typ} (fst ∘ f) (finCellHom.fhom (fst ind))
 
     main-coh : (n : Fin (suc (suc m))) (c : C .fst (fst n))
       → Square
@@ -1027,7 +1032,7 @@ pathToCellularHomotopy-main {C = C} {D = D} (suc (suc m)) f-c g-c h∞' =
         λ n c
          → cong (cong (CW↪ D (suc (fst n))))
              (funExt⁻ (main-homβ .snd (injectSuc n)) c)
-          ◁ finiteCellHom.coh (fst ind) n c
+          ◁ finCellHom.fcoh (fst ind) n c
           ▷ sym (funExt⁻ (main-homβ .snd (fsuc n)) (CW↪ C (fst n) c))
 
     ∞coh : (n : Fin (suc (suc (suc m)))) (x : fst C (fst n))
@@ -1046,7 +1051,7 @@ pathToCellularHomotopy-main {C = C} {D = D} (suc (suc m)) f-c g-c h∞' =
     (pathToCellularHomotopy-main m
       (finCellMapLower f-c) (finCellMapLower g-c) λ s → h∞' (injectSuc s))
   where
-  module _ (ind : finiteCellHom-rel m (finCellMapLower f-c)
+  module _ (ind : finCellHom-rel m (finCellMapLower f-c)
       (finCellMapLower g-c)
       (approkz.h∞ m (finCellMapLower f-c) (finCellMapLower g-c)
        (h∞' (injectSuc flast)))) where
@@ -1059,8 +1064,8 @@ pathToCellularHomotopy-main {C = C} {D = D} (suc (suc m)) f-c g-c h∞' =
     ham (n , zero , p) = {!!}
     ham (n , suc diff , p) x =
          {!!}
-      ∙∙ finiteCellHom.hom (ind .fst) (n , diff , cong predℕ p) x
-      ∙∙ {!!} -- finiteCellHom.hom {!ind .fst!} {!!} 
+      ∙∙ finCellHom.hom (ind .fst) (n , diff , cong predℕ p) x
+      ∙∙ {!!} -- finCellHom.hom {!ind .fst!} {!!} 
 -}  
 
   -- -- main theorem
@@ -1310,7 +1315,7 @@ pathToCellularHomotopy-main {C = C} {D = D} (suc (suc m)) f-c g-c h∞' =
 pathToCellularHomotopy :
   {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) (f-c g-c : finCellMap m C D)
   → ((x : fst C m) → Path (realise D) (incl (fmap f-c flast x)) (incl (fmap g-c flast x)))
-  → ∥ finiteCellHom m f-c g-c ∥₁
+  → ∥ finCellHom m f-c g-c ∥₁
 pathToCellularHomotopy {C} {D} m f-c g-c h =
   PT.map fst
     (pathToCellularHomotopy-main m f-c g-c

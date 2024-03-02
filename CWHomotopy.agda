@@ -347,53 +347,46 @@ module realiseMMmap (C : CWskel ℓ) (D : CWskel ℓ') (m : ℕ) (f g : finCellM
 
   -- realisation of MMΣH∂ is equal to Susp H∂
   -- TODO: it is the same code as before. factorise!
-
-module realiseMMmapP2 (C : CWskel ℓ) (D : CWskel ℓ') (m : ℕ) (f g : finCellMap (suc m) C D) (H : finCellHom (suc m) f g) (n : Fin m)  where
+realiseMMΣH∂ : (C : CWskel ℓ) (D : CWskel ℓ') (m : ℕ)
+  (f g : finCellMap (suc m) C D) (H : finCellHom (suc m) f g)
+      (n : Fin m) (x : Susp (cofibCW (suc (fst n)) C)) →
+       MMmaps.realiseMMmap C D (suc m) (fsuc n) (λ x → inl tt) (λ x → inl tt)
+         (MMchainHomotopy*.MMΣH∂ (suc m) C D f g H (fsuc n) ) x
+      ≡ suspFun (preChainHomotopy.Hn+1/Hn (suc m) C D f g H (injectSuc n)
+               ∘ suspFun (to_cofibCW (fst n) C)
+               ∘ δ (suc (fst n)) C) x
+realiseMMΣH∂ C D (suc m) f g H n x =
+  realiseMMmap1≡2 fzero (fsuc n) (λ x → inl tt) (λ x → inl tt) (MMΣH∂ (fsuc n)) x ∙ aux x
+  where
   open FinSequenceMap
   open finCellHom
   open MMmaps C D
-  open MMchainHomotopy* (suc m) C D f g H
-  -- open preChainHomotopy (suc m) C D f g H
-  open realiseMMmap C D (suc m) f g H
-
-  Hn+1/Hn' : {!preChainHomotopy.Hn+1/Hn m C D (finCellMap↓ f) (finCellMap↓ g) (finCellHom↓ H) n!}
-  Hn+1/Hn' = preChainHomotopy.Hn+1/Hn m C D (finCellMap↓ f) (finCellMap↓ g) (finCellHom↓ H) n
-
-  realiseMMΣH∂* : {!!}
-  realiseMMΣH∂* = {!!}
-
-  realiseMMΣH∂ : (x : Susp (cofibCW (suc (fst n)) C)) →
-        realiseMMmap (suc m) (fsuc n) (λ x → inl tt) (λ x → inl tt) (MMΣH∂ (fsuc n)) x
-        ≡ suspFun (Hn+1/Hn'
-                 ∘ suspFun (to_cofibCW (fst n) C)
-                 ∘ δ (suc (fst n)) C) x
-  realiseMMΣH∂ x =
-    realiseMMmap1≡2 fzero (fsuc n) (λ x → inl tt) (λ x → inl tt) (MMΣH∂ (fsuc n)) x
-    ∙ aux x
-    where
-      aux : (x : Susp (cofibCW (suc (fst n)) C)) →
-        realiseMMmap.realiseMMmap2 C D (suc m) f g H fzero (fsuc n)
-          (λ x₁ → inl tt) (λ x₁ → inl tt)
-          (MMchainHomotopy*.MMΣH∂ (suc m) C D f g H (fsuc n)) x
-        ≡ suspFun (Hn+1/Hn' ∘ (suspFun (to_cofibCW (fst n) C)) ∘ (δ (suc (fst n)) C)) x
-      aux north = refl
-      aux south l = merid (inl tt) l
-      aux (merid (inl tt) i) l = merid (inl tt) (i ∧ l)
-      aux (merid (inr x) i) l =
-        hcomp (λ k → λ { (i = i0) → merid (inl tt) (~ k)
-                       ; (i = i1) → merid (inl tt) (l ∨ (~ k))
-                       ; (l = i1) → merid (inl tt) (~ k ∨ i) })
-              south
-      aux (merid (push x j) i) l =
-        hcomp (λ k → λ { (i = i0) → merid (((push (f .fmap (injectSuc (fsuc n)) x))
-                                   ∙∙ (cong inr (H .fhom (injectSuc (fsuc n)) x))
-                                   ∙∙ (sym (push (g .fmap (injectSuc (fsuc n)) x)))) j) (~ k)
-                         ; (i = i1) → merid (inl tt) (l ∨ (~ k))
-                         ; (j = i0) → merid (inl tt) ((i ∧ l) ∨ (~ k))
-                         ; (l = i1) → merid (((push (f .fmap (injectSuc (fsuc n)) x))
-                                    ∙∙ (cong inr (H .fhom (injectSuc (fsuc n)) x))
-                                    ∙∙ (sym (push (g .fmap (injectSuc (fsuc n)) x)))) j) (i ∨ (~ k))})
-                south
+  open MMchainHomotopy* (suc (suc m)) C D f g H
+  open preChainHomotopy (suc (suc m)) C D f g H
+  open realiseMMmap C D (suc (suc m)) f g H
+  aux : (x : Susp (cofibCW (suc (fst n)) C)) →
+    realiseMMmap.realiseMMmap2 C D (suc (suc m)) f g H fzero (fsuc n)
+      (λ x₁ → inl tt) (λ x₁ → inl tt)
+      (MMchainHomotopy*.MMΣH∂ (suc (suc m)) C D f g H (fsuc n)) x
+    ≡ suspFun (Hn+1/Hn (injectSuc n) ∘ (suspFun (to_cofibCW (fst n) C)) ∘ (δ (suc (fst n)) C)) x
+  aux north = refl
+  aux south l = merid (inl tt) l
+  aux (merid (inl tt) i) l = merid (inl tt) (i ∧ l)
+  aux (merid (inr x) i) l =
+    hcomp (λ k → λ { (i = i0) → merid (inl tt) (~ k)
+                   ; (i = i1) → merid (inl tt) (l ∨ (~ k))
+                   ; (l = i1) → merid (inl tt) (~ k ∨ i) })
+          south
+  aux (merid (push x j) i) l =
+    hcomp (λ k → λ { (i = i0) → merid (((push (f .fmap (injectSuc (fsuc n)) x))
+                               ∙∙ (cong inr (H .fhom (injectSuc (fsuc n)) x))
+                               ∙∙ (sym (push (g .fmap (injectSuc (fsuc n)) x)))) j) (~ k)
+                     ; (i = i1) → merid (inl tt) (l ∨ (~ k))
+                     ; (j = i0) → merid (inl tt) ((i ∧ l) ∨ (~ k))
+                     ; (l = i1) → merid (((push (f .fmap (injectSuc (fsuc n)) x))
+                                ∙∙ (cong inr (H .fhom (injectSuc (fsuc n)) x))
+                                ∙∙ (sym (push (g .fmap (injectSuc (fsuc n)) x)))) j) (i ∨ (~ k))})
+            south                
 
 -- Then, we connect the addition of MMmaps to the addition of abelian maps
 module bouquetAdd where
@@ -587,31 +580,23 @@ module chainHomEquation (m : ℕ) (C : CWskel ℓ) (D : CWskel ℓ') (f g : finC
   -- connecting MMΣH∂ to H∂
   bouquetΣH∂ : bouquetDegree (bouquetMMmap merid-tt merid-tt MMΣH∂) ≡ H∂
   bouquetΣH∂ =
-    {- cong (λ X → bouquetDegree ((Iso.fun (cofibIso (suc (fst n)) D)) ∘ X ∘ (Iso.inv (cofibIso (suc (fst n)) C))))
-         (funExt (realiseMMmapP2.realiseMMΣH∂ C D m f g H n)) -}
-       {!bouquetMMmap merid-tt merid-tt MMΣH∂!}
+     cong (λ X → bouquetDegree ((Iso.fun (cofibIso (suc (fst n)) D)) ∘ X ∘ (Iso.inv (cofibIso (suc (fst n)) C))))
+         (funExt (realiseMMΣH∂ C D m f g H n))
       ∙ cong bouquetDegree (cofibIso-suspFun _ C D (Hn+1/Hn (injectSuc n) ∘ suspFun (to_cofibCW (fst n) C) ∘ δ (suc (fst n)) C))
       ∙ sym (bouquetDegreeSusp Hιδ)
       ∙ cong bouquetDegree Hιδ≡H∘pre∂
       ∙ bouquetDegreeComp (bouquetHomotopy (injectSuc n)) (preboundary.pre∂ C (fst n))
-      {-
-      ∙ cong bouquetDegree
-             (cofibIso-suspFun _ C D (Hn+1/Hn (injectSuc n) ∘ suspFun (to_cofibCW (fst n) C) ∘ δ (suc (fst n)) C))
-      ∙ sym (bouquetDegreeSusp Hιδ)
-      ∙ cong bouquetDegree Hιδ≡H∘pre∂
-      ∙ bouquetDegreeComp (bouquetHomotopy (injectSuc n)) (preboundary.pre∂ C (fst n))
-      -}
     where
-      Hιδ : SphereBouquet (suc (fst n)) (Fin (CWskel-fields.card C (suc (fst n))))
-          → SphereBouquet (suc (fst n)) (Fin (CWskel-fields.card D (suc (fst n))))
-      Hιδ = Iso.fun (BouquetIso D (suc (fst n))) ∘ (Hn+1/Hn (injectSuc n)) ∘ suspFun (to_cofibCW (fst n) C)
-            ∘ δ (suc (fst n)) C ∘ Iso.inv (BouquetIso C (suc (fst n)))
+    Hιδ : SphereBouquet (suc (fst n)) (Fin (CWskel-fields.card C (suc (fst n))))
+        → SphereBouquet (suc (fst n)) (Fin (CWskel-fields.card D (suc (fst n))))
+    Hιδ = Iso.fun (BouquetIso D (suc (fst n))) ∘ (Hn+1/Hn (injectSuc n)) ∘ suspFun (to_cofibCW (fst n) C)
+          ∘ δ (suc (fst n)) C ∘ Iso.inv (BouquetIso C (suc (fst n)))
 
-      Hιδ≡H∘pre∂ : Hιδ ≡ bouquetHomotopy (injectSuc n) ∘ (preboundary.pre∂ C (fst n))
-      Hιδ≡H∘pre∂ = cong (λ X → Iso.fun (BouquetIso D (suc (fst n))) ∘ (Hn+1/Hn (injectSuc n)) ∘ X
-                               ∘ suspFun (to_cofibCW (fst n) C) ∘ δ (suc (fst n)) C
-                               ∘ Iso.inv (BouquetIso C (suc (fst n))))
-                        (sym (funExt (Iso.leftInv (cofibIso (fst n) C))))
+    Hιδ≡H∘pre∂ : Hιδ ≡ bouquetHomotopy (injectSuc n) ∘ (preboundary.pre∂ C (fst n))
+    Hιδ≡H∘pre∂ = cong (λ X → Iso.fun (BouquetIso D (suc (fst n))) ∘ (Hn+1/Hn (injectSuc n)) ∘ X
+                             ∘ suspFun (to_cofibCW (fst n) C) ∘ δ (suc (fst n)) C
+                             ∘ Iso.inv (BouquetIso C (suc (fst n))))
+                      (sym (funExt (Iso.leftInv (cofibIso (fst n) C))))
 
   -- connecting MMΣf to fn+1
   bouquetΣf : bouquetDegree (bouquetMMmap merid-f merid-tt MMΣf) ≡ fn+1
@@ -665,33 +650,33 @@ module chainHomEquation (m : ℕ) (C : CWskel ℓ) (D : CWskel ℓ') (f g : finC
         ∙ cong (λ X → X +G z) (sym (+AssocG x y (-G y))
                               ∙ cong (λ X → x +G X) (+InvR y)
                               ∙ +IdR x)
-  {- GroupHom≡ (funExt λ x → aux (fn+1 .fst x) (∂H .fst x) (gn+1 .fst x)
-                     (H∂ .fst x) (cong (λ X → X .fst x) chainHomotopy1))
-    where
-      open AbGroupStr (snd (ℤ[AD (suc n) ])) renaming (_+_ to _+G_ ; -_ to -G_ ; +Assoc to +AssocG ; +Comm to +CommG)
-      aux : ∀ w x y z → (x +G y) +G z ≡ w → w +G (-G y) ≡ x +G z
-      aux w x y z H = cong (λ X → X +G (-G y)) (sym H)
-        ∙ sym (+AssocG (x +G y) z (-G y))
-        ∙ cong (λ X → (x +G y) +G X) (+CommG z (-G y))
-        ∙ +AssocG (x +G y) (-G y) z
-        ∙ cong (λ X → X +G z) (sym (+AssocG x y (-G y))
-                              ∙ cong (λ X → x +G X) (+InvR y)
-                              ∙ +IdR x)
--}
+
 -- Going from a cell homotopy to a chain homotopy
-cellHom-to-ChainHomotopy : {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ) {f g : finCellMap (suc m) C D} (H : finCellHom (suc m) f g)
-                         → finChainHomotopy m (finCellMap→finChainComplexMap m f) (finCellMap→finChainComplexMap m g)
-cellHom-to-ChainHomotopy {C = C} {D} m {f} {g} H .finChainHomotopy.fhtpy n = preChainHomotopy.chainHomotopy (suc m) C D f g H n
-cellHom-to-ChainHomotopy {C = C} {D} m {f} {g} H .finChainHomotopy.fbdryhtpy n = chainHomEquation.chainHomotopy2 m C D f g H n
+cellHom-to-ChainHomotopy : {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ)
+  {f g : finCellMap (suc m) C D} (H : finCellHom (suc m) f g)
+  → finChainHomotopy m (finCellMap→finChainComplexMap m f) (finCellMap→finChainComplexMap m g)
+cellHom-to-ChainHomotopy {C = C} {D} m {f} {g} H .finChainHomotopy.fhtpy n =
+  preChainHomotopy.chainHomotopy (suc m) C D f g H n
+cellHom-to-ChainHomotopy {C = C} {D} m {f} {g} H .finChainHomotopy.fbdryhtpy n =
+  chainHomEquation.chainHomotopy2 m C D f g H n
 
--- open import cw-approx
+-- open import cw-approx2
 
--- open import Cubical.HITs.PropositionalTruncation as PT
--- finMap→cellMap₁ : (n m : ℕ) (C : finCWskel ℓ n) (D : finCWskel ℓ' m)
---   (f : realise (finCWskel→CWskel n C) → realise (finCWskel→CWskel m D))
---   → ∃[ ϕ ∈ cellMap (finCWskel→CWskel n C) (finCWskel→CWskel m D) ]
---             realiseCellMap ϕ ≡ f
--- finMap→cellMap₁ n m C D f =
+open import Cubical.HITs.PropositionalTruncation as PT
+
+-- finMap→cellMap₁ : (n : ℕ) (C : CWskel ℓ) (D : CWskel ℓ')
+--   (f : realise C → realise D)
+--   → ∃[ ϕ ∈ finCellMap n C D ]
+--             FinSeqColim→Colim n ∘ finCellMap→FinSeqColim C D ϕ
+--           ≡ f ∘ FinSeqColim→Colim n
+-- finMap→cellMap₁ n C D f =
+--   PT.map (λ {(ϕ , p) → (record { fmap = fmap ϕ
+--                                ; fcomm = λ n x → fcomm ϕ n x })
+--          , p})
+--   (CWmap→finCellMap C D f n)
+--   where
+--   open FinSequenceMap
+
 --   PT.map (λ {(ϕ , p) → record { map = fst ∘ ϕ ; comm = λ n c → sym (p n c) }
 --            , sym (converges→funId (n +ℕ m) (n +ℕ m) (snd (snd C↑)) (snd (snd D↑)) f _ λ n c → sym (ϕ n .snd c))})
 --     (approxFinCw (n +ℕ m) C↑ D↑ f)

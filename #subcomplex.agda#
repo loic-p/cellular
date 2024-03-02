@@ -299,7 +299,7 @@ Hᶠᶜʷ→comp m {C = C} {D = D} {E = E} g f =
     eq2 = cong₂ compGroupHom (Hᶜʷ→β C D m {f = f} F) (Hᶜʷ→β D E m {f = g} G)
 
     main : Hᶜʷ→ C E m (g ∘ f) ≡ compGroupHom (Hᶜʷ→ C D m f) (Hᶜʷ→ D E m g)
-    main = eq1 ∙∙ {!refl!} ∙∙ sym eq2
+    main = eq1 ∙∙ {!finCellMap→HomologyMap!} ∙∙ sym eq2
   
 {-
   PT.rec2 (isSetGroupHom _ _)
