@@ -15,6 +15,8 @@ open import Cubical.Data.Fin.Inductive.Properties
 open import Cubical.Data.Sigma
 open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.CW
+open import Cubical.Data.CW.Map
+open import Cubical.Data.CW.Homotopy
 open import Cubical.Data.Sequence
 open import Cubical.Data.CW.ChainComplex
 open import Cubical.Algebra.ChainComplex
@@ -38,6 +40,17 @@ open import Cubical.Algebra.Group.MorphismProperties
 open import Cubical.Algebra.ChainComplex.Base
 open import Cubical.Algebra.ChainComplex.Natindexed
 
+-- open import fin-cw-map
+open import cw-approx2
+
+open import Cubical.Foundations.Transport
+
+open import Cubical.Data.CW.Map
+open import Cubical.HITs.PropositionalTruncation as PT
+open import Cubical.HITs.SequentialColimit
+
+open import Cubical.Algebra.Group.GroupPath
+
 
 module subcomplex where
 
@@ -45,6 +58,76 @@ module subcomplex where
 private
   variable
     ℓ ℓ' ℓ'' : Level
+
+open import Cubical.HITs.PropositionalTruncation as PT
+
+open import Cubical.Algebra.Group.GroupPath
+GroupEquivJ> : {ℓ : Level} {ℓ' : Level} {G : Group ℓ}
+   {P : (H : Group ℓ) → GroupEquiv G H → Type ℓ'} →
+   P G idGroupEquiv → (H : Group ℓ) (e : GroupEquiv G H) → P H e
+GroupEquivJ> {G = G} {P} ids H = GroupEquivJ (λ H e → P H e) ids
+
+module _ {ℓ ℓ' : Level} {G1 : Group ℓ} {H1 : Group ℓ'} where
+  private
+    pre-PathPGroupHom : ∀
+      (G2 : Group ℓ)
+      (eG : GroupEquiv G1 G2)
+      (H2 : Group ℓ') (eH : GroupEquiv H1 H2)
+      (ϕ : GroupHom G1 H1) (ψ : GroupHom G2 H2)
+      → compGroupHom (GroupEquiv→GroupHom eG) ψ
+       ≡ compGroupHom ϕ (GroupEquiv→GroupHom eH)
+      → PathP (λ i → GroupHom (uaGroup eG i) (uaGroup eH i))
+               ϕ ψ
+    pre-PathPGroupHom =
+      GroupEquivJ> (GroupEquivJ>
+       λ ϕ ψ → λ s
+      → toPathP ((λ s
+      → transport (λ i → GroupHom (uaGroupId G1 s i) (uaGroupId H1 s i)) ϕ)
+      ∙ transportRefl ϕ
+      ∙ Σ≡Prop (λ _ → isPropIsGroupHom _ _) (sym (cong fst s))))
+
+  PathPGroupHom : {G2 : Group ℓ} (eG : GroupEquiv G1 G2)
+                  {H2 : Group ℓ'} (eH : GroupEquiv H1 H2)
+                  {ϕ : GroupHom G1 H1} {ψ : GroupHom G2 H2}
+      → compGroupHom (GroupEquiv→GroupHom eG) ψ
+       ≡ compGroupHom ϕ (GroupEquiv→GroupHom eH)
+      → PathP (λ i → GroupHom (uaGroup eG i) (uaGroup eH i)) ϕ ψ
+  PathPGroupHom eG eH p = pre-PathPGroupHom _ eG _ eH _ _ p
+
+  module _ {H2 : Group ℓ'} (eH : GroupEquiv H1 H2)
+           {ϕ : GroupHom G1 H1} {ψ : GroupHom G1 H2} where
+    PathPGroupHomₗ : ψ ≡ compGroupHom ϕ (GroupEquiv→GroupHom eH)
+        → PathP (λ i → GroupHom G1 (uaGroup eH i)) ϕ ψ
+    PathPGroupHomₗ p =
+      transport (λ k → PathP (λ i → GroupHom (uaGroupId G1 k i) (uaGroup eH i)) ϕ ψ)
+        (PathPGroupHom idGroupEquiv eH
+         (Σ≡Prop (λ _ → isPropIsGroupHom _ _) (cong fst p)))
+
+    PathPGroupHomₗ' : compGroupHom ψ (GroupEquiv→GroupHom (invGroupEquiv eH)) ≡ ϕ
+        → PathP (λ i → GroupHom G1 (uaGroup eH i)) ϕ ψ
+    PathPGroupHomₗ' p =
+      PathPGroupHomₗ
+        (Σ≡Prop (λ _ → isPropIsGroupHom _ _)
+          (funExt (λ s → sym (secEq (fst eH) (fst ψ s))))
+      ∙ cong (λ ϕ → compGroupHom ϕ (GroupEquiv→GroupHom eH)) p)
+
+  module _ {G2 : Group ℓ} (eG : GroupEquiv G1 G2)
+           {ϕ : GroupHom G1 H1} {ψ : GroupHom G2 H1}
+    where
+    PathPGroupHomᵣ : compGroupHom (GroupEquiv→GroupHom eG) ψ ≡ ϕ
+      → PathP (λ i → GroupHom (uaGroup eG i) H1) ϕ ψ
+    PathPGroupHomᵣ p =
+      transport (λ k → PathP (λ i → GroupHom (uaGroup eG i) (uaGroupId H1 k i)) ϕ ψ)
+        (PathPGroupHom eG idGroupEquiv
+         (Σ≡Prop (λ _ → isPropIsGroupHom _ _) (cong fst p)))
+
+    PathPGroupHomᵣ' : ψ ≡ compGroupHom (GroupEquiv→GroupHom (invGroupEquiv eG)) ϕ
+      → PathP (λ i → GroupHom (uaGroup eG i) H1) ϕ ψ
+    PathPGroupHomᵣ' p = PathPGroupHomᵣ
+      (cong (compGroupHom (GroupEquiv→GroupHom eG)) p
+      ∙ Σ≡Prop (λ _ → isPropIsGroupHom _ _)
+         (funExt λ x → cong (fst ϕ) (retEq (fst eG) x)) )
+
 
 ¬-suc-n<ᵗn : {n : ℕ} → ¬ (suc n) <ᵗ n
 ¬-suc-n<ᵗn {suc n} = ¬-suc-n<ᵗn {n}
@@ -173,7 +256,7 @@ subChainIso C n (m , p) with (m ≟ᵗ n)
 ... | gt x = ⊥.rec (¬m<ᵗm (<ᵗ-trans x p))
 
 subComplexHomology : (C : CWskel ℓ) (n m : ℕ) (p : suc (suc m) <ᵗ n)
-  → GroupIso (Hᶜʷ C m) (Hᶜʷ (subComplex C n) m)
+  → GroupIso (Hˢᵏᵉˡ C m) (Hˢᵏᵉˡ (subComplex C n) m)
 subComplexHomology C n m p =
   homologyIso m _ _
     (subChainIso C n (suc (suc m) , p))
@@ -209,10 +292,7 @@ subComplexHomology C n m p =
   ... | eq x | s | t = ⊥.rec (¬m<ᵗm (subst (suc m <ᵗ_) (sym x) q))
   ... | gt x | s | t = ⊥.rec (¬-suc-n<ᵗn (<ᵗ-trans p x))
 
-open import CWHomotopy
-open import fin-cw-map
 
-open import Cubical.Foundations.Transport
 -- restrCellMap : (C : CWskel ℓ) (D : CWskel ℓ') (f : cellMap C D) (m : ℕ)
 --   → cellMap (subComplex C m) (subComplex D m)
 -- SequenceMap.map (restrCellMap C D f m) n k with (n ≟ᵗ m)
@@ -233,56 +313,62 @@ open import Cubical.Foundations.Transport
 --     ∙ cong (SequenceMap.map f m) (sym (transportRefl _))
 -- ... | gt x₁ | gt x₂ = refl
 
-open import Cubical.Data.CW.Map
-Hᶜʷ→-pre : (C : CWskel ℓ) (D : CWskel ℓ') (m : ℕ)
-  (f : finCellMap (suc (suc (suc m))) C D)
-  → GroupHom (Hᶜʷ C m) (Hᶜʷ D m)
-Hᶜʷ→-pre C D m f = finCellMap→HomologyMap m f
 
-open import cw-approx2
-open import Cubical.HITs.PropositionalTruncation as PT
-open import Cubical.HITs.SequentialColimit
+Hˢᵏᵉˡ→-pre : (C : CWskel ℓ) (D : CWskel ℓ') (m : ℕ)
+  (f : finCellMap (suc (suc (suc m))) C D)
+  → GroupHom (Hˢᵏᵉˡ C m) (Hˢᵏᵉˡ D m)
+Hˢᵏᵉˡ→-pre C D m f = finCellMap→HomologyMap m f
+
 
 private
-  preHᶜʷ→ : (C : CWskel ℓ) (D : CWskel ℓ') (m : ℕ)
+  preHˢᵏᵉˡ→ : (C : CWskel ℓ) (D : CWskel ℓ') (m : ℕ)
     → (f : realise C → realise D)
     → ∥ finCellApprox C D f (suc (suc (suc m))) ∥₁
-    → GroupHom (Hᶜʷ C m) (Hᶜʷ D m)
-  preHᶜʷ→ C D m f =
+    → GroupHom (Hˢᵏᵉˡ C m) (Hˢᵏᵉˡ D m)
+  preHˢᵏᵉˡ→ C D m f =
     rec→Set isSetGroupHom
-    (λ f → Hᶜʷ→-pre C D m (f .fst))
+    (λ f → Hˢᵏᵉˡ→-pre C D m (f .fst))
     main
     where
-    main : 2-Constant (λ f₁ → Hᶜʷ→-pre C D m (f₁ .fst))
+    main : 2-Constant (λ f₁ → Hˢᵏᵉˡ→-pre C D m (f₁ .fst))
     main f g = PT.rec (isSetGroupHom _ _)
       (λ q → finChainHomotopy→HomologyPath _ _
         (cellHom-to-ChainHomotopy _ q) flast)
       (pathToCellularHomotopy _ (fst f) (fst g)
         λ x → funExt⁻ (snd f ∙ sym (snd g)) (fincl flast x))
 
-Hᶜʷ→ : (C : CWskel ℓ) (D : CWskel ℓ') (m : ℕ)
+Hˢᵏᵉˡ→ : {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ)
   (f : realise C → realise D)
-  → GroupHom (Hᶜʷ C m) (Hᶜʷ D m)
-Hᶜʷ→ C D m f =
-  preHᶜʷ→ C D m f
+  → GroupHom (Hˢᵏᵉˡ C m) (Hˢᵏᵉˡ D m)
+Hˢᵏᵉˡ→ {C = C} {D} m f =
+  preHˢᵏᵉˡ→ C D m f
     (CWmap→finCellMap C D f (suc (suc (suc m))))
 
 opaque
-  Hᶜʷ→β : (C : CWskel ℓ) (D : CWskel ℓ') (m : ℕ)
+  Hˢᵏᵉˡ→β : (C : CWskel ℓ) (D : CWskel ℓ') (m : ℕ)
     {f : realise C → realise D}
-    (ϕ : finCellApprox C D f (suc (suc (suc m)))) 
-    → Hᶜʷ→ C D m f ≡ Hᶜʷ→-pre C D m (ϕ .fst)
-  Hᶜʷ→β C D m {f = f} ϕ =
-    cong (preHᶜʷ→ C D m f) (squash₁ _ ∣ ϕ ∣₁)
+    (ϕ : finCellApprox C D f (suc (suc (suc m))))
+    → Hˢᵏᵉˡ→ {C = C} {D} m f ≡ Hˢᵏᵉˡ→-pre C D m (ϕ .fst)
+  Hˢᵏᵉˡ→β C D m {f = f} ϕ =
+    cong (preHˢᵏᵉˡ→ C D m f) (squash₁ _ ∣ ϕ ∣₁)
 
-Hᶠᶜʷ→comp : (m : ℕ)
+Hˢᵏᵉˡ→id : (m : ℕ) {C : CWskel ℓ}
+  → Hˢᵏᵉˡ→ {C = C} m (idfun _) ≡ idGroupHom
+Hˢᵏᵉˡ→id m {C = C} =
+  Hˢᵏᵉˡ→β C C m {idfun _} (idFinCellApprox (suc (suc (suc m))))
+  ∙ finCellMap→HomologyMapId _
+
+Hˢᵏᵉˡ→comp : (m : ℕ)
   {C : CWskel ℓ} {D : CWskel ℓ'} {E : CWskel ℓ''}
   (g : realise D → realise E)
   (f : realise C → realise D)
-  → Hᶜʷ→ C E m (g ∘ f)
-  ≡ compGroupHom (Hᶜʷ→ C D m f) (Hᶜʷ→ D E m g)
-Hᶠᶜʷ→comp m {C = C} {D = D} {E = E} g f =
-  {!PT.rec2 (isSetGroupHom _ _) ? ?!}
+  → Hˢᵏᵉˡ→ m (g ∘ f)
+  ≡ compGroupHom (Hˢᵏᵉˡ→ m f) (Hˢᵏᵉˡ→ m g)
+Hˢᵏᵉˡ→comp m {C = C} {D = D} {E = E} g f =
+  PT.rec2 (isSetGroupHom _ _)
+    main
+    (CWmap→finCellMap C D f (suc (suc (suc m))))
+    (CWmap→finCellMap D E g (suc (suc (suc m))))
   where
   module _  (F : finCellApprox C D f (suc (suc (suc m))))
             (G : finCellApprox D E g (suc (suc (suc m))))
@@ -290,368 +376,144 @@ Hᶠᶜʷ→comp m {C = C} {D = D} {E = E} g f =
     comps : finCellApprox C E (g ∘ f) (suc (suc (suc m)))
     comps = compFinCellApprox _ {g = g} {f} G F
 
-    eq1 : Hᶜʷ→ C E m (g ∘ f)
-        ≡ Hᶜʷ→-pre C E m (composeFinCellMap _ (fst G) (fst F))
-    eq1 = Hᶜʷ→β C E m {g ∘ f} comps
+    eq1 : Hˢᵏᵉˡ→ m (g ∘ f)
+        ≡ Hˢᵏᵉˡ→-pre C E m (composeFinCellMap _ (fst G) (fst F))
+    eq1 = Hˢᵏᵉˡ→β C E m {g ∘ f} comps
 
-    eq2 : compGroupHom (Hᶜʷ→ C D m f) (Hᶜʷ→ D E m g)
-        ≡ compGroupHom (Hᶜʷ→-pre C D m (fst F)) (Hᶜʷ→-pre D E m (fst G))
-    eq2 = cong₂ compGroupHom (Hᶜʷ→β C D m {f = f} F) (Hᶜʷ→β D E m {f = g} G)
+    eq2 : compGroupHom (Hˢᵏᵉˡ→ m f) (Hˢᵏᵉˡ→ m g)
+        ≡ compGroupHom (Hˢᵏᵉˡ→-pre C D m (fst F)) (Hˢᵏᵉˡ→-pre D E m (fst G))
+    eq2 = cong₂ compGroupHom (Hˢᵏᵉˡ→β C D m {f = f} F) (Hˢᵏᵉˡ→β D E m {f = g} G)
 
-    main : Hᶜʷ→ C E m (g ∘ f) ≡ compGroupHom (Hᶜʷ→ C D m f) (Hᶜʷ→ D E m g)
-    main = eq1 ∙∙ {!refl!} ∙∙ sym eq2
-  
-{-
-  PT.rec2 (isSetGroupHom _ _)
-    (λ F G
-      → Σ≡Prop {!!}
-          ({!!}
-          ∙∙ {!!}
-          ∙∙ λ i x → Hᶜʷ→β D E m {g} G (~ i)
-                  .fst (Hᶜʷ→β C D m {f} F (~ i) .fst x)))
-      {-
-    → {!!} -- Hᶜʷ→β C E m {!!}
-     ∙∙ {!!}
-     ∙∙ -- cong₂ compGroupHom
-                 -- (sym (Hᶜʷ→β C D m {f} (F , fp)))
-                {!!}}) -- (sym (Hᶜʷ→β D E m {g} (G , gp)))})
-                -}
-    {-
-    (λ {(F , fp) (G , gp)
-   → rewriteHᶠᶜʷ k n r (g ∘ f) (composeCellMap G F)
-          (realiseCompSequenceMap G F ∙ (λ i x → gp i (fp i x)))
-    ∙ cong (λ f → chainComplexMap→HomologyMap f (k , ≠suc))
-               (cellMap-to-ChainComplexMapComp G F)
-    ∙ chainComplexMap→HomologyMapComp _ _ (k , ≠suc)
-    ∙ cong₂ compGroupHom (sym (rewriteHᶠᶜʷ k n m f F fp))
-                         (sym (rewriteHᶠᶜʷ k m r g G gp))})
-                         -}
-    (CWmap→finCellMap C D f (suc (suc (suc m)))) -- (finMap→cellMap₁ n m C D f)
-    (CWmap→finCellMap D E g (suc (suc (suc m)))) -- (finMap→cellMap₁ m r D E g)
--}
+    main : Hˢᵏᵉˡ→ m (g ∘ f) ≡ compGroupHom (Hˢᵏᵉˡ→ m f) (Hˢᵏᵉˡ→ m g)
+    main = eq1 ∙∙ finCellMap→HomologyMapComp _ _ _ ∙∙ sym eq2
 
 
+Hˢᵏᵉˡ→Iso : {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ)
+  (e : realise C ≃ realise D) → GroupIso (Hˢᵏᵉˡ C m) (Hˢᵏᵉˡ D m)
+Iso.fun (fst (Hˢᵏᵉˡ→Iso m e)) = fst (Hˢᵏᵉˡ→ m (fst e))
+Iso.inv (fst (Hˢᵏᵉˡ→Iso m e)) = fst (Hˢᵏᵉˡ→ m (invEq e))
+Iso.rightInv (fst (Hˢᵏᵉˡ→Iso m e)) =
+  funExt⁻ (cong fst (sym (Hˢᵏᵉˡ→comp m (fst e) (invEq e))
+       ∙∙ cong (Hˢᵏᵉˡ→ m) (funExt (secEq e))
+       ∙∙ Hˢᵏᵉˡ→id m))
+Iso.leftInv (fst (Hˢᵏᵉˡ→Iso m e)) =
+  funExt⁻ (cong fst (sym (Hˢᵏᵉˡ→comp m (invEq e) (fst e))
+       ∙∙ cong (Hˢᵏᵉˡ→ m) (funExt (retEq e))
+       ∙∙ Hˢᵏᵉˡ→id m))
+snd (Hˢᵏᵉˡ→Iso m e) = snd (Hˢᵏᵉˡ→ m (fst e))
 
--- Hᶠᶜʷ→comp : (k : ℕ) (n m r : ℕ)
---   {C : finCWskel ℓ n} {D : finCWskel ℓ' m} {E : finCWskel ℓ'' r}
---   (g : realise (finCWskel→CWskel m D) → realise (finCWskel→CWskel r E))
---   (f : realise (finCWskel→CWskel n C) → realise (finCWskel→CWskel m D))
---   → Hᶠᶜʷ→ k n r {C = C} {D = E} (g ∘ f)
---    ≡ compGroupHom (Hᶠᶜʷ→ k n m f) (Hᶠᶜʷ→ k m r g)
--- Hᶠᶜʷ→comp k n m r {C = C} {D = D} {E = E} g f =
---   PT.rec2 (isSetGroupHom _ _)
---     (λ {(F , fp) (G , gp)
---    → rewriteHᶠᶜʷ k n r (g ∘ f) (composeCellMap G F)
---           (realiseCompSequenceMap G F ∙ (λ i x → gp i (fp i x)))
---     ∙ cong (λ f → chainComplexMap→HomologyMap f (k , ≠suc))
---                (cellMap-to-ChainComplexMapComp G F)
---     ∙ chainComplexMap→HomologyMapComp _ _ (k , ≠suc)
---     ∙ cong₂ compGroupHom (sym (rewriteHᶠᶜʷ k n m f F fp))
---                          (sym (rewriteHᶠᶜʷ k m r g G gp))})
---     (finMap→cellMap₁ n m C D f)
---     (finMap→cellMap₁ m r D E g)
+Hˢᵏᵉˡ→Equiv : {C : CWskel ℓ} {D : CWskel ℓ'} (m : ℕ)
+  (e : realise C ≃ realise D) → GroupEquiv (Hˢᵏᵉˡ C m) (Hˢᵏᵉˡ D m)
+Hˢᵏᵉˡ→Equiv m e = GroupIso→GroupEquiv (Hˢᵏᵉˡ→Iso m e)
+
+Hᶜʷ : ∀ (C : CW ℓ) (n : ℕ) → Group₀
+Hᶜʷ (C , CWstr) n =
+  PropTrunc→Group
+      (λ Cskel → Hˢᵏᵉˡ (Cskel .fst) n)
+      (λ Cskel Dskel → Hˢᵏᵉˡ→Equiv n (compEquiv (invEquiv (snd Cskel)) (snd Dskel)))
+      coh
+      CWstr
+  where
+  coh : (Cskel Dskel Eskel : isCW C) (t : fst (Hˢᵏᵉˡ (Cskel .fst) n))
+    → fst (fst (Hˢᵏᵉˡ→Equiv n (compEquiv (invEquiv (snd Dskel)) (snd Eskel))))
+         (fst (fst (Hˢᵏᵉˡ→Equiv n (compEquiv (invEquiv (snd Cskel)) (snd Dskel)))) t)
+    ≡ fst (fst (Hˢᵏᵉˡ→Equiv n (compEquiv (invEquiv (snd Cskel)) (snd Eskel)))) t
+  coh (C' , e) (D , f) (E , h) =
+    funExt⁻ (cong fst
+          (sym (Hˢᵏᵉˡ→comp n (fst (compEquiv (invEquiv f) h))
+                           (fst (compEquiv (invEquiv e) f)))
+          ∙ cong (Hˢᵏᵉˡ→ n) (funExt λ x → cong (fst h) (retEq f _))))
 
 
 
--- {-
---   where
---   ϕ = chainComplexMap→HomologyMap
---          {C = CW-ChainComplex (subComplex C (3 +ℕ m))}
---          {D = CW-ChainComplex (subComplex D (3 +ℕ m))}
---          (cellMap-to-ChainComplexMap (restrCellMap C D f (3 +ℕ m)))
---          (m , _)
--- -}
+private
+  module _ {C : Type ℓ} {D : Type ℓ'} (f : C → D) (n : ℕ) where
+    right : (cwC : isCW C) (cwD1 : isCW D) (cwD2 : isCW D)
+      → PathP (λ i → GroupHom (Hᶜʷ (C , ∣ cwC ∣₁) n)
+                         (Hᶜʷ (D , squash₁ ∣ cwD1 ∣₁ ∣ cwD2 ∣₁ i) n))
+        (Hˢᵏᵉˡ→ n (λ x → fst (snd cwD1) (f (invEq (snd cwC) x))))
+        (Hˢᵏᵉˡ→ n (λ x → fst (snd cwD2) (f (invEq (snd cwC) x))))
+    right cwC cwD1 cwD2 =
+      PathPGroupHomₗ _
+        (cong (Hˢᵏᵉˡ→ n) (funExt (λ s
+          → cong (fst (snd cwD2)) (sym (retEq (snd cwD1) _))))
+        ∙ Hˢᵏᵉˡ→comp n _ _)
 
+    left : (cwC1 : isCW C) (cwC2 : isCW C) (cwD : isCW D)
+      → PathP (λ i → GroupHom (Hᶜʷ (C , squash₁ ∣ cwC1 ∣₁ ∣ cwC2 ∣₁ i) n)
+                                  (Hᶜʷ (D , ∣ cwD ∣₁) n))
+                 (Hˢᵏᵉˡ→ n (λ x → fst (snd cwD) (f (invEq (snd cwC1) x))))
+                 (Hˢᵏᵉˡ→ n (λ x → fst (snd cwD) (f (invEq (snd cwC2) x))))
+    left cwC1 cwC2 cwD =
+      PathPGroupHomᵣ (Hˢᵏᵉˡ→Equiv n (compEquiv (invEquiv (snd cwC1)) (snd cwC2)))
+            (sym (Hˢᵏᵉˡ→comp n (λ x → fst (snd cwD) (f (invEq (snd cwC2) x)))
+                             (compEquiv (invEquiv (snd cwC1)) (snd cwC2) .fst))
+           ∙ cong (Hˢᵏᵉˡ→ n) (funExt (λ x
+              → cong (fst (snd cwD) ∘ f)
+                  (retEq (snd cwC2) _))))
 
--- -- Hᶜʷ→finite : (C : CWskel ℓ) (D : CWskel ℓ') (m : ℕ)
--- --   (f : cellMap C D)
--- --   → GroupHom (Hᶜʷ (subComplex C (3 +ℕ m)) m) (Hᶜʷ (subComplex D (3 +ℕ m)) m)
--- -- Hᶜʷ→finite C D m f = ϕ
--- --   where
--- --   ϕ = chainComplexMap→HomologyMap
--- --          {C = CW-ChainComplex (subComplex C (3 +ℕ m))}
--- --          {D = CW-ChainComplex (subComplex D (3 +ℕ m))}
--- --          (cellMap-to-ChainComplexMap (restrCellMap C D f (3 +ℕ m)))
--- --          (m , _)
+    left-right : (x y : isCW C) (v w : isCW D) →
+      SquareP
+      (λ i j →
+         GroupHom (Hᶜʷ (C , squash₁ ∣ x ∣₁ ∣ y ∣₁ i) n)
+         (Hᶜʷ (D , squash₁ ∣ v ∣₁ ∣ w ∣₁ j) n))
+      (right x v w) (right y v w) (left x y v) (left x y w)
+    left-right _ _ _ _ = isSet→SquareP
+       (λ _ _ → isSetGroupHom) _ _ _ _
 
--- -- Hᶠᶜʷ : (m : ℕ) (C : finCWskel ℓ m) (n : ℕ) → Group₀
--- -- Hᶠᶜʷ m C n = Hᶜʷ (finCWskel→CWskel m C) n
+    Hᶜʷ→pre : (cwC : ∥ isCW C ∥₁) (cwD : ∥ isCW D ∥₁)
+      → GroupHom (Hᶜʷ (C , cwC) n) (Hᶜʷ (D , cwD) n)
+    Hᶜʷ→pre =
+      elim2→Set (λ _ _ → isSetGroupHom)
+        (λ cwC cwD → Hˢᵏᵉˡ→ n (fst (snd cwD) ∘ f ∘ invEq (snd cwC)))
+        left right
+        (λ _ _ _ _ → isSet→SquareP
+         (λ _ _ → isSetGroupHom) _ _ _ _)
 
+Hᶜʷ→ : {C : CW ℓ} {D : CW ℓ'} (n : ℕ) (f : C →ᶜʷ D)
+    → GroupHom (Hᶜʷ C n) (Hᶜʷ D n)
+Hᶜʷ→ {C = C , cwC} {D = D , cwD} n f = Hᶜʷ→pre f n cwC cwD
 
--- -- open import Cubical.HITs.PropositionalTruncation as PT
--- -- open import cw-approx2
+Hᶜʷ→id : {C : CW ℓ} (n : ℕ)
+    → Hᶜʷ→ {C = C} {C} n (idfun (fst C))
+     ≡ idGroupHom
+Hᶜʷ→id {C = C , cwC} n =
+  PT.elim {P = λ cwC
+    → Hᶜʷ→ {C = C , cwC} {C , cwC} n (idfun C) ≡ idGroupHom}
+    (λ _ → isSetGroupHom _ _)
+    (λ cwC* → cong (Hˢᵏᵉˡ→ n) (funExt (secEq (snd cwC*)))
+              ∙ Hˢᵏᵉˡ→id n) cwC
 
--- -- module _ (k : ℕ) (n m : ℕ) {C : finCWskel ℓ n} {D : finCWskel ℓ' m}
--- --         (f : realise (finCWskel→CWskel n C) → realise (finCWskel→CWskel m D)) where
+Hᶜʷ→comp : {C : CW ℓ} {D : CW ℓ'} {E : CW ℓ''} (n : ℕ)
+      (g : D →ᶜʷ E) (f : C →ᶜʷ D)
+    → Hᶜʷ→ {C = C} {E} n (g ∘ f)
+     ≡ compGroupHom (Hᶜʷ→ {C = C} {D} n f) (Hᶜʷ→ {C = D} {E} n g)
+Hᶜʷ→comp {C = C , cwC} {D = D , cwD} {E = E , cwE} n g f =
+  PT.elim3 {P = λ cwC cwD cwE
+    → Hᶜʷ→ {C = C , cwC} {E , cwE} n (g ∘ f)
+     ≡ compGroupHom (Hᶜʷ→ {C = C , cwC} {D , cwD} n f)
+                    (Hᶜʷ→ {C = D , cwD} {E , cwE} n g)}
+     (λ _ _ _ → isSetGroupHom _ _)
+     (λ cwC cwD cwE
+       → cong (Hˢᵏᵉˡ→ n) (funExt (λ x → cong (fst (snd cwE) ∘ g)
+                          (sym (retEq (snd cwD) _))))
+       ∙ Hˢᵏᵉˡ→comp n _ _)
+     cwC cwD cwE
 
--- --   cellMap→Hᶠᶜʷ-hom : cellMap (finCWskel→CWskel n C) (finCWskel→CWskel m D) → GroupHom (Hᶠᶜʷ n C k) (Hᶠᶜʷ m D k)
--- --   cellMap→Hᶠᶜʷ-hom ϕ = chainComplexMap→HomologyMap (cellMap-to-ChainComplexMap ϕ) (k , _)
+Hᶜʷ→Iso : {C : CW ℓ} {D : CW ℓ'} (m : ℕ)
+  (e : fst C ≃ fst D) → GroupIso (Hᶜʷ C m) (Hᶜʷ D m)
+Iso.fun (fst (Hᶜʷ→Iso m e)) = fst (Hᶜʷ→ m (fst e))
+Iso.inv (fst (Hᶜʷ→Iso m e)) = fst (Hᶜʷ→ m (invEq e))
+Iso.rightInv (fst (Hᶜʷ→Iso m e)) =
+  funExt⁻ (cong fst (sym (Hᶜʷ→comp m (fst e) (invEq e))
+       ∙∙ cong (Hᶜʷ→ m) (funExt (secEq e))
+       ∙∙ Hᶜʷ→id m))
+Iso.leftInv (fst (Hᶜʷ→Iso m e)) =
+  funExt⁻ (cong fst (sym (Hᶜʷ→comp m (invEq e) (fst e))
+       ∙∙ cong (Hᶜʷ→ m) (funExt (retEq e))
+       ∙∙ Hᶜʷ→id m))
+snd (Hᶜʷ→Iso m e) = snd (Hᶜʷ→ m (fst e))
 
--- --   cellMap→Hᶠᶜʷ-hom-coh : (p q : Σ[ r ∈ (cellMap (finCWskel→CWskel n C) (finCWskel→CWskel m D)) ]
--- --                                        (realiseSequenceMap r ≡ f))
--- --       → cellMap→Hᶠᶜʷ-hom (fst p) ≡ cellMap→Hᶠᶜʷ-hom (fst q)
--- --   cellMap→Hᶠᶜʷ-hom-coh p q = PT.rec (isSetGroupHom _ _)
--- --       ((λ ϕ → ChainHomotopy→HomologyPath (cellMap-to-ChainComplexMap (fst p))
--- --                                           (cellMap-to-ChainComplexMap (fst q))
--- --                                           (cellHom-to-ChainHomotopy ϕ)
--- --                                           (k , ≠suc)))
--- --       (cellHomotopy₁ n m (fst p) (fst q) (snd p ∙ sym (snd q)))
-
--- --   Hᶠᶜʷ→ : GroupHom (Hᶠᶜʷ n C k) (Hᶠᶜʷ m D k)
--- --   Hᶠᶜʷ→ = rec→Set isSetGroupHom
--- --                   (cellMap→Hᶠᶜʷ-hom ∘ fst)
--- --                   (cellMap→Hᶠᶜʷ-hom-coh)
--- --                   (finMap→cellMap₁ n m C D f)
-
-
--- -- rewriteHᶠᶜʷ : (k : ℕ) (n m : ℕ) {C : finCWskel ℓ n} {D : finCWskel ℓ' m}
--- --      → (f : realise (finCWskel→CWskel n C) → realise (finCWskel→CWskel m D))
--- --      → (g : cellMap (finCWskel→CWskel n C) (finCWskel→CWskel m D))
--- --      → (realiseCellMap g ≡ f)
--- --      → Hᶠᶜʷ→ k n m f ≡ cellMap→Hᶠᶜʷ-hom k n m f g
--- -- rewriteHᶠᶜʷ k n m {C = C} {D = D} f g p = main
--- --   where
--- --   finMap→cellMap₁-path : finMap→cellMap₁ n m C D f ≡ ∣ g , p ∣₁
--- --   finMap→cellMap₁-path = squash₁ _ _
-
--- --   main : Hᶠᶜʷ→ k n m f ≡ cellMap→Hᶠᶜʷ-hom k n m f g
--- --   main = cong (rec→Set isSetGroupHom
--- --               (cellMap→Hᶠᶜʷ-hom k n m {C = C} {D} f ∘ fst)
--- --               (cellMap→Hᶠᶜʷ-hom-coh k n m {C = C} {D} f))
--- --               finMap→cellMap₁-path
-
--- -- cellMap-to-ChainComplexMapId : (C : CWskel ℓ)
--- --   → cellMap-to-ChainComplexMap {C = C} (idCellMap C) ≡ idChainMap _
--- -- cellMap-to-ChainComplexMapId C = ChainComplexMap≡ λ i _ → chainFunct-id C i
-
--- -- cellMap-to-ChainComplexMapComp : {C : CWskel ℓ} {D : CWskel ℓ'} {E : CWskel ℓ''}
--- --   (g : cellMap D E) (f : cellMap C D)
--- --   → cellMap-to-ChainComplexMap (composeCellMap g f)
--- --   ≡ compChainMap (cellMap-to-ChainComplexMap f) (cellMap-to-ChainComplexMap g)
--- -- cellMap-to-ChainComplexMapComp g f = ChainComplexMap≡ λ n _ → sym (chainFunct-comp g f n)
-
--- -- Hᶠᶜʷ→-id : (k : ℕ) (n : ℕ) {C : finCWskel ℓ n}
--- --   → Hᶠᶜʷ→ k n n {C = C} {D = C} (idfun _) ≡ idGroupHom
--- -- Hᶠᶜʷ→-id k n {C = C} =
--- --     rewriteHᶠᶜʷ k n n {C = C} (idfun _) (idCellMap _) realiseIdSequenceMap
--- --   ∙ (λ j → chainComplexMap→HomologyMap
--- --              (cellMap-to-ChainComplexMapId
--- --                (finCWskel→CWskel n C) j) (k , ≠suc))
--- --   ∙ chainComplexMap→HomologyMapId (k , ≠suc)
-
--- -- Hᶠᶜʷ→comp : (k : ℕ) (n m r : ℕ)
--- --   {C : finCWskel ℓ n} {D : finCWskel ℓ' m} {E : finCWskel ℓ'' r}
--- --   (g : realise (finCWskel→CWskel m D) → realise (finCWskel→CWskel r E))
--- --   (f : realise (finCWskel→CWskel n C) → realise (finCWskel→CWskel m D))
--- --   → Hᶠᶜʷ→ k n r {C = C} {D = E} (g ∘ f)
--- --    ≡ compGroupHom (Hᶠᶜʷ→ k n m f) (Hᶠᶜʷ→ k m r g)
--- -- Hᶠᶜʷ→comp k n m r {C = C} {D = D} {E = E} g f =
--- --   PT.rec2 (isSetGroupHom _ _)
--- --     (λ {(F , fp) (G , gp)
--- --    → rewriteHᶠᶜʷ k n r (g ∘ f) (composeCellMap G F)
--- --           (realiseCompSequenceMap G F ∙ (λ i x → gp i (fp i x)))
--- --     ∙ cong (λ f → chainComplexMap→HomologyMap f (k , ≠suc))
--- --                (cellMap-to-ChainComplexMapComp G F)
--- --     ∙ chainComplexMap→HomologyMapComp _ _ (k , ≠suc)
--- --     ∙ cong₂ compGroupHom (sym (rewriteHᶠᶜʷ k n m f F fp))
--- --                          (sym (rewriteHᶠᶜʷ k m r g G gp))})
--- --     (finMap→cellMap₁ n m C D f)
--- --     (finMap→cellMap₁ m r D E g)
-
--- -- Hᶠᶜʷ→≃ : (k : ℕ) (n m : ℕ) {C : finCWskel ℓ n} {D : finCWskel ℓ' m}
--- --   (f : realise (finCWskel→CWskel n C) ≃ realise (finCWskel→CWskel m D))
--- --   → GroupEquiv (Hᶠᶜʷ n C k) (Hᶠᶜʷ m D k)
--- -- fst (Hᶠᶜʷ→≃ k n m {C = C} {D = D} f) = isoToEquiv ϕ
--- --   where
--- --   ϕ : Iso (Hᶠᶜʷ n C k .fst) (Hᶠᶜʷ m D k .fst)
--- --   Iso.fun ϕ = Hᶠᶜʷ→ k n m (fst f) .fst
--- --   Iso.inv ϕ = Hᶠᶜʷ→ k m n (invEq f) .fst
--- --   Iso.rightInv ϕ =
--- --     funExt⁻ (cong fst (sym (Hᶠᶜʷ→comp k m n m (fst f) (invEq f))
--- --           ∙ cong (Hᶠᶜʷ→ k m m) (funExt (secEq f))
--- --           ∙ Hᶠᶜʷ→-id k m))
--- --   Iso.leftInv ϕ =
--- --     funExt⁻ (cong fst (sym (Hᶠᶜʷ→comp k n m n (invEq f) (fst f))
--- --           ∙ cong (Hᶠᶜʷ→ k n n) (funExt (retEq f))
--- --           ∙ Hᶠᶜʷ→-id k n))
--- -- snd (Hᶠᶜʷ→≃ k n m {C = C} {D = D} f) = Hᶠᶜʷ→ k n m (fst f) .snd
-
--- -- open import Cubical.Algebra.Group.GroupPath
-
--- -- module _ (X : Type ℓ) (n : ℕ) where
--- --   HᶠGr : isFinCW X → Group ℓ-zero
--- --   HᶠGr (m , C) = Hᶠᶜʷ m (C .fst) n
-
--- --   HᶠGr-eq : (XC YC : isFinCW X) → GroupEquiv (HᶠGr XC) (HᶠGr YC)
--- --   HᶠGr-eq (m , XC , e1) (k , YC , e2) =
--- --     Hᶠᶜʷ→≃ n m k {C = XC} {D = YC} (compEquiv (invEquiv e1) e2)
-
--- --   HᶠGr-eq-coh : (x y z : isFinCW X) →
--- --       fst (fst (HᶠGr-eq y z)) ∘ (fst (fst (HᶠGr-eq x y)))
--- --     ≡ fst (fst (HᶠGr-eq x z))
--- --   HᶠGr-eq-coh (m , XC , e1) (k , YC , e2) (r , ZC , e3) =
--- --     sym (cong fst (Hᶠᶜʷ→comp n _ _ _
--- --            (compEquiv (invEquiv e2) e3 .fst)
--- --            (compEquiv (invEquiv e1) e2 .fst)))
--- --     ∙ cong (fst ∘ Hᶠᶜʷ→ n m r)
--- --        (funExt λ y → cong (fst e3) (retEq e2 (invEquiv e1 .fst y)))
-
--- -- Hᶠ : finCW ℓ → ℕ → Group₀
--- -- Hᶠ (X , A) n =
--- --   PropTrunc→Group (HᶠGr X n)
--- --     (HᶠGr-eq X n)
--- --     (λ x y z → funExt⁻ (HᶠGr-eq-coh X n x y z))
--- --     A
-
--- -- module _ (X : finCW ℓ) (Y : finCW ℓ') (n : ℕ) (f : fst X → fst Y) where
--- --   module Hᶠ→-constr where
--- --     X' = fst X
--- --     Y' = fst Y
-
--- --     ϕ₁-fun : (XC : isFinCW X') (YC : isFinCW Y')
--- --       → GroupHom (Hᶠ (X' , ∣ XC ∣₁) n) (Hᶠ (Y' , ∣ YC ∣₁) n)
--- --     ϕ₁-fun XC YC = Hᶠᶜʷ→ n (fst XC) (fst YC)
--- --                     (fst (snd (snd YC)) ∘ f ∘ invEq (snd (snd XC)))
-
--- --     ϕ₁-fun-coh : (XC : isFinCW X') (YC YC' : isFinCW Y')
--- --       → PathP (λ i → GroupHom (Hᶠ (X' , ∣ XC ∣₁) n)
--- --                                 (Hᶠ (Y' , squash₁ ∣ YC ∣₁ ∣ YC' ∣₁ i) n))
--- --                (ϕ₁-fun XC YC) (ϕ₁-fun XC YC')
--- --     ϕ₁-fun-coh XC YC YC' =
--- --       toPathP (Σ≡Prop (λ _ → isPropIsGroupHom _ _)
--- --                ((λ i x → transportRefl ((Hᶠᶜʷ→ n (fst YC) (fst YC')
--- --                             (fst (snd (snd YC')) ∘ invEq (snd (snd YC)))) .fst
--- --                               (Hᶠᶜʷ→ n (fst XC) (fst YC)
--- --                                (λ x₁ → fst (snd (snd YC)) (f (invEq (snd (snd XC)) x₁)))
--- --                                .fst (transportRefl x i))) i)
--- --               ∙ cong fst (sym (Hᶠᶜʷ→comp n (fst XC) (fst YC) (fst YC')
--- --                              (fst (snd (snd YC')) ∘ invEq (snd (snd YC)))
--- --                              (fst (snd (snd YC)) ∘ f ∘ invEq (snd (snd XC))))
--- --                       ∙ cong (Hᶠᶜʷ→ n (fst XC) (fst YC'))
--- --                           (funExt (λ x → cong (fst (snd (snd YC')))
--- --                             (retEq (snd (snd YC)) (f (invEq (snd (snd XC)) x))))))))
-
--- --     ϕ₁ : (XC : isFinCW X') (YC : ∥ isFinCW Y' ∥₁)
--- --       → GroupHom (Hᶠ (X' , ∣ XC ∣₁) n) (Hᶠ (Y' , YC) n)
--- --     ϕ₁ XC = elim→Set (λ _ → isSetGroupHom)
--- --               (ϕ₁-fun XC)
--- --               (ϕ₁-fun-coh XC)
-
--- --     ϕ₁≡ : (XC : isFinCW X') (YC : isFinCW Y') → ϕ₁ XC ∣ YC ∣₁ ≡ ϕ₁-fun XC YC
--- --     ϕ₁≡ XC = elim→Setβ {P = λ YC → GroupHom (Hᶠ (X' , ∣ XC ∣₁) n) (Hᶠ (Y' , YC) n)}
--- --               (λ _ → isSetGroupHom)
--- --               (ϕ₁-fun XC)
--- --               (ϕ₁-fun-coh XC)
-
--- --     ϕ₂ : (XC XC' : isFinCW X') (YC : ∥ isFinCW Y' ∥₁)
--- --       → transport (λ z → GroupHom (Hᶠ (X' , squash₁ ∣ XC ∣₁ ∣ XC' ∣₁ z) n) (Hᶠ (Y' , YC) n))
--- --                     (ϕ₁ XC YC) .fst
--- --        ≡ ϕ₁ XC' YC .fst
--- --     ϕ₂ XC XC' = PT.elim
--- --       (λ YC → isOfHLevelPath' 1 (isSetΠ (λ _ → GroupStr.is-set (snd (Hᶠ (Y' , YC) n)))) _ _)
--- --       λ YC → funExt
--- --         (λ x → transportRefl (ϕ₁ XC ∣ YC ∣₁ .fst
--- --                  (transport (λ j → Hᶠ (X' , squash₁ ∣ XC ∣₁ ∣ XC' ∣₁ (~ j)) n .fst) x))
--- --              ∙ (cong (ϕ₁ XC ∣ YC ∣₁ .fst)
--- --                λ i → Hᶠᶜʷ→ n (fst XC') (fst XC)
--- --                        (fst (snd (snd XC)) ∘ invEq (snd (snd XC'))) .fst
--- --                        (transportRefl x i))
--- --             ∙ funExt⁻ (cong fst (ϕ₁≡ XC YC))
--- --                (Hᶠᶜʷ→ n (fst XC') (fst XC)
--- --                  (fst (snd (snd XC)) ∘ invEq (snd (snd XC'))) .fst x))
--- --       ∙ (sym (cong fst
--- --          (cong (Hᶠᶜʷ→ n (fst XC') (fst YC))
--- --             (funExt (λ a
--- --               → cong (fst (snd (snd YC)) ∘ f)
--- --                   (sym (retEq (snd (snd XC)) (invEq (snd (snd XC')) a)))))
--- --         ∙ Hᶠᶜʷ→comp n (fst XC') (fst XC) (fst YC)
--- --            (fst (snd (snd YC)) ∘ f ∘ invEq (snd (snd XC)))
--- --            (fst (snd (snd XC)) ∘ invEq (snd (snd XC'))))))
--- --       ∙ cong fst (sym (ϕ₁≡ XC' YC))
-
--- --     ϕ : (XC : ∥ isFinCW X' ∥₁) (YC : ∥ isFinCW Y' ∥₁)
--- --       → GroupHom (Hᶠ (X' , XC) n) (Hᶠ (Y' , YC) n)
--- --     ϕ = elim→Set (λ _ → isSetΠ λ _ → isSetGroupHom)
--- --          ϕ₁
--- --          λ XC XC' → funExt λ YC → toPathP (Σ≡Prop (λ _ → isPropIsGroupHom _ _)
--- --            (ϕ₂ XC XC' YC))
-
--- --   Hᶠ→ : GroupHom (Hᶠ X n) (Hᶠ Y n)
--- --   Hᶠ→ = Hᶠ→-constr.ϕ (X .snd) (Y .snd)
-
--- -- Hᶠ→β : {X : Type ℓ} {Y : Type ℓ'} {XC : isFinCW X} {YC : isFinCW Y}  (n : ℕ) (f : X → Y)
--- --   → Hᶠ→ (X , ∣ XC ∣₁) (Y , ∣ YC ∣₁) n f
--- --    ≡ Hᶠᶜʷ→ n _ _ (fst (snd (snd YC)) ∘ f ∘ invEq (snd (snd XC)))
--- -- Hᶠ→β {X = X} {Y = Y} {XC = XC} {YC} n f =
--- --     funExt⁻ (lem XC) ∣ YC ∣₁
--- --   ∙ Hᶠ→-constr.ϕ₁≡ _ _ n f XC YC
--- --   where
--- --   lem = elim→Setβ {P = λ XC → (YC : ∥ isFinCW Y ∥₁)
--- --                       → GroupHom (Hᶠ (X , XC) n) (Hᶠ (Y , YC) n)}
--- --         (λ _ → isSetΠ λ _ → isSetGroupHom)
--- --         (Hᶠ→-constr.ϕ₁ (X , ∣ XC ∣₁) (Y , ∣ YC ∣₁) n f)
--- --         λ XC XC' → funExt λ YC → toPathP (Σ≡Prop (λ _ → isPropIsGroupHom _ _)
--- --            (Hᶠ→-constr.ϕ₂ _ _ n f XC XC' YC))
-
--- -- Hᶠ→id : {C : finCW ℓ} (n : ℕ) → Hᶠ→ C C n (idfun _) ≡ idGroupHom
--- -- Hᶠ→id {C = C , XC} n =
--- --   PT.elim {P = λ XC → Hᶠ→ (C , XC) (C , XC) n (idfun C) ≡ idGroupHom}
--- --     (λ _ → isSetGroupHom _ _)
--- --     (λ XC → Hᶠ→β n (idfun C)
--- --           ∙ cong (Hᶠᶜʷ→ n (fst XC) (fst XC))
--- --                (funExt (secEq (snd (snd XC))))
--- --           ∙ Hᶠᶜʷ→-id n (fst XC)) XC
-
--- -- Hᶠ→comp : {C : finCW ℓ} {D : finCW ℓ'} {E : finCW ℓ''} (n : ℕ)
--- --   (g : fst D → fst E) (f : fst C → fst D)
--- --   → compGroupHom (Hᶠ→ C D n f) (Hᶠ→ D E n g)
--- --    ≡ Hᶠ→ C E n (g ∘ f)
--- -- Hᶠ→comp {C = C , XC} {D = D , XD} {E = E , XE} n g f =
--- --   PT.elim3 {P = λ XC XD XE
--- --     → compGroupHom (Hᶠ→ (C , XC) (D , XD) n f)
--- --                     (Hᶠ→ (D , XD) (E , XE) n g)
--- --      ≡ Hᶠ→ (C , XC) (E , XE) n (g ∘ f)}
--- --      (λ _ _ _ → isSetGroupHom _ _)
--- --      (λ XC XD XE
--- --      → cong₂ compGroupHom (Hᶠ→β n f) (Hᶠ→β n g)
--- --      ∙∙ sym (Hᶠᶜʷ→comp _ _ _ _ _ _)
--- --      ∙∙ cong (Hᶠᶜʷ→ n (fst XC) (fst XE))
--- --           (funExt (λ p → cong (fst (snd (snd XE)) ∘ g)
--- --             (retEq (snd (snd XD)) _)))
--- --       ∙ sym (Hᶠ→β n (g ∘ f)))
--- --      XC XD XE
-
--- -- Hᶜʷ→ : (C : CWskel ℓ) (D : CWskel ℓ') (f : realise C → realise D) (m : ℕ)
--- --   → GroupHom (Hᶜʷ C m) (Hᶜʷ D m)
--- -- Hᶜʷ→ C D f m =
--- --   compGroupHom ϕ₁
--- --     (compGroupHom (Hᶠᶜʷ→ m (3 +ℕ m) (3 +ℕ m) {!Hᶜʷ→finite C D m f!}) -- (Hᶜʷ→finite C D m f)
--- --       ϕ₂)
--- --   where
--- --   ϕ₁≅ : GroupIso (Hᶜʷ C m) (Hᶜʷ (subComplex C (3 +ℕ m)) m)
--- --   ϕ₁≅ = subComplexHomology C (3 +ℕ m) m (0 , refl)
-
--- --   ϕ₂≅ : GroupIso (Hᶜʷ D m) (Hᶜʷ (subComplex D (3 +ℕ m)) m)
--- --   ϕ₂≅ = subComplexHomology D (3 +ℕ m) m (0 , refl)
-
--- --   ϕ₁ : GroupHom (Hᶜʷ C m) (Hᶜʷ (subComplex C (suc (suc (suc m)))) m)
--- --   ϕ₁ = GroupIso→GroupHom ϕ₁≅
-
--- --   ϕ₂ : GroupHom (Hᶜʷ (subComplex D (3 +ℕ m)) m) (Hᶜʷ D m)
--- --   ϕ₂ = GroupIso→GroupHom (invGroupIso ϕ₂≅)
-
--- -- Hᶜʷ→id : {!Hᶠᶜʷ→!}
--- -- Hᶜʷ→id = {!!}
-
--- -- Hᶜʷ→comp : {!!}
--- -- Hᶜʷ→comp = {!!}
-
--- -- open import Cubical.HITs.SetTruncation as ST
--- -- CW→finCW : ∀ {ℓ} (n : ℕ) → CW ℓ → Group₀
--- -- CW→finCW n = uncurry λ X
--- --   → PropTrunc→Group
--- --        (λ XC → Hᶜʷ (fst XC) n)
--- --        (λ XC YC → {! -- Hᶜʷ→ (fst XC) (fst YC) ? n!})
--- --        {!!}
-
-
+Hᶜʷ→Equiv : {C : CW ℓ} {D : CW ℓ'} (m : ℕ)
+  (e : fst C ≃ fst D) → GroupEquiv (Hᶜʷ C m) (Hᶜʷ D m)
+Hᶜʷ→Equiv m e = GroupIso→GroupEquiv (Hᶜʷ→Iso m e)

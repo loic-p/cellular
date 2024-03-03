@@ -42,13 +42,6 @@ open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup
 open import Cubical.Algebra.ChainComplex
 
 
-
-
-
-
-open import fin-cw-map
-
-
 module CWHomotopy where
 
 private
@@ -659,38 +652,3 @@ cellHom-to-ChainHomotopy {C = C} {D} m {f} {g} H .finChainHomotopy.fhtpy n =
   preChainHomotopy.chainHomotopy (suc m) C D f g H n
 cellHom-to-ChainHomotopy {C = C} {D} m {f} {g} H .finChainHomotopy.fbdryhtpy n =
   chainHomEquation.chainHomotopy2 m C D f g H n
-
--- open import cw-approx2
-
-open import Cubical.HITs.PropositionalTruncation as PT
-
--- finMap→cellMap₁ : (n : ℕ) (C : CWskel ℓ) (D : CWskel ℓ')
---   (f : realise C → realise D)
---   → ∃[ ϕ ∈ finCellMap n C D ]
---             FinSeqColim→Colim n ∘ finCellMap→FinSeqColim C D ϕ
---           ≡ f ∘ FinSeqColim→Colim n
--- finMap→cellMap₁ n C D f =
---   PT.map (λ {(ϕ , p) → (record { fmap = fmap ϕ
---                                ; fcomm = λ n x → fcomm ϕ n x })
---          , p})
---   (CWmap→finCellMap C D f n)
---   where
---   open FinSequenceMap
-
---   PT.map (λ {(ϕ , p) → record { map = fst ∘ ϕ ; comm = λ n c → sym (p n c) }
---            , sym (converges→funId (n +ℕ m) (n +ℕ m) (snd (snd C↑)) (snd (snd D↑)) f _ λ n c → sym (ϕ n .snd c))})
---     (approxFinCw (n +ℕ m) C↑ D↑ f)
---   where
---   C↑ = finCW↑ n (n +ℕ m) (m , +-comm m n) C
---   D↑ = finCW↑ m (n +ℕ m) (n , refl) D
-
--- module _ (n m : ℕ) {C : finCWskel ℓ n} {D : finCWskel ℓ' m}
---   (f-c g-c : cellMap (finCWskel→CWskel n C) (finCWskel→CWskel m D))
---   (h∞ : realiseCellMap f-c ≡ realiseCellMap g-c) where
---   cellHomotopy₁ : ∥ cellHom f-c g-c ∥₁
---   cellHomotopy₁ =
---     PT.map (λ {(f , p) → record { hom = f ; coh = p }})
---       (pathToCellularHomotopyFin (n +ℕ m) {C = C↑} {D = D↑} f-c g-c h∞)
---     where
---     C↑ = finCW↑ n (n +ℕ m) (m , +-comm m n) C
---     D↑ = finCW↑ m (n +ℕ m) (n , refl) D
