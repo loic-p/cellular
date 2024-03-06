@@ -64,36 +64,6 @@ finCellHom-rel {C = C} {D = D} m f g h∞ =
          (cong incl (finCellHom.fhom ϕ n x))
          (push (f .fmap n x)) (push (g .fmap n x)))
 
--- The embedding of stage n into stage n+1 is (n+1)-connected
--- 2 calls to univalence in there
-isConnected-CW↪ : (n : ℕ) (C : CWskel ℓ) → isConnectedFun n (CW↪ C n)
-isConnected-CW↪ zero C x = isContrUnit*
-isConnected-CW↪ (suc n) C =
-  EquivJ (λ X E → isConnectedFun (suc n) (λ x → invEq E (inl x)))
-                   inPushoutConnected (e₊ (suc n))
-  where
-    A = snd C .fst
-    α = snd C .snd .fst
-    e₊ = snd C .snd .snd .snd
-
-    inPushout : fst C (suc n) → Pushout (α (suc n)) fst
-    inPushout x = inl x
-
-    fstProjPath : (b : Fin (A (suc n))) → S₊ n ≡ fiber fst b
-    fstProjPath b = ua (fiberProjEquiv (Fin (A (suc n))) (λ _ → S₊ n) b)
-
-    inPushoutConnected : isConnectedFun (suc n) inPushout
-    inPushoutConnected = inlConnected (suc n) (α (suc n)) fst
-      λ b → subst (isConnected (suc n)) (fstProjPath b) (sphereConnected n)
-
--- The embedding of stage n into the colimit is (n+1)-connected
-isConnected-CW↪∞ : (n : ℕ) (C : CWskel ℓ) → isConnectedFun n (CW↪∞ C n)
-isConnected-CW↪∞ zero C b = isContrUnit*
-isConnected-CW↪∞ (suc n) C = isConnectedIncl∞ (realiseSeq C) (suc n) (suc n) subtr
-  where
-    subtr : (k : ℕ) → isConnectedFun (suc n) (CW↪ C (k +ℕ (suc n)))
-    subtr k = isConnectedFunSubtr (suc n) k (CW↪ C (k +ℕ (suc n)))
-                                   (isConnected-CW↪ (k +ℕ (suc n)) C)
 
 -- Cellular approximation
 satAC∃Fin-C0 : (C : CWskel ℓ) → satAC∃ ℓ' ℓ'' (fst C 1)

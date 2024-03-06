@@ -14,11 +14,13 @@ open import Cubical.Data.Fin.Inductive.Base
 open import Cubical.Data.Fin.Inductive.Properties
 open import Cubical.Data.Sigma
 open import Cubical.Data.Empty as ⊥
+
 open import Cubical.Data.CW
 open import Cubical.Data.CW.Map
 open import Cubical.Data.CW.Homotopy
-open import Cubical.Data.Sequence
 open import Cubical.Data.CW.ChainComplex
+open import Cubical.Data.CW.Approximation
+
 open import Cubical.Algebra.ChainComplex
 
 
@@ -34,14 +36,8 @@ open import Cubical.Algebra.AbGroup
 open import Cubical.Algebra.Group.Morphisms
 open import Cubical.Algebra.Group.MorphismProperties
 
--- open import cw-chain-complex
--- open import ChainComplex
-
 open import Cubical.Algebra.ChainComplex.Base
 open import Cubical.Algebra.ChainComplex.Natindexed
-
--- open import fin-cw-map
-open import cw-approx2
 
 open import Cubical.Foundations.Transport
 
@@ -62,76 +58,6 @@ private
 open import Cubical.HITs.PropositionalTruncation as PT
 
 open import Cubical.Algebra.Group.GroupPath
-GroupEquivJ> : {ℓ : Level} {ℓ' : Level} {G : Group ℓ}
-   {P : (H : Group ℓ) → GroupEquiv G H → Type ℓ'} →
-   P G idGroupEquiv → (H : Group ℓ) (e : GroupEquiv G H) → P H e
-GroupEquivJ> {G = G} {P} ids H = GroupEquivJ (λ H e → P H e) ids
-
-module _ {ℓ ℓ' : Level} {G1 : Group ℓ} {H1 : Group ℓ'} where
-  private
-    pre-PathPGroupHom : ∀
-      (G2 : Group ℓ)
-      (eG : GroupEquiv G1 G2)
-      (H2 : Group ℓ') (eH : GroupEquiv H1 H2)
-      (ϕ : GroupHom G1 H1) (ψ : GroupHom G2 H2)
-      → compGroupHom (GroupEquiv→GroupHom eG) ψ
-       ≡ compGroupHom ϕ (GroupEquiv→GroupHom eH)
-      → PathP (λ i → GroupHom (uaGroup eG i) (uaGroup eH i))
-               ϕ ψ
-    pre-PathPGroupHom =
-      GroupEquivJ> (GroupEquivJ>
-       λ ϕ ψ → λ s
-      → toPathP ((λ s
-      → transport (λ i → GroupHom (uaGroupId G1 s i) (uaGroupId H1 s i)) ϕ)
-      ∙ transportRefl ϕ
-      ∙ Σ≡Prop (λ _ → isPropIsGroupHom _ _) (sym (cong fst s))))
-
-  PathPGroupHom : {G2 : Group ℓ} (eG : GroupEquiv G1 G2)
-                  {H2 : Group ℓ'} (eH : GroupEquiv H1 H2)
-                  {ϕ : GroupHom G1 H1} {ψ : GroupHom G2 H2}
-      → compGroupHom (GroupEquiv→GroupHom eG) ψ
-       ≡ compGroupHom ϕ (GroupEquiv→GroupHom eH)
-      → PathP (λ i → GroupHom (uaGroup eG i) (uaGroup eH i)) ϕ ψ
-  PathPGroupHom eG eH p = pre-PathPGroupHom _ eG _ eH _ _ p
-
-  module _ {H2 : Group ℓ'} (eH : GroupEquiv H1 H2)
-           {ϕ : GroupHom G1 H1} {ψ : GroupHom G1 H2} where
-    PathPGroupHomₗ : ψ ≡ compGroupHom ϕ (GroupEquiv→GroupHom eH)
-        → PathP (λ i → GroupHom G1 (uaGroup eH i)) ϕ ψ
-    PathPGroupHomₗ p =
-      transport (λ k → PathP (λ i → GroupHom (uaGroupId G1 k i) (uaGroup eH i)) ϕ ψ)
-        (PathPGroupHom idGroupEquiv eH
-         (Σ≡Prop (λ _ → isPropIsGroupHom _ _) (cong fst p)))
-
-    PathPGroupHomₗ' : compGroupHom ψ (GroupEquiv→GroupHom (invGroupEquiv eH)) ≡ ϕ
-        → PathP (λ i → GroupHom G1 (uaGroup eH i)) ϕ ψ
-    PathPGroupHomₗ' p =
-      PathPGroupHomₗ
-        (Σ≡Prop (λ _ → isPropIsGroupHom _ _)
-          (funExt (λ s → sym (secEq (fst eH) (fst ψ s))))
-      ∙ cong (λ ϕ → compGroupHom ϕ (GroupEquiv→GroupHom eH)) p)
-
-  module _ {G2 : Group ℓ} (eG : GroupEquiv G1 G2)
-           {ϕ : GroupHom G1 H1} {ψ : GroupHom G2 H1}
-    where
-    PathPGroupHomᵣ : compGroupHom (GroupEquiv→GroupHom eG) ψ ≡ ϕ
-      → PathP (λ i → GroupHom (uaGroup eG i) H1) ϕ ψ
-    PathPGroupHomᵣ p =
-      transport (λ k → PathP (λ i → GroupHom (uaGroup eG i) (uaGroupId H1 k i)) ϕ ψ)
-        (PathPGroupHom eG idGroupEquiv
-         (Σ≡Prop (λ _ → isPropIsGroupHom _ _) (cong fst p)))
-
-    PathPGroupHomᵣ' : ψ ≡ compGroupHom (GroupEquiv→GroupHom (invGroupEquiv eG)) ϕ
-      → PathP (λ i → GroupHom (uaGroup eG i) H1) ϕ ψ
-    PathPGroupHomᵣ' p = PathPGroupHomᵣ
-      (cong (compGroupHom (GroupEquiv→GroupHom eG)) p
-      ∙ Σ≡Prop (λ _ → isPropIsGroupHom _ _)
-         (funExt λ x → cong (fst ϕ) (retEq (fst eG) x)) )
-
-
-¬-suc-n<ᵗn : {n : ℕ} → ¬ (suc n) <ᵗ n
-¬-suc-n<ᵗn {suc n} = ¬-suc-n<ᵗn {n}
-
 
 -- finite subcomplex
 module _ (C : CWskel ℓ) where
