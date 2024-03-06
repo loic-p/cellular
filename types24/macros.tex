@@ -1,0 +1,217 @@
+\definecolor{darkgreen}{rgb}{.30,.70,.60}
+
+\newtheorem{remark}{Remark}
+\newtheorem{lemma}{Lemma}
+\newtheorem{definition}{Definition}
+\newtheorem{example}{Example}
+\newtheorem{proposition}{Proposition}
+\newtheorem{theorem}{Theorem}
+%\newtheorem{theoremCheck}[theorem]{Theorem${}^{\text{\color{darkgreen}{\Checkmark}}}$}
+\newtheorem{corollary}{Corollary}
+\newtheorem{conjecture}{Conjecture}
+
+
+\newcommand{\push}[1]{{\ensuremath{\textnormal{\textsf{push}}}(#1)}}
+\newcommand{\pushl}[1]{{\ensuremath{\textnormal{\textsf{push}}_{\textnormal{\textsf{l}}}}(#1)}}
+\newcommand{\pushr}[1]{{\ensuremath{\textnormal{\textsf{push}}_{\textnormal{\textsf{r}}}}(#1)}}
+\newcommand{\pushlr}{{\ensuremath{\textnormal{\textsf{push}}_{\textnormal{\textsf{lr}}}}}}
+\newcommand{\smashinc}[2]{{\ensuremath{\langle #1,#2 \rangle}}}
+\newcommand{\smashincalt}[3]{{\ensuremath{\langle #1,#2,#3 \rangle}}}
+
+\newcommand{\incl}[1]{\textnormal{\ensuremath{\mathsf{incl}_{#1}}}}
+\newcommand{\fin}[1]{\textnormal{\ensuremath{\mathsf{Fin}({#1})}}}
+
+
+%% Configure appearance of system names here
+\newcommand{\teletype}[1]{\ensuremath{\mathtt{#1}}}
+\newcommand{\systemname}[1]{\teletype{\color{darkgray}#1}\xspace}
+
+%% Systems referred to in the paper
+\newcommand{\cubicaltt}{\systemname{cubicaltt}}
+\newcommand{\CubicalAgda}{\systemname{Cubical} \systemname{Agda}}
+\newcommand{\cooltt}{\systemname{cooltt}}
+\newcommand{\Idris}{\systemname{Idris}}
+\newcommand{\Haskell}{\systemname{Haskell}}
+\newcommand{\Lean}{\systemname{Lean}}
+
+\definecolor{Revolutionary}{RGB}{232,70,68}
+\newcommand{\redtt}{\textbf{\teletype{{\color{Revolutionary}red}tt}}}
+
+\newcommand{\eg}{{e.g.}}
+\newcommand{\ie}{{i.e.}}
+\newcommand{\cf}{{cf.}}
+
+%% Type theory macros
+\newcommand{\su}[2]{#1/#2}
+\newcommand{\subst}[2]{(\su #1 #2)}
+\newcommand{\esubst}[3]{(#1, \su #2 #3)}
+\newcommand{\substnop}[2]{{#2}\, / \,{#1}}
+
+%% \usepackage{MnSymbol}
+\usepackage{newunicodechar}
+\newunicodechar{≃}{\ensuremath{\simeq}}
+\newunicodechar{≅}{\ensuremath{\mathsfg}}
+\newunicodechar{∈}{\ensuremath{\in}}
+\newunicodechar{⁻}{\ensuremath{^{-}}}
+\newunicodechar{ᴹ}{\ensuremath{_{M}}}
+\newunicodechar{ᴺ}{\ensuremath{_{N}}}
+\newunicodechar{≡}{\ensuremath{\equiv}}
+\newunicodechar{λ}{\ensuremath{\lambda}}
+\newunicodechar{⊎}{\ensuremath{\uplus}}
+\newunicodechar{∷}{\ensuremath{::}}
+\newunicodechar{ℓ}{\ensuremath{\ell}}
+\newunicodechar{ᵢ}{\ensuremath{_i}}
+\newunicodechar{⟨}{\ensuremath{\langle}}
+\newunicodechar{⟩}{\ensuremath{\rangle}}
+\newunicodechar{α}{\ensuremath{\alpha}}
+\newunicodechar{β}{\ensuremath{\beta}}
+\newunicodechar{θ}{\ensuremath{\theta}}
+\newunicodechar{φ}{\ensuremath{\varphi}}
+\newunicodechar{ψ}{\ensuremath{\psi}}
+\newunicodechar{η}{\ensuremath{\eta}}
+\newunicodechar{ε}{\ensuremath{\varepsilon}}
+\newunicodechar{ι}{\ensuremath{\iota}}
+\newunicodechar{Σ}{\ensuremath{\Sigma}}
+\newunicodechar{σ}{\ensuremath{\sigma}}
+\newunicodechar{∀}{\ensuremath{\forall}}
+\newunicodechar{ℕ}{\ensuremath{\mathbb{N}}}
+\newunicodechar{→}{\ensuremath{\to}}
+\newunicodechar{⊎}{\ensuremath{\uplus}}
+\newunicodechar{⋆}{\ensuremath{*}}
+\newunicodechar{¬}{\ensuremath{\lnot}}
+\newunicodechar{Θ}{\ensuremath{\theta}}
+\newunicodechar{ᴸ}{\ensuremath{{}^{\color{black}\leftarrow}}}  % hax
+\newunicodechar{ᴿ}{\ensuremath{{}^{\color{black}\rightarrow}}} % hax
+\newunicodechar{∧}{\ensuremath{\wedge}}
+\newunicodechar{∨}{\ensuremath{\vee}}
+\newunicodechar{∼}{\ensuremath{\sim}}
+\newunicodechar{≢}{\ensuremath{\nequiv}}
+\newunicodechar{Π}{\ensuremath{\Pi}}
+\newunicodechar{ℤ}{\ensuremath{\mathbb{Z}}}
+\newunicodechar{∥}{\ensuremath{\parallel}}
+\newunicodechar{∣}{\ensuremath{\mid}}
+\newunicodechar{ℚ}{\ensuremath{\mathbb{Q}}}
+\newunicodechar{₊}{\ensuremath{_+}}
+\newunicodechar{∗}{\ensuremath{\ast}}
+\newunicodechar{₁}{\ensuremath{_1}}
+\newunicodechar{₂}{\ensuremath{_2}}
+\newunicodechar{⊥}{\ensuremath{\bot}}
+\newunicodechar{∘}{\ensuremath{\circ}}
+\newunicodechar{ρ}{\ensuremath{\rho}}
+\newunicodechar{↦}{\ensuremath{\mapsto}}
+\newunicodechar{₀}{\ensuremath{_0}}
+\newunicodechar{∙}{\ensuremath{\boldsymbol{\cdot}}}
+\newunicodechar{Ω}{\ensuremath{\Omega}}
+\newunicodechar{§}{\ensuremath{\mathbb{S}}}
+\newunicodechar{𝟙}{\ensuremath{\mathbb{1}}}
+\newunicodechar{×}{\ensuremath{\times}}
+
+%Ugly hacks for torus, klein and RP2
+\newunicodechar{□}{\mathsf{\ensuremath{\square}}}
+\newunicodechar{α}{\textsf{\ensuremath{{\mathbb{T}^2}}}} %Torus
+
+\newunicodechar{β}{\textsf{\ensuremath{{\mathbb{K}^2}}}} %Klein
+
+\newunicodechar{γ}{\textsf{\ensuremath{{\mathbb{R}P^2}}}} %RP^2
+
+
+% Hacks for ex computation
+\newunicodechar{ₕ}{\textsf{\ensuremath{_h}}}
+\newunicodechar{ϕ}{\textsf{\ensuremath{\phi}}}
+\newunicodechar{ζ}{\anum{3}\;\;\;\;\;\;\;\;\;}
+
+\newcommand{\winding}[1]{\textsf{winding}({#1})}
+\newcommand{\Type}{\textsf{Type}}
+\newcommand{\ptrunc}[1]{\textsf{∥}\,{#1}\,\textsf{∥}}
+\newcommand{\tyProduct}[2]{{#1}\,\AgdaOperator{\AgdaTextsftion{×}}\,{#2}}
+\newcommand{\tySigma}[3]{\textsf{Σ[}\,{#1}\,\textsf{∈}\,{#2}\,\textsf{]}\,{#3}}
+\newcommand{\tyMaybe}[1]{\data{Maybe}\,{#1}}
+\newcommand{\tyNat}{\data{ℕ}}
+\newcommand{\tyPath}[2]{{#1}\,\textsf{≡}\,{#2}}
+\newcommand{\tyPathP}[4]{\primty{PathP}\,(\symb{λ}\,{#1} \to {#2})\,{#3}\,{#4}}
+\newcommand{\tyEquiv}[2]{{#1}\,\textsf{≃}\,{#2}}
+\newcommand{\tySum}[2]{{#1}\,\textsf{⊎}\,{#2}}
+\newcommand{\tyNot}[1]{\textsf{¬}\,{#1}}
+\newcommand{\tyStructEq}[3]{{#1}\,\textsf{≃[}\,{#2}\,\textsf{]}\,{#3}}
+
+
+
+\newlength{\LETTERheight}
+\AtBeginDocument{\settoheight{\LETTERheight}{I}}
+\newcommand*{\longleadsto}[1]{\ \raisebox{0.24\LETTERheight}{\tikz \draw [->,
+line join=round,
+decorate, decoration={
+    zigzag,
+    segment length=4,
+    amplitude=.9,
+    post=lineto,
+    post length=2pt
+}] (0,0) -- (#1,0);}\ }
+
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\newcommand{\equivDef}{\overset{\scriptscriptstyle \textsf{def}}{\equiv}}
+\newcommand{\trivGrp}{\textsf{𝟙}}
+\newcommand{\bZ}{\ensuremath{\mathbb{Z}}}
+\newcommand{\bZTwo}{\ensuremath{\mathbb{Z}/2\mathbb{Z}}}
+\newcommand{\bN}{\ensuremath{\mathbb{N}}}
+\newcommand{\sphere}[1]{\textsf{§}^{#1}}
+\newcommand{\klein}{\textsf{$\mathbb{K}^{\,2}$}}
+\newcommand{\cohom}[2]{H^{#1}\!\left({#2}\right)}
+\newcommand{\funspace}[2]{\left({{#2} \to \textsf{K}_{#1}}\right)}
+\newcommand{\funspaceP}[2]{{{#2} \to \textsf{K}_{#1}}}
+\newcommand{\torus}{\textsf{$\mathbb{T}^{\,2}$}}
+\newcommand{\RP}{\textsf{$\mathbb{R}P^2$}}
+\newcommand{\RPinf}{\textnormal{\ensuremath{\mathbb{R}P^\infty}}}
+\newcommand{\CP}{\textsf{$\mathbb{C}P^2$}}
+\newcommand{\refl}{\textsf{refl}}
+\newcommand{\inr}[1]{\mathsf{inr}\,{#1}}
+\newcommand{\inl}[1]{\mathsf{inl}\,{#1}}
+\newcommand{\trunc}[1]{\mathsf{∣}\,#1\,\mathsf{∣}}
+\newcommand{\truncT}[2]{\textsf{∥}\,#2\,\textsf{∥}_{#1}}
+\newcommand{\Loop}{\mathsf{loop}}
+\newcommand{\base}{\mathsf{base}}
+\newcommand{\north}{\mathsf{north}}
+\newcommand{\south}{\mathsf{south}}
+\newcommand{\Code}{\textsf{Code}}
+\newcommand{\merid}[1]{\mathsf{merid}\;{#1}}
+\newcommand{\transport}[2]{\textsf{transport}\;(#1)\;#2}
+\newcommand{\ap}[2]{\textnormal{\textsf{ap}}_{#1}{(#2)}}
+\newcommand{\app}[3]{\textnormal{\textsf{ap}$^2$}_{#1}\;{#2}\;{#3}}
+\newcommand{\tmPair}[2]{{#1}\,\mathsf{,}\,{#2}}
+\newcommand{\tmTrunc}[1]{\mathsf{[}\,{#1}\,\mathsf{]}}
+\newcommand{\tmNil}{\mathsf{[]}}
+\newcommand{\tmCons}[2]{{#1}\;\mathsf{∷}\;{#2}}
+
+\newcommand{\cupprodop}{\textsf{$\smile$}}
+\newcommand{\cupprodkop}{\textsf{$\smile_k$}}
+\newcommand{\cupprodk}[2]{{#1}\;\cupprodkop\;{#2}}
+\newcommand{\cupprod}[2]{{#1}\;\cupprodop\;{#2}}
+
+%% Comment macro colors
+\definecolor{dkblue}{rgb}{0,0.1,0.5}
+\definecolor{lightblue}{rgb}{0,0.5,0.5}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{dkbrown}{rgb}{0.4,0,0}
+\definecolor{dkviolet}{rgb}{0.6,0,0.8}
+
+%% SUBMISSION: turn off all comments
+%\newcommand{\mycomment}[3]{}
+\newcommand{\mycomment}[3]{\textcolor{#1}{[#2#3]}}
+\newcommand{\todo}[1]{\mycomment{red}{TODO: }{#1}}
+
+\newcommand{\sq}[1]{\textnormal{\ensuremath{\mathsf{Sq}^{#1}}}}
+\newcommand{\sqind}[2]{\textnormal{\ensuremath{\mathsf{Sq}_{#2}^{#1}}}}
+
+\DeclareMathOperator*{\bigast}{\raisebox{-0.6ex}{\scalebox{2.5}{$\ast$}}}
+\DeclareMathOperator*{\bigsmile}{\raisebox{-0.ex}{\scalebox{1.5}{$\smile$}}}
+
+\newcommand{\negpath}{\textnormal{\textsf{neg-path}}}
+\newcommand{\totSq}{\textnormal{\ensuremath{\widehat{\mathsf{Sq}}}}}
+
+\newcommand{\cwskel}{\textnormal{\ensuremath{\mathsf{CW}^{\mathsf{skel}}}}}
+\newcommand{\cwskelinf}{\textnormal{\ensuremath{\mathsf{CW}_\infty^{\mathsf{skel}}}}}
+\newcommand{\hskel}[1]{\textnormal{\ensuremath{H^{\mathsf{skel}}_{#1}}}}
+\newcommand{\hskelinf}[1]{\textnormal{\ensuremath{H^{\mathsf{skel}_\infty}_{#1}}}}
+\newcommand{\abgrp}{\textnormal{\ensuremath{\mathsf{AbGrp}}}}
+\newcommand{\hcw}[1]{\textnormal{\ensuremath{H^{\mathsf{cw}}_{#1}}}}

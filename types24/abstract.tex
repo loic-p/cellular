@@ -1,0 +1,120 @@
+% easychair.tex,v 3.5 2017/03/15
+
+\documentclass{easychair}
+%\documentclass[EPiC]{easychair}
+%\documentclass[EPiCempty]{easychair}
+%\documentclass[debug]{easychair}
+%\documentclass[verbose]{easychair}
+%\documentclass[notimes]{easychair}
+%\documentclass[withtimes]{easychair}
+%\documentclass[a4paper]{easychair}
+%\documentclass[letterpaper]{easychair}
+
+\usepackage{amsmath, amsfonts, amsthm , mathtools , bbold, float}
+
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usepackage{mathpartir}
+\usepackage[nameinlink,capitalize,noabbrev]{cleveref}
+\usepackage{quiver}
+\usepackage{xspace}
+\usepackage{xcolor}
+\usepackage{bbm}
+\usepackage{breakurl}
+\usepackage{bbding}
+\hypersetup{pdfborder={0 0 100}}
+\usepackage{lipsum}
+%\usepackage{biblatex}
+%\bibliographystyle{unsrt}
+%% \usepackage[backend=biber,style=alphabetic,sorting=nty,giveninits]{biblatex} % Bibliography management
+%% \addbibresource{refs.bib}
+
+\usepackage{textcomp}
+\usepackage{xspace}
+\usepackage{url}
+\usepackage{multirow}
+\usepackage{hhline}
+\usepackage{pifont}
+\usetikzlibrary{arrows,matrix,decorations.pathmorphing,
+  decorations.markings, calc, backgrounds}
+\usepackage{mathpartir}
+\usepackage{microtype}
+
+\DisableLigatures[-]{family=tt*}
+
+\input{macros}
+
+
+\usepackage{doc}
+
+% use this if you have a long article and want to create an index
+% \usepackage{makeidx}
+
+% In order to save space or manage large tables or figures in a
+% landcape-like text, you can use the rotating and pdflscape
+% packages. Uncomment the desired from the below.
+%
+% \usepackage{rotating}
+% \usepackage{pdflscape}
+
+% Some of our commands for this guide.
+%
+\newcommand{\easychair}{\textsf{easychair}}
+\newcommand{\miktex}{MiK{\TeX}}
+\newcommand{\texniccenter}{{\TeX}nicCenter}
+\newcommand{\makefile}{\texttt{Makefile}}
+\newcommand{\latexeditor}{LEd}
+
+%\makeindex
+
+%% Front Matter
+%%
+% Regular title as in the article class.
+%
+\title{A Constructive Cellular Approximation Theorem in HoTT}
+
+% Authors are joined by \and. Their affiliations are given by \inst, which indexes
+% into the list defined using \institute
+%
+\author{
+Axel Ljungström\inst{1} \and Loïc Pujet\inst{1}}
+
+% Institutes for affiliations are also joined by \and,
+\institute{
+  {
+  Stockholm University,
+  Stockholm, Sweden
+  }
+ }
+
+%  \authorrunning{} has to be set for the shorter version of the authors' names;
+% otherwise a warning will be rendered in the running heads. When processed by
+% EasyChair, this command is mandatory: a document without \authorrunning
+% will be rejected by EasyChair
+
+\authorrunning{Axel Ljungström and Loïc Pujet}
+
+% \titlerunning{} has to be set to either the main title or its shorter
+% version for the running heads. When processed by
+% EasyChair, this command is mandatory: a document without \titlerunning
+% will be rejected by EasyChair
+\titlerunning{A Constructive Cellular Approximation Theorem in HoTT}
+
+
+\begin{document}
+
+\maketitle
+
+\label{sect:bib}
+\bibliographystyle{plain}
+%\bibliographystyle{alpha}
+%\bibliographystyle{unsrt}
+%\bibliographystyle{abbrv}
+\bibliography{refs.bib}
+
+%------------------------------------------------------------------------------
+% Index
+%\printindex
+
+%------------------------------------------------------------------------------
+\end{document}
