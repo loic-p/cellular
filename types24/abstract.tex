@@ -135,7 +135,7 @@ project on the development of cellular homology with Anders Mörtberg.
 In order to define CW complexes, we will need the following definition:
 
 \begin{definition}[CW skeleta]
-  An \textbf{ordered CW skeleton} is an infinite sequence of types $$C_{-1} \xrightarrow{\iota_{-1}} C_0 \xrightarrow{\iota_{0}} C_1 \xrightarrow{\iota_{1}} \dots$$
+  An \textbf{ordered CW skeleton} is an infinite sequence of types $$\varnothing = C_{-1} \xrightarrow{\iota_{-1}} C_0 \xrightarrow{\iota_{0}} C_1 \xrightarrow{\iota_{1}} \dots$$
   equipped with maps $\alpha : \sphere{n} \times A_n \to C_n$ where $A_n$ is equivalent to $\mathsf{Fin}(k_n)$ for some $k_n : \mathbb{N}$ and the following square is a pushout:
   \[
 \begin{tikzcd}[ampersand replacement=\&]
@@ -154,10 +154,10 @@ finite, \ie for all \( n \) we have a proof of \( \| A_n \simeq \mathsf{Fin}(k_n
 
 The pushout condition ensures that the \( (n + 1) \)-skeleton \( C_{n+1} \) is obtained by attaching
 a finite number of \( n \)-dimensional cells to the \( n \)-skeleton \( C_n \). In the case of an
-ordered CW skeleton, the cells are equipped with an order inherited from \( \mathsf{Fin}(k_n) \),
+ordered CW skeleton, each type of cells is equipped with an order inherited from \( \mathsf{Fin}(k_n) \),
 hence the name.
 %
-Given a CW complex \( C_{\bullet} \), we write \( C_\infty \) for the colimit of the sequence of
+Given a CW skeleton \( C_{\bullet} \), we write \( C_\infty \) for the colimit of the sequence of
 \( n \)-skeleta, and for any \( n \) we write $\iota_\infty : C_n \to C_\infty$ for the inclusion of
 $C_n$ into the colimit $C_\infty$.
 
