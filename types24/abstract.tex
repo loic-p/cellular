@@ -105,10 +105,35 @@ Axel Ljungström \and Loïc Pujet}
 
 \maketitle
 
-Blabla~\cite{dummy}
+At the heart of Homotopy Type Theory (HoTT) is the analogy between types and spaces.
+%
+This analogy permits the use of type theory as a language for Algebraic Topology, \ie for the study
+of spaces and maps of spaces up to homotopy by means of algebraic invariants, such as homotopy groups
+and homology groups~\cite{HoTT13}.
+%
+Although the methods of algebraic topology apply to very general notions of spaces, the theory is
+most easily developed in the context of a more restricted and well-behaved notion of spaces:
+CW complexes.
+%
+As such, it is natural to define CW complexes in the language of Homotopy Type Theory,
+in order to obtain a notion of space that is easier to work with than arbitrary types.
 
-\begin{definition}[$m$-Cellular maps]
-  A \textbf{CW skeleton} is an infinite sequence of types $$C_{-1} \xrightarrow{\iota_{-1}} C_0 \xrightarrow{\iota_{0}} C_1 \xrightarrow{\iota_{1}} \dots$$
+In this work, we revisit the definition of CW complexes that was given by Favonia and
+Buchholtz~\cite{BuchholtzFavonia18} and we develop their theory.
+%
+In particular, we focus on the \emph{cellular approximation theorem}, a cornerstone result in
+Algebraic Topology which says that arbitrary maps between CW complexes and their homotopies may be
+approximated by maps and homotopies that respect the cellular structure~\cite[chap. 10]{May1999}.
+%
+We give a constructive proof of the theorem that relies heavily on the (admissible) principle of
+finite choice%
+\footnote{The proof has been fully formalised in \CubicalAgda, and is available at \url{https://github.com/loic-p/cellular/blob/main/summary.agda}}%
+, and we discuss the extent to which the theorem can be strengthened while remaining constructive.
+
+We will need the following definition to define CW complexes:
+
+\begin{definition}[CW skeleta]
+  An \textbf{ordered CW skeleton} is an infinite sequence of types $$C_{-1} \xrightarrow{\iota_{-1}} C_0 \xrightarrow{\iota_{0}} C_1 \xrightarrow{\iota_{1}} \dots$$
   equipped with maps $\alpha : \sphere{n} \times A_n \to C_n$ where $A_n$ is equivalent to $\mathsf{Fin}(k_n)$ for some $k_n : \mathbb{N}$ and the following square is a pushout:
   \[
 \begin{tikzcd}[ampersand replacement=\&]
@@ -121,36 +146,110 @@ Blabla~\cite{dummy}
 	\arrow["\lrcorner"{anchor=center, pos=0.125, rotate=180}, draw=none, from=2-2, to=1-1]
 \end{tikzcd}
 \]
-A \textbf{generalised CW skeleton} is a CW skeleton where each $A_n$ is only assumed to be merely finite.
+An \textbf{unordered CW skeleton} is defined similarly, but each $A_n$ is only assumed to be merely
+finite, \ie for all \( n \) we have a proof of \( \| A_n \simeq \mathsf{Fin}(k_n) \|_{-1} \).
 \end{definition}
-We write $\iota_\infty : C_n \to C_\infty$ for the (cell-wise) inclusion of $C_n$ into the colimit of $C_\bullet$.
+
+The pushout condition ensures that the \( (n + 1) \)-skeleton \( C_{n+1} \) is obtained by attaching
+a finite number of \( n \)-dimensional cells to the \( n \)-skeleton \( C_n \). In the case of an
+ordered CW skeleton, the cells are equipped with an order inherited from \( \mathsf{Fin}(k_n) \),
+hence the name.
+%
+Given a CW complex \( C_{\bullet} \), we write \( C_\infty \) for the colimit of the sequence of
+\( n \)-skeleta, and for any \( n \) we write $\iota_\infty : C_n \to C_\infty$ for the inclusion of
+$C_n$ into the colimit $C_\infty$.
+
+\begin{definition}[CW complexes]
+  A type \( X \) is said to be an ordered (resp. unordered) CW complex if there merely exists an
+  ordered (resp. unordered) CW skeleton \( C_{\bullet} \) such that \( X \) is equivalent to the
+  colimit \( C_\infty \).
+\end{definition}
+
+A map between two CW complexes \( X \) and \( Y \) is simply a map between the underlying types.
+%
+The cellular approximation theorem states that such maps may be approximated by \emph{cellular maps},
+\ie sequences of maps between the \( n \)-skeleta of \( X \) and \( Y \).
+%
+In order to prove this theorem constructively for unordered CW complexes, we need to define finite
+cellular maps:
 
 \begin{definition}[Cellular $m$-maps]
-  Given two CW skeleta $C_\bullet,D_\bullet$ an cellular $m$-map is a set of maps $f_n : C_n \to D_n$ for $n \leq m$ equipped with, for $n < m$, homotopies $h_n : \iota \circ f_{n} = f_{n+1} \circ \iota$
+  Given two CW skeleta $C_\bullet$ and $D_\bullet$, a cellular $m$-map from \( C_\bullet \) to \( D_\bullet \)
+  is a finite sequence of maps $(f_n : C_n \to D_n)_{n \leq m}$ equipped with a family of homotopies
+  $h_n : \iota_n \circ f_{n} = f_{n+1} \circ \iota_n$ for $n < m$.
 \end{definition}
 
 \begin{definition}[Cellular $m$-homotopies]
-  Given two CW skeleta $C_\bullet,D_\bullet$ and two cellular $m$-maps $f_n , g_n : C_n \to D_n$, an $m$-homotopy is ...
+  Given two CW skeleta $C_\bullet,D_\bullet$ and two cellular $m$-maps $f_\bullet , g_\bullet : C_\bullet \to D_\bullet$, a
+  $m$-homotopy between \( f_\bullet \) and \( g_\bullet \) is a finite sequence of homotopies
+  \( (h_n : \iota_n \circ f_n = \iota_n \circ g_n)_{n \leq m} \) such that for all \( n < m \) and for all \( x \) the following square commutes:
+  \[
+\begin{tikzcd}[ampersand replacement=\&]
+	{(\iota_{n+1} \circ f_{n+1} \circ \iota_n)~x} \& {(\iota_{n+1} \circ g_{n+1} \circ \iota_n)~x} \\
+	{(\iota_{n+1} \circ \iota_n \circ f_n)~x} \& {(\iota_{n+1} \circ \iota_n \circ g_n)~x}
+	\arrow[double equal sign distance, -, double, "{h_{n+1} \circ \iota_n}"', from=1-1, to=1-2]
+	\arrow[double equal sign distance, -, double, from=1-1, to=2-1]
+	\arrow[double equal sign distance, -, double, "{\iota_{n+1} \circ h_n}"', from=2-1, to=2-2]
+	\arrow[double equal sign distance, -, double, from=1-2, to=2-2]
+\end{tikzcd}
+\]
 \end{definition}
 
 \begin{theorem}[Cellular $m$-approximation theorem]
-  Given two CW skeleta $C_\bullet,D_\bullet$, a map $f : C_\infty \to
-  D_\infty$ and $m:\bN$, there exists (merely) an $m$-cellular map $f_\bullet : C_\bullet \to D_{\bullet}$ s.t. $\iota_{\infty} \circ f_m = f \circ \iota_{\infty}$.
+  Given two unordered CW skeleta $C_\bullet,D_\bullet$, a map $f : C_\infty \to  D_\infty$ and
+  $m:\bN$, there merely exists a $m$-cellular map $f_\bullet : C_\bullet \to D_{\bullet}$ such that
+  $\iota_{\infty} \circ f_m = f \circ \iota_{\infty}$.
 \end{theorem}
 
 \begin{theorem}[Cellular $m$-approximation theorem, part 2]
-  Let $C_\bullet,D_\bullet$ be CW skeleta and consider two
-  cellular $m$-maps map $f_n,g_n : C_n \to D_n$ with a
+  Let $C_\bullet,D_\bullet$ be unordered CW skeleta and consider two
+  cellular $m$-maps map $f_\bullet,g_\bullet : C_\bullet \to D_\bullet$ with a
   homotopy $h_m : f_m = g_m$. In this case, there merely exists a
-  cellular $m$-homotopy $f_\bullet \sim_m g_\bullet$
+  cellular $m$-homotopy $f_\bullet \sim_m g_\bullet$.
 \end{theorem}
 
-\begin{conjecture}\label{conj1}
-  The approximation theorems hold even for $m = \infty$.
-\end{conjecture}
+\begin{proof}[Sketch of proof]
+The proof of theorems 1 and 2 is done by induction on \( m \):
+%
+if we have a \( n \)-approximation of \( f \), we can use the principle of finite choice to obtain
+the mere existence of a \( (n+1) \)-approximation.
+%
+Note that we only approximate \( f \) up to a fixed dimension \( m \), so that the construction
+only needs finitely many calls to finite choice, which is constructively valid~\cite[exercise 3.22]{HoTT13}.
+\end{proof}
+
+Our statement of the cellular approximation theorem is weaker than its classical counterpart on two
+points.
+%
+Firstly, we only obtain the \emph{mere existence} of an approximation. However, since every
+construction in HoTT has to be homotopy invariant, the untruncated statement is actually
+inconsistent: when specialised to the unit type and the circle (which are both CW complexes),
+the untruncated approximation theorem amounts to the contractibility of the circle.
+Therefore, some amount of truncation is required to state the theorem in HoTT.
+%
+Secondly, the classical cellular approximation theorems is stated for \( m = \infty \), while
+ours only provides finite approximations.
+%
+In fact, due to the fundamental reliance of the theorem on finite choice, we conjecture that the
+case \( m = \infty \) is equivalent to the axiom of countable choice, and thus not provable in
+constructive HoTT.
 
 \begin{conjecture}
-  Conjecture~\ref{conj1} is unprovable for generalised CW skeleta.
+  The case \( m = \infty \) of the cellular approximation theorems is not provable in plain HoTT
+  for unordered CW skeleta.
+\end{conjecture}
+
+%% Indeed, we expect that it is equivalent to the possibility of choosing an inhabitant of countably
+%% many types that are merely finite.
+%
+However, in the case of \emph{ordered} CW skeleta, we expect that it is possible to use the order
+on the sets of cells to pick a \emph{minimal} approximation at each stage for some carefully defined
+order, which eschews the need for finite choice.
+%
+Hence the following conjecture:
+
+\begin{conjecture}\label{conj1}
+  The cellular approximation theorems hold for $m = \infty$ for ordered CW skeleta.
 \end{conjecture}
 
 
