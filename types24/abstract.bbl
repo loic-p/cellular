@@ -1,0 +1,85 @@
+\begin{thebibliography}{10}
+
+\bibitem{Brunerie16}
+Guillaume Brunerie.
+\newblock {\em On the homotopy groups of spheres in homotopy type theory}.
+\newblock PhD thesis, Universit{\'e} Nice Sophia Antipolis, 2016.
+
+\bibitem{BLM22}
+Guillaume Brunerie, Axel Ljungstr\"{o}m, and Anders M\"{o}rtberg.
+\newblock {Synthetic Integral Cohomology in Cubical Agda}.
+\newblock In Florin Manea and Alex Simpson, editors, {\em 30th EACSL Annual
+  Conference on Computer Science Logic (CSL 2022)}, volume 216 of {\em Leibniz
+  International Proceedings in Informatics (LIPIcs)}, pages 11:1--11:19,
+  Dagstuhl, Germany, 2022. Schloss Dagstuhl -- Leibniz-Zentrum f{\"u}r
+  Informatik.
+
+\bibitem{BuchholtzFavonia18}
+Ulrik Buchholtz and Kuen-Bang Hou~Favonia.
+\newblock {Cellular Cohomology in Homotopy Type Theory}.
+\newblock In {\em Proceedings of the 33rd Annual ACM/IEEE Symposium on Logic in
+  Computer Science}, LICS '18, pages 521--529, New York, NY, USA, 2018.
+  Association for Computing Machinery.
+
+\bibitem{Buchholtz2016TheCC}
+Ulrik Buchholtz and Egbert Rijke.
+\newblock The cayley-dickson construction in homotopy type theory.
+\newblock {\em ArXiv}, abs/1610.01134, 2016.
+
+\bibitem{CavalloMsc15}
+Evan Cavallo.
+\newblock {Synthetic Cohomology in Homotopy Type Theory}.
+\newblock Master's thesis, Carnegie Mellon University, 2015.
+
+\bibitem{christensen2020hurewicz}
+J.~Daniel Christensen and Luis Scoccola.
+\newblock {The Hurewicz theorem in Homotopy Type Theory}.
+\newblock {\em Algebraic \& Geometric Topology}, 23:2107--2140, 2023.
+
+\bibitem{graham18}
+Robert Graham.
+\newblock {Synthetic Homology in Homotopy Type Theory}, 2018.
+\newblock Preprint.
+
+\bibitem{LLM23}
+Thomas Lamiaux, Axel Ljungstr\"{o}m, and Anders M\"{o}rtberg.
+\newblock Computing cohomology rings in cubical agda.
+\newblock In {\em Proceedings of the 12th ACM SIGPLAN International Conference
+  on Certified Programs and Proofs}, CPP 2023, page 239–252, New York, NY,
+  USA, 2023. Association for Computing Machinery.
+
+\bibitem{LicataFinster14}
+Daniel~R. Licata and Eric Finster.
+\newblock {Eilenberg-MacLane Spaces in Homotopy Type Theory}.
+\newblock In {\em Proceedings of the Joint Meeting of the Twenty-Third EACSL
+  Annual Conference on Computer Science Logic (CSL) and the Twenty-Ninth Annual
+  ACM/IEEE Symposium on Logic in Computer Science (LICS)}, CSL-LICS '14, New
+  York, NY, USA, 2014. Association for Computing Machinery.
+
+\bibitem{LM24}
+Axel Ljungström and Anders Mörtberg.
+\newblock Computational synthetic cohomology theory in homotopy type theory,
+  2024.
+
+\bibitem{CellHomology}
+Axel Ljungström, Anders Mörtberg, and Loïc Pujet.
+\newblock Cellular homology and the cellular approximation theorem, 2024.
+\newblock Extended abstract at HoTT/UF 2024.
+
+\bibitem{May1999}
+J.P. May.
+\newblock {\em A Concise Course in Algebraic Topology}.
+\newblock Chicago Lectures in Mathematics. University of Chicago Press, 1999.
+
+\bibitem{HoTT13}
+{The Univalent Foundations Program}.
+\newblock {\em Homotopy Type Theory: Univalent Foundations of Mathematics}.
+\newblock Self-published, Institute for Advanced Study, 2013.
+
+\bibitem{FlorisPhd}
+Floris van Doorn.
+\newblock {\em {On the Formalization of Higher Inductive Types and Synthetic
+  Homotopy Theory}}.
+\newblock PhD thesis, Carnegie Mellon University, May 2018.
+
+\end{thebibliography}
