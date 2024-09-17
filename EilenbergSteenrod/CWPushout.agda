@@ -110,7 +110,7 @@ module _ (ℓ : Level) (B C D : CWskel ℓ)
   pushoutMapₛ n (inl (inl c) , x) = inl (e C n .fst (α C (suc n) (c ,  Iso.inv (IsoSphereSusp n) x)))
   pushoutMapₛ n (inl (inr b) , north) = inl (strictMap {B} {C} f (suc n) (inr b))
   pushoutMapₛ n (inl (inr b) , south) = inr (strictMap {B} {D} g (suc n) (inr b))
-  pushoutMapₛ n (inl (inr b) , merid x i) =
+  pushoutMapₛ n (inl (inr b) , merid x i) = --pushoutIsoₛ-filler0 n b x i1 i
     ((λ i → inl (strictMap {B} {C} f (suc n) (push (b , x) (~ i))))
     ∙∙ (push (α B n (b , x)))
     ∙∙ (λ i → inr (strictMap {B} {D} g (suc n) (push (b , x) i)))) i
@@ -138,17 +138,6 @@ module _ (ℓ : Level) (B C D : CWskel ℓ)
                                                       (λ i → push (inl (inr b) , south) (~ i)) k i })
           (inS (push (inl (inr b) , merid x i) j)) k
 
-  pushoutIsoₛ-fun : (n : ℕ) → strictPushout n → (Pushout (pushoutMapₛ n) fst)
-  pushoutIsoₛ-fun n (inl (inl c)) = inl (inl c)
-  pushoutIsoₛ-fun n (inl (inr c)) = inr (inl (inl c))
-  pushoutIsoₛ-fun n (inl (push (c , x) i)) = push (inl (inl c) , x) i
-  pushoutIsoₛ-fun n (inr (inl d)) = inl (inr d)
-  pushoutIsoₛ-fun n (inr (inr d)) = inr (inr d)
-  pushoutIsoₛ-fun n (inr (push (d , x) i)) = push (inr d , x) i
-  pushoutIsoₛ-fun n (push (inl b) i) = inl (push b i)
-  pushoutIsoₛ-fun n (push (inr b) i) = (push (inl (inr b) , north) ∙∙ refl ∙∙ (λ i → push (inl (inr b) , south) (~ i))) i
-  pushoutIsoₛ-fun n (push (push (b , x) j) i) = pushoutIsoₛ-filler1 n b x i j i1
-
   pushoutIsoₛ-inv↪ : (n : ℕ) → pushoutA (suc n) → strictPushout n
   pushoutIsoₛ-inv↪ n (inl c) = inl (inl c)
   pushoutIsoₛ-inv↪ n (inr d) = inr (inl d)
@@ -164,6 +153,35 @@ module _ (ℓ : Level) (B C D : CWskel ℓ)
                                                 (λ i → push (inr b) (~ i)) i (~ k) i1 })
           (inS (push (push (b , x) i) j)) k
 
+  pushoutIsoₛ-filler3 : (n : ℕ) → (b : A B n) → I → I → I → Pushout (pushoutMapₛ n) fst
+  pushoutIsoₛ-filler3 n b j k l =
+    hfill (λ l → λ { (j = i0) → push (inl (inr b) , south) i0
+                   ; (j = i1) → doubleCompPath-filler (push (inl (inr b) , north))
+                                                      (λ _ → inr (inl (inr b)))
+                                                      (λ i → push (inl (inr b) , south) (~ i)) (~ k) (~ l)
+                   ; (k = i0) → (push (inl (inr b) , north) ∙∙ (λ _ → inr (inl (inr b))) ∙∙ (λ i → push (inl (inr b) , south) (~ i))) (~ l ∨ ~ j)
+                   ; (k = i1) → push (inl (inr b) , south) j })
+          (inS (push (inl (inr b) , south) (j ∧ k))) l
+
+  pushoutIsoₛ-filler4 : (n : ℕ) → (b : A B n) → I → I → I → Pushout (pushoutMapₛ n) fst
+  pushoutIsoₛ-filler4 n b i k j =
+    hfill (λ j → λ { (i = i0) → push (inl (inr b) , south) i0
+                   ; (i = i1) → pushoutIsoₛ-filler3 n b j k i1
+                   ; (k = i0) → (push (inl (inr b) , north) ∙∙ (λ _ → inr (inl (inr b))) ∙∙ (λ i → push (inl (inr b) , south) (~ i))) (~ i ∨ ~ j)
+                   ; (k = i1) → push (inl (inr b) , south) (i ∧ j) })
+          (inS (push (inl (inr b) , south) i0)) j
+
+  pushoutIsoₛ-fun : (n : ℕ) → strictPushout n → (Pushout (pushoutMapₛ n) fst)
+  pushoutIsoₛ-fun n (inl (inl c)) = inl (inl c)
+  pushoutIsoₛ-fun n (inl (inr c)) = inr (inl (inl c))
+  pushoutIsoₛ-fun n (inl (push (c , x) i)) = push (inl (inl c) , x) i
+  pushoutIsoₛ-fun n (inr (inl d)) = inl (inr d)
+  pushoutIsoₛ-fun n (inr (inr d)) = inr (inr d)
+  pushoutIsoₛ-fun n (inr (push (d , x) i)) = push (inr d , x) i
+  pushoutIsoₛ-fun n (push (inl b) i) = inl (push b i)
+  pushoutIsoₛ-fun n (push (inr b) i) = (push (inl (inr b) , north) ∙∙ refl ∙∙ (λ i → push (inl (inr b) , south) (~ i))) i
+  pushoutIsoₛ-fun n (push (push (b , x) j) i) = pushoutIsoₛ-filler1 n b x i j i1
+
   pushoutIsoₛ-inv : (n : ℕ) → (Pushout (pushoutMapₛ n) fst) → strictPushout n
   pushoutIsoₛ-inv n (inl x) = pushoutIsoₛ-inv↪ n x
   pushoutIsoₛ-inv n (inr (inl (inl c))) = inl (inr c)
@@ -175,29 +193,56 @@ module _ (ℓ : Level) (B C D : CWskel ℓ)
   pushoutIsoₛ-inv n (push (inl (inr b) , merid x j) i) = pushoutIsoₛ-filler2 n b x i j i1
   pushoutIsoₛ-inv n (push (inr d , x) i) = inr (push (d , x) i)
 
+  pushoutIsoₛ-rightInv↪ : (n : ℕ) → (x : pushoutA (suc n)) → pushoutIsoₛ-fun n (pushoutIsoₛ-inv↪ n x) ≡ inl x
+  pushoutIsoₛ-rightInv↪ n (inl c) = refl
+  pushoutIsoₛ-rightInv↪ n (inr d) = refl
+  pushoutIsoₛ-rightInv↪ n (push b i) = refl
+
   pushoutIsoₛ-rightInv : (n : ℕ) → (x : Pushout (pushoutMapₛ n) fst) → pushoutIsoₛ-fun n (pushoutIsoₛ-inv n x) ≡ x
-  pushoutIsoₛ-rightInv n (inl (inl c)) = refl
-  pushoutIsoₛ-rightInv n (inl (inr d)) = refl
-  pushoutIsoₛ-rightInv n (inl (push b i)) = refl
+  pushoutIsoₛ-rightInv n (inl x) = pushoutIsoₛ-rightInv↪ n x
   pushoutIsoₛ-rightInv n (inr (inl (inl c))) = refl
   pushoutIsoₛ-rightInv n (inr (inl (inr b))) = push (inl (inr b) , north)
   pushoutIsoₛ-rightInv n (inr (inr d)) = refl
   pushoutIsoₛ-rightInv n (push (inl (inl c) , x) i) = refl
-  pushoutIsoₛ-rightInv n (push (inl (inr b) , north) i) j = push (inl (inr b) , north) (i ∧ j)
-  pushoutIsoₛ-rightInv n (push (inl (inr b) , south) i) j = {!!}
-    -- doubleCompPath-filler (push (inl (inr b) , north))
-    --                       (λ i → push (inl (inr b) , south) (~ i))
-    --                       refl (~ j) (~ i)
+  pushoutIsoₛ-rightInv n (push (inl (inr b) , north) i) k = push (inl (inr b) , north) (i ∧ k)
+  pushoutIsoₛ-rightInv n (push (inl (inr b) , south) i) k = pushoutIsoₛ-filler4 n b i k i1
   pushoutIsoₛ-rightInv n (push (inl (inr b) , merid x j) i) k =
-    hcomp (λ l → λ { (i = i0) → {!!}
-                   ; (i = i1) → {!!}
-                   ; (j = i0) → {!!} -- standard filler
-                   ; (j = i1) → {!!} -- complicated filler
+    hcomp (λ l → λ { (i = i0) → hcomp (λ i → λ { (j = i0) → inl (pushoutIsoₛ-filler0 n b x (i ∧ (k ∨ l)) i0)
+                                               ; (j = i1) → inl (pushoutIsoₛ-filler0 n b x (i ∧ (k ∨ l)) i1)
+                                               ; (k = i0) → pushoutIsoₛ-fun n (pushoutIsoₛ-inv↪ n (pushoutIsoₛ-filler0 n b x (l ∧ i) j))
+                                               ; (k = i1) → pushoutIsoₛ-rightInv↪ n (pushoutIsoₛ-filler0 n b x i j) i1
+                                               ; (l = i0) → inl (pushoutIsoₛ-filler0 n b x (i ∧ k) j)
+                                               ; (l = i1) → pushoutIsoₛ-rightInv↪ n (pushoutIsoₛ-filler0 n b x i j) k })
+                                      (inl (push (α B n (b , x)) j))
+                   ; (i = i1) → doubleCompPath-filler (push (inl (inr b) , north))
+                                                      (λ _ → inr (inl (inr b)))
+                                                      (λ i → push (inl (inr b) , south) (~ i)) (~ k) (~ l ∧ j)
+                   ; (j = i0) → hcomp (λ j → λ { (i = i0) → inl (pushoutIsoₛ-filler0 n b x (k ∨ l) i0)
+                                               ; (i = i1) → push (inl (inr b) , north) (k ∧ j)
+                                               ; (k = i0) → pushoutIsoₛ-fun n (invSides-hfill1
+                                                                (λ i → inl (inl (strictMap {B} {C} f (suc n) (push (b , x) (~ i)))))
+                                                                (λ _ → push (inr b) i0) i (~ l) j)
+                                               ; (k = i1) → push (inl (inr b) , north) (i ∧ j) --?
+                                               ; (l = i0) → invSides-hfill2 (push (inl (inr b) , north))
+                                                                            (λ i → inl (inl (strictMap {B} {C} f (suc n) (push (b , x) (~ i)))))
+                                                                            (~ i) ( k) j
+                                               ; (l = i1) → push (inl (inr b) , north) (i ∧ k ∧ j) })
+                                      (inl (pushoutIsoₛ-filler0 n b x (i ∨ k ∨ l) i0))
+                   ; (j = i1) → hcomp (λ j → λ { (i = i0) → inl (pushoutIsoₛ-filler0 n b x (k ∨ l) i1)
+                                               ; (i = i1) → pushoutIsoₛ-filler3 n b j k l
+                                               ; (k = i0) → pushoutIsoₛ-fun n (invSides-hfill1
+                                                                (λ i → inr (inl (strictMap {B} {D} g (suc n) (push (b , x) (~ i)))))
+                                                                (λ i → push (inr b) (~ i)) i (~ l) j)
+                                               ; (k = i1) → push (inl (inr b) , south) (i ∧ j)
+                                               ; (l = i0) → invSides-hfill2 (push (inl (inr b) , south))
+                                                                            (λ i → inl (inr (strictMap {B} {D} g (suc n) (push (b , x) (~ i)))))
+                                                                            (~ i) ( k) j
+                                               ; (l = i1) → pushoutIsoₛ-filler4 n b i k j })
+                                      (inl (pushoutIsoₛ-filler0 n b x (i ∨ k ∨ l) i1))
                    ; (k = i0) → pushoutIsoₛ-fun n (pushoutIsoₛ-filler2 n b x i j l)
                    ; (k = i1) → push (inl (inr b) , merid x j) i })
           (pushoutIsoₛ-filler1 n b x j i (~ k))
   pushoutIsoₛ-rightInv n (push (inr d , x) i) = refl
-
 
   pushoutIsoₛ-leftInv : (n : ℕ) → (x : strictPushout n) → pushoutIsoₛ-inv n (pushoutIsoₛ-fun n x) ≡ x
   pushoutIsoₛ-leftInv n (inl (inl c)) = refl
@@ -247,6 +292,8 @@ module _ (ℓ : Level) (B C D : CWskel ℓ)
 
   pushoutIsoₛ : (n : ℕ) → Iso (strictPushout n) (Pushout (pushoutMapₛ n) fst)
   pushoutIsoₛ n = iso (pushoutIsoₛ-fun n) (pushoutIsoₛ-inv n) (pushoutIsoₛ-rightInv n) (pushoutIsoₛ-leftInv n)
+
+  -- it remains to show that strictPushout is the same as the regular pushout...
 
   pushoutSkel : CWskel ℓ
   pushoutSkel = pushoutA , (pushoutCells , pushoutMap , (B .snd .snd .snd .fst) , {!!})
