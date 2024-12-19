@@ -17,12 +17,11 @@ open import Cubical.Data.Fin.Inductive.Properties
 open import Cubical.Data.Sigma
 open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.Bool hiding (_≟_ ; isProp≤)
-open import Cubical.Data.CW
-open import Cubical.Data.CW.Map
+open import Cubical.CW.Base
+open import Cubical.CW.Map
 open import Cubical.Data.Sequence
 open import Cubical.Data.FinSequence
-open import Cubical.Data.CW.ChainComplex
-
+open import Cubical.CW.ChainComplex
 
 open import Cubical.HITs.Sn
 open import Cubical.HITs.Sn.Degree

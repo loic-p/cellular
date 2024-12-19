@@ -16,6 +16,8 @@ open import Cubical.Data.Sigma
 open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.Sequence
 
+open import Cubical.Foundations.Transport
+
 
 open import Cubical.CW.Map
 open import Cubical.CW.Base
@@ -47,58 +49,29 @@ open import Cubical.Algebra.ChainComplex.Base
 
 open import Cubical.Foundations.Transport
 
+open import Cubical.Data.Nat.Order.Inductive
 open import Cubical.CW.Map
+open import Cubical.Data.Fin.Inductive.Base
 open import Cubical.HITs.PropositionalTruncation as PT hiding (map)
 open import Cubical.HITs.SequentialColimit
 
 open import Cubical.Algebra.Group.GroupPath
 
+
 module connected where
 
 open import Cubical.Data.Sum hiding (map)
+
+private
+  variable
+    ℓ ℓ' ℓ'' : Level
+
 
 ¬+<ᵗ : ∀ {n m : ℕ} → ¬ ((m +ℕ n) <ᵗ n)
 ¬+<ᵗ {n = suc n} {m = m} = subst ¬_ (sym (cong (_<ᵗ suc n) (+-suc m n)))
                                     (¬+<ᵗ {n = n} {m})
 
-
-Iso-SeqColim→SeqColimSuc : ∀ {ℓ} (X : Sequence ℓ) → Iso (SeqColim X) (SeqColim (ShiftSeq X))
-Iso-SeqColim→SeqColimSuc X = iso G F F→G→F G→F→G
-  where
-  open Sequence
-  F : SeqColim (ShiftSeq X) → SeqColim X
-  F (incl {n = n} x) = incl {n = suc n} x
-  F (push {n = n} x i) = push {n = suc n} x i
-
-  G : SeqColim X → SeqColim (ShiftSeq X)
-  G (incl {n = zero} x) = incl {n = zero} (map X x)
-  G (incl {n = suc n} x) = incl {n = n} x
-  G (push {n = zero} x i) = incl {n = zero} (map X x)
-  G (push {n = suc n} x i) = push {n = n} x i
-
-  F→G→F : (x : SeqColim (ShiftSeq X)) → G (F x) ≡ x
-  F→G→F (incl x) = refl
-  F→G→F (push x i) = refl
-
-  G→F→G : (x : SeqColim X) → F (G x) ≡ x
-  G→F→G (incl {n = zero} x) = sym (push {n = zero} x)
-  G→F→G (incl {n = suc n} x) = refl
-  G→F→G (push {n = zero} x i) j = push {n = zero} x (i ∨ ~ j)
-  G→F→G (push {n = suc n} x i) = refl
-
-ShiftSequenceIt : ∀ {ℓ} (S : Sequence ℓ) (n : ℕ) → Sequence ℓ
-ShiftSequenceIt S zero = S
-ShiftSequenceIt S (suc n) = ShiftSeq (ShiftSequenceIt S n)
-
-ShiftSequenceExpl : ∀ {ℓ} (S : Sequence ℓ) (n : ℕ) → Sequence ℓ
-Sequence.obj (ShiftSequenceExpl S n) m = Sequence.obj S (m +ℕ n)
-Sequence.map (ShiftSequenceExpl S n) {n = m} = Sequence.map S
-
-Iso-SeqColim→SeqColimShift : ∀ {ℓ} (S : Sequence ℓ) (n : ℕ)
-  → Iso (SeqColim S) (SeqColim (ShiftSequenceIt S n))
-Iso-SeqColim→SeqColimShift S zero = idIso
-Iso-SeqColim→SeqColimShift S (suc n) =
-  compIso (Iso-SeqColim→SeqColimShift S n) (Iso-SeqColim→SeqColimSuc _)
+open Sequence
 
 -----
 
@@ -130,196 +103,8 @@ open import Cubical.Data.Unit
 open import Cubical.Data.Fin as diffFin
 open import Cubical.Data.Nat.Order as diffOrder
 
-SequenceMapIterate : ∀ {ℓ} (A : Sequence ℓ) → (n m : ℕ) → Sequence.obj A n → Sequence.obj A (m +ℕ n) 
-SequenceMapIterate A n zero x = x
-SequenceMapIterate A n (suc m) = Sequence.map A ∘ SequenceMapIterate A n m
-
-suc-≤ᵗ-suc : {n m : ℕ} → n ≤ᵗ m → suc n ≤ᵗ suc m
-suc-≤ᵗ-suc (inl x) = inl x
-suc-≤ᵗ-suc (inr x) = inr (cong suc x)
-
-pred-≤ᵗ-pred : {n m : ℕ} → suc n ≤ᵗ suc m → n ≤ᵗ m
-pred-≤ᵗ-pred (inl x) = inl x
-pred-≤ᵗ-pred (inr x) = inr (cong predℕ x)
-
-<→≤ : {n m : ℕ} → n <ᵗ suc m → n ≤ᵗ m
-<→≤ {n = zero} {m = zero} _ = inr refl
-<→≤ {n = zero} {m = suc m} _ = inl tt
-<→≤ {n = suc n} {m = suc m} = suc-≤ᵗ-suc ∘ <→≤ {n = n} {m = m}
-
-SequenceMapIterate' : ∀ {ℓ} (A : Sequence ℓ) → (n m : ℕ) → n ≤ᵗ m →  Sequence.obj A n → Sequence.obj A m
-SequenceMapIterate' A n (suc m) (inl x) = Sequence.map A ∘ SequenceMapIterate' A n m (<→≤ x)
-SequenceMapIterate' A n m (inr x) = subst (Sequence.obj A) x
-
-SequenceMapIterate'≡ : ∀ {ℓ} (A : Sequence ℓ) (n m : ℕ) (s : _) (a :  Sequence.obj A n)
-  → SequenceMapIterate A n m a ≡ SequenceMapIterate' A n (m +ℕ n) s a
-SequenceMapIterate'≡ A n zero (inl x₁) = ⊥.rec (¬m<ᵗm x₁)
-SequenceMapIterate'≡ A zero (suc x) (inl tt) a =
-  cong (Sequence.map A) (SequenceMapIterate'≡ A zero x (<→≤ tt) a)
-SequenceMapIterate'≡ A (suc n) (suc x) (inl x₁) a =
-  cong (Sequence.map A) (SequenceMapIterate'≡ A (suc n) x (<→≤ x₁) a)
-SequenceMapIterate'≡ A zero zero (inr x₁) a =
-  sym (transportRefl a) ∙ λ j → subst (Sequence.obj A) (isSetℕ _ _ refl x₁ j) a
-SequenceMapIterate'≡ A (suc n) zero (inr x₁) a =
-  sym (transportRefl a) ∙ λ j → subst (Sequence.obj A) (isSetℕ _ _ refl x₁ j) a
-SequenceMapIterate'≡ A n (suc x) (inr x₁) = ⊥.rec (¬m<m (x , +-suc x n ∙ sym x₁))
-
-  
-cofib→ : ∀ {ℓ ℓ' ℓ''} {A : Type ℓ} {B : Type ℓ'} {C : Type ℓ''}
-  {f : A → B} (h : B → C)
-  → cofib f → cofib (h ∘ f)
-cofib→ h (inl x) = inl x
-cofib→ h (inr x) = inr (h x)
-cofib→ h (push a i) = push a i
-
-
-SequenceIso : ∀ {ℓ ℓ'} (A : Sequence ℓ) (B : Sequence ℓ') → Type (ℓ-max ℓ ℓ')
-SequenceIso A B =
-  Σ[ is ∈ ((n : ℕ) → Iso (Sequence.obj A n) (Sequence.obj B n)) ]
-     ((n : ℕ) (a : Sequence.obj A n)
-       → Sequence.map B (Iso.fun (is n) a) ≡ Iso.fun (is (suc n)) (Sequence.map A a))
-
-compSequenceIso : ∀ {ℓ ℓ' ℓ''} {A : Sequence ℓ} {B : Sequence ℓ'} {C : Sequence ℓ''}
-  → SequenceIso A B → SequenceIso B C → SequenceIso A C
-fst (compSequenceIso e g) n = compIso (fst e n) (fst g n)
-snd (compSequenceIso e g) n a = snd g n _ ∙ cong (Iso.fun (fst g (suc n))) (snd e n a)
-
-SequenceEquiv : ∀ {ℓ ℓ'} (A : Sequence ℓ) (B : Sequence ℓ') → Type (ℓ-max ℓ ℓ')
-SequenceEquiv A B =
-  Σ[ e ∈ (SequenceMap A B) ]
-     ((n : ℕ) → isEquiv (SequenceMap.map e n))
-
-invSequenceEquiv : ∀ {ℓ ℓ'} {A : Sequence ℓ} {B : Sequence ℓ'} → SequenceEquiv A B → SequenceEquiv B A
-SequenceMap.map (fst (invSequenceEquiv eqs)) n = invEq (_ , snd eqs n)
-SequenceMap.comm (fst (invSequenceEquiv {A = A} {B} eqs)) n x =
-    sym (retEq (_ , snd eqs (suc n)) (Sequence.map A (invEq (_  , snd eqs n) x)))
-  ∙∙ cong (invEq (_ , snd eqs (suc n))) (sym (SequenceMap.comm (fst eqs) n (invEq (_ , snd eqs n) x)))
-  ∙∙ cong (invEq (_ , snd eqs (suc n)) ∘ Sequence.map B) (secEq (_ , snd eqs n) x)
-snd (invSequenceEquiv eqs) n = invEquiv (_ , snd eqs n) .snd
-
-
-SequenceIso→SequenceEquiv : ∀ {ℓ ℓ'} {A : Sequence ℓ} {B : Sequence ℓ'}
-  → SequenceIso A B → SequenceEquiv A B
-SequenceMap.map (fst (SequenceIso→SequenceEquiv (is , e))) = Iso.fun ∘ is
-SequenceMap.comm (fst (SequenceIso→SequenceEquiv (is , e))) = e
-snd (SequenceIso→SequenceEquiv (is , e)) n = isoToIsEquiv (is n)
-
-idSequenceEquiv : ∀ {ℓ} → (A : Sequence ℓ) → SequenceEquiv A A
-fst (idSequenceEquiv A) = idSequenceMap A
-snd (idSequenceEquiv A) _ = idIsEquiv _
-
-invIdSequenceEquiv : ∀ {ℓ} {A : Sequence ℓ}
-  → invSequenceEquiv (idSequenceEquiv A) ≡ idSequenceEquiv A
-invIdSequenceEquiv {A = A} =
-  Σ≡Prop (λ _ → isPropΠ (λ _ → isPropIsEquiv _)) main
-  where
-  main : invSequenceEquiv (idSequenceEquiv A) .fst ≡ idSequenceMap A
-  SequenceMap.map (main i) n z = z
-  SequenceMap.comm (main i) n x j = rUnit (λ _ → Sequence.map A x) (~ i) j
-
-uaSequence : ∀ {ℓ} {A B : Sequence ℓ} → SequenceEquiv A B → A ≡ B
-Sequence.obj (uaSequence {A = A} {B} (e , eqv) i) n = ua (_ , eqv n) i
-Sequence.map (uaSequence {A = A} {B} (e , eqv) i) {n = n} a =
-  hcomp (λ k → λ {(i = i0) → Sequence.map A (retEq (_ , eqv n) a k)
-                 ; (i = i1) → (sym (SequenceMap.comm e n (invEq (_ , eqv n) a))
-                              ∙ cong (Sequence.map B) (secEq (_ , eqv n) a)) k})
-        (ua-gluePt (_ , eqv (suc n)) i
-          (Sequence.map A (invEq (_ , eqv n) (ua-unglue (_ , eqv n) i a))))
-
-
-uaSequenceIdEquiv : ∀ {ℓ} {A : Sequence ℓ}
-  → uaSequence (idSequenceEquiv A) ≡ refl
-Sequence.obj (uaSequenceIdEquiv {A = A} i j) n = uaIdEquiv {A = Sequence.obj A n} i j
-Sequence.map (uaSequenceIdEquiv {A = A} i j) {n = n} x =
-  hcomp (λ k → λ {(i = i1) → Sequence.map A x
-                 ; (j = i0) → Sequence.map A x
-                 ; (j = i1) → rUnit (refl {x = Sequence.map A x}) (~ i) k})
-   (glue {φ = j ∨ ~ j ∨ i}
-      (λ { (j = i0) → Sequence.map A x
-         ; (j = i1) → Sequence.map A x
-         ; (i = i1) → Sequence.map A x})
-      ((Sequence.map A
-          (unglue (j ∨ ~ j ∨ i) x))))
-
-open import Cubical.Foundations.Equiv.HalfAdjoint
-
-halfAdjointSequenceEquiv : ∀ {ℓ ℓ'} {A : Sequence ℓ} {B : Sequence ℓ'} → SequenceEquiv A B → SequenceEquiv A B
-fst (halfAdjointSequenceEquiv (e , eqv)) = e
-snd (halfAdjointSequenceEquiv (e , eqv)) n = isHAEquiv→isEquiv (equiv→HAEquiv (_ , eqv n) .snd)
-
-isContrTotalSequence : ∀ {ℓ} (A : Sequence ℓ)
-  → isContr (Σ[ B ∈ Sequence ℓ ] SequenceEquiv A B)
-fst (isContrTotalSequence A) = A , idSequenceEquiv A
-snd (isContrTotalSequence A) (B , eqv*) =
-  ΣPathP (uaSequence eqv , main)
-  where
-  eqv = halfAdjointSequenceEquiv eqv*
-
-  open import Cubical.Foundations.Path
-
-
-  help : (n : ℕ) (x : Sequence.obj A n)
-    → Square (cong (SequenceMap.map (fst eqv) (suc n) ∘ Sequence.map A)
-                    (retEq (_ , snd eqv n) x))
-              (SequenceMap.comm (fst eqv) n x)
-              (sym (SequenceMap.comm (fst eqv) n (invEq (_ , snd eqv n) (SequenceMap.map (fst eqv) n x)))
-              ∙ λ i₁ → Sequence.map B (secEq (SequenceMap.map (fst eqv) n , snd eqv n)
-                         (SequenceMap.map (fst eqv) n x) i₁))
-              λ _ → SequenceMap.map (fst eqv) (suc n) (Sequence.map A x)
-  help n x = flipSquare ((compPath≡compPath' _ _
-    ∙ cong₂ _∙'_ refl λ j i → Sequence.map B (isHAEquiv.com (equiv→HAEquiv (_ , eqv* .snd n) .snd) x (~ j) i))
-    ◁ λ i j → 
-    hcomp (λ k → λ {(j = i0) → SequenceMap.comm (fst eqv) n
-                                  (lUnit ((cong fst (eqv* .snd n .equiv-proof (SequenceMap.map (fst eqv*) n x)
-                                   .snd (x , (λ _ → SequenceMap.map (fst eqv*) n x))))) k i) k
-                   ; (j = i1) → SequenceMap.comm (fst eqv) n x (i ∧ k)
-                   ; (i = i0) → compPath'-filler (sym (SequenceMap.comm (fst eqv) n (invEq (_ , snd eqv n) (SequenceMap.map (fst eqv) n x))))
-                                                  (cong (Sequence.map B) (isHAEquiv.com (equiv→HAEquiv (_ , eqv* .snd n) .snd) x i0)) k j
-                   ; (i = i1) → SequenceMap.comm (fst eqv) n x k
-                   })
-          (Sequence.map B (SequenceMap.map (fst eqv*) n
-            ((cong fst (eqv* .snd n .equiv-proof (SequenceMap.map (fst eqv*) n x)
-              .snd (x , (λ _ → SequenceMap.map (fst eqv*) n x)))) (i ∨ j)))))
-
-  main : PathP (λ i → SequenceEquiv A (uaSequence eqv i))
-      (idSequenceEquiv A) eqv*
-  SequenceMap.map (fst (main i)) n x = ua-gluePt (_ , snd eqv n) i x
-  SequenceMap.comm (fst (main i)) n x j =
-    hcomp (λ k → λ {(i = i0) → Sequence.map A
-                                  (retEq (_ , snd eqv n) x (k ∨ j))
-                   ; (i = i1) → help n x k j
-                   ; (j = i1) → ua-gluePt (_ , snd eqv (suc n)) i (Sequence.map A x)})
-          (ua-gluePt (_ , snd eqv (suc n)) i
-                     (Sequence.map A (retEq (_ , snd eqv n) x j)))
-  snd (main i) n =
-    isProp→PathP {B = λ i → isEquiv  (λ x → ua-gluePt (_ , snd eqv n) i x)}
-     (λ i → isPropIsEquiv _)
-     (idIsEquiv (Sequence.obj A n)) (snd eqv* n) i
-
-
-
-SequenceEquivJ : ∀ {ℓ ℓ'} {A : Sequence ℓ}
-  (P : (B : Sequence ℓ) → SequenceEquiv A B → Type ℓ')
-  → P A (idSequenceEquiv A)
-  → (B : _) (e : _) → P B e
-SequenceEquivJ {ℓ = ℓ} {A = A} P ind B e = main (B , e)
-  where
-  P' : Σ[ B ∈ Sequence ℓ ] SequenceEquiv A B → Type _ 
-  P' (B , e) = P B e
-
-  main : (x : _) → P' x
-  main (B , e) = subst P' (isContrTotalSequence A .snd (B , e)) ind
-
-SequenceEquivJ>_ : ∀ {ℓ ℓ'} {A : Sequence ℓ}
-  {P : (B : Sequence ℓ) → SequenceEquiv A B → Type ℓ'}
-  → P A (idSequenceEquiv A)
-  → (B : _) (e : _) → P B e
-SequenceEquivJ>_ {P = P} hyp B e = SequenceEquivJ P hyp B e
-
-open import Cubical.Foundations.Transport
-
-ShiftSequenceIso : ∀ {ℓ} {A : Sequence ℓ} (n : ℕ)
-  → SequenceIso (ShiftSequenceIt A n) (ShiftSequenceExpl A n)
+ShiftSequenceIso : {A : Sequence ℓ} (n : ℕ)
+  → SequenceIso (ShiftSequence+Rec A n) (ShiftSequence+ A n)
 fst (ShiftSequenceIso {A = A} zero) m = pathToIso λ i → Sequence.obj A (+-comm zero m i)
 fst (ShiftSequenceIso {A = A} (suc n)) m =
   compIso (fst (ShiftSequenceIso {A = A} n) (suc m))
@@ -339,63 +124,69 @@ snd (ShiftSequenceIso {A = A} (suc n)) m a =
   ∙ cong (subst (λ x → Sequence.obj A (suc x)) (sym (+-suc m n)))
          (snd (ShiftSequenceIso {A = A} n) (suc m) a)
 
-SequenceEquivJRefl : ∀ {ℓ ℓ'} {A : Sequence ℓ}
-  (P : (B : Sequence ℓ) → SequenceEquiv A B → Type ℓ')
-    (id : P A (idSequenceEquiv A))
-  → SequenceEquivJ P id A (idSequenceEquiv A) ≡ id
-SequenceEquivJRefl {ℓ = ℓ} {A = A} P ids =
-  (λ j → subst P' (isProp→isSet (isContr→isProp (isContrTotalSequence A))
-                    _ _ (isContrTotalSequence A .snd (A , idSequenceEquiv A)) refl j) ids)
-  ∙ transportRefl ids
-  where
-  P' : Σ[ B ∈ Sequence ℓ ] SequenceEquiv A B → Type _ 
-  P' (B , e) = P B e
-
-sequenceEquiv→ColimIso : ∀ {ℓ} {A B : Sequence ℓ} → SequenceEquiv A B → Iso (SeqColim A) (SeqColim B)
-sequenceEquiv→ColimIso e = mainIso
-  where
-  main : ∀ {ℓ} {A : Sequence ℓ} (B : Sequence ℓ) (e : SequenceEquiv A B)
-    → section (realiseSequenceMap (fst e))
-               (realiseSequenceMap (fst (invSequenceEquiv e)))
-     × retract (realiseSequenceMap (fst e))
-               (realiseSequenceMap (fst (invSequenceEquiv e)))
-  main {A = A} = SequenceEquivJ>
-    ((λ x → (λ i → realiseIdSequenceMap {C = A} i
-                      (realiseSequenceMap (fst (invIdSequenceEquiv {A = A} i)) x))
-           ∙ funExt⁻ realiseIdSequenceMap x)
-   , λ x → (λ i → realiseSequenceMap (fst (invIdSequenceEquiv {A = A} i))
-                      (realiseIdSequenceMap {C = A} i x))
-           ∙ funExt⁻ realiseIdSequenceMap x)
-
-  mainIso : Iso _ _
-  Iso.fun mainIso = realiseSequenceMap (fst e)
-  Iso.inv mainIso = realiseSequenceMap (fst (invSequenceEquiv e))
-  Iso.rightInv mainIso = main _ e .fst
-  Iso.leftInv mainIso = main _ e .snd
-
-
-SeqColimIso : ∀ {ℓ} (S : Sequence ℓ) (n : ℕ)
-  → Iso (SeqColim S) (SeqColim (ShiftSequenceExpl S n))
+SeqColimIso : (S : Sequence ℓ) (n : ℕ)
+  → Iso (SeqColim S) (SeqColim (ShiftSequence+ S n))
 SeqColimIso S n =
   compIso (Iso-SeqColim→SeqColimShift S n)
     (sequenceEquiv→ColimIso
       (SequenceIso→SequenceEquiv (ShiftSequenceIso n)))
 
+SequenceMapIterate : (A : Sequence ℓ) → (n m : ℕ) → Sequence.obj A n → Sequence.obj A (m +ℕ n) 
+SequenceMapIterate A n zero x = x
+SequenceMapIterate A n (suc m) = Sequence.map A ∘ SequenceMapIterate A n m
+
+suc-≤ᵗ-suc : {n m : ℕ} → n ≤ᵗ m → suc n ≤ᵗ suc m
+suc-≤ᵗ-suc (inl x) = inl x
+suc-≤ᵗ-suc (inr x) = inr (cong suc x)
+
+pred-≤ᵗ-pred : {n m : ℕ} → suc n ≤ᵗ suc m → n ≤ᵗ m
+pred-≤ᵗ-pred (inl x) = inl x
+pred-≤ᵗ-pred (inr x) = inr (cong predℕ x)
+
+<→≤ : {n m : ℕ} → n <ᵗ suc m → n ≤ᵗ m
+<→≤ {n = zero} {m = zero} _ = inr refl
+<→≤ {n = zero} {m = suc m} _ = inl tt
+<→≤ {n = suc n} {m = suc m} = suc-≤ᵗ-suc ∘ <→≤ {n = n} {m = m}
+
+SequenceMapIterate' : (A : Sequence ℓ) → (n m : ℕ) → n ≤ᵗ m →  Sequence.obj A n → Sequence.obj A m
+SequenceMapIterate' A n (suc m) (inl x) = Sequence.map A ∘ SequenceMapIterate' A n m (<→≤ x)
+SequenceMapIterate' A n m (inr x) = subst (Sequence.obj A) x
+
+SequenceMapIterate'≡ : (A : Sequence ℓ) (n m : ℕ) (s : _) (a :  Sequence.obj A n)
+  → SequenceMapIterate A n m a ≡ SequenceMapIterate' A n (m +ℕ n) s a
+SequenceMapIterate'≡ A n zero (inl x₁) = ⊥.rec (¬m<ᵗm x₁)
+SequenceMapIterate'≡ A zero (suc x) (inl tt) a =
+  cong (Sequence.map A) (SequenceMapIterate'≡ A zero x (<→≤ tt) a)
+SequenceMapIterate'≡ A (suc n) (suc x) (inl x₁) a =
+  cong (Sequence.map A) (SequenceMapIterate'≡ A (suc n) x (<→≤ x₁) a)
+SequenceMapIterate'≡ A zero zero (inr x₁) a =
+  sym (transportRefl a) ∙ λ j → subst (Sequence.obj A) (isSetℕ _ _ refl x₁ j) a
+SequenceMapIterate'≡ A (suc n) zero (inr x₁) a =
+  sym (transportRefl a) ∙ λ j → subst (Sequence.obj A) (isSetℕ _ _ refl x₁ j) a
+SequenceMapIterate'≡ A n (suc x) (inr x₁) = ⊥.rec (¬m<m (x , +-suc x n ∙ sym x₁))
+
+cofib→ : ∀ {ℓ ℓ' ℓ''} {A : Type ℓ} {B : Type ℓ'} {C : Type ℓ''}
+  {f : A → B} (h : B → C)
+  → cofib f → cofib (h ∘ f)
+cofib→ h (inl x) = inl x
+cofib→ h (inr x) = inr (h x)
+cofib→ h (push a i) = push a i
+
 asdd = Trichotomyᵗ
 
-SequenceMapIterate₀ : ∀ {ℓ} (S : Sequence ℓ) (n : ℕ) → Sequence.obj S 0 → Sequence.obj S n
+SequenceMapIterate₀ : (S : Sequence ℓ) (n : ℕ) → Sequence.obj S 0 → Sequence.obj S n
 SequenceMapIterate₀ S zero = idfun _
 SequenceMapIterate₀ S (suc n) = Sequence.map S ∘ SequenceMapIterate₀ S n
 
-SeqColim/₀Sequence : ∀ {ℓ} (S : Sequence ℓ) → Sequence ℓ
+SeqColim/₀Sequence : (S : Sequence ℓ) → Sequence ℓ
 Sequence.obj (SeqColim/₀Sequence S) n =
   cofib {A = Sequence.obj S 0} {B = Sequence.obj S n} (SequenceMapIterate₀ S n) 
 Sequence.map (SeqColim/₀Sequence S) = cofib→ (Sequence.map S)
 
-incl₀ : ∀ {ℓ} {S : Sequence ℓ} → Sequence.obj S 0 → SeqColim S
+incl₀ : {S : Sequence ℓ} → Sequence.obj S 0 → SeqColim S
 incl₀ = incl
 
-SeqColim/₀Iso : ∀ {ℓ} {S : Sequence ℓ}
+SeqColim/₀Iso : {S : Sequence ℓ}
   → Iso (cofib {B = SeqColim S} incl₀)
          (SeqColim (SeqColim/₀Sequence S))
 SeqColim/₀Iso {S = S} = iso lr rl sect retr
@@ -487,9 +278,6 @@ SeqColim/₀Iso {S = S} = iso lr rl sect retr
   retr (inr (push x i)) = refl
   retr (push a i) j = rUnit (push a) (~ j) i
 
-sequenceIso→ColimIso : ∀ {ℓ} {A B : Sequence ℓ}
-  → SequenceIso A B → Iso (SeqColim A) (SeqColim B)
-sequenceIso→ColimIso e = sequenceEquiv→ColimIso (SequenceIso→SequenceEquiv e)
 
 
 module _ {ℓ} (A : Sequence ℓ) where
@@ -518,16 +306,10 @@ module _ {ℓ} (A : Sequence ℓ) where
   seqMap (cofibSequenceShifted n) = cofib→ (seqMap A)
 
   cofibSequenceShifted' : (n : ℕ) → Sequence ℓ
-  cofibSequenceShifted' n = SeqColim/₀Sequence (ShiftSequenceExpl A n)
-
-  cofibSequenceShiftedIso : (n : ℕ)
-    → SequenceIso (cofibSequenceShifted n) (cofibSequenceShifted' n)
-  fst (cofibSequenceShiftedIso n) m = {!idIso!}
-  snd (cofibSequenceShiftedIso n) = {!!}
-
+  cofibSequenceShifted' n = SeqColim/₀Sequence (ShiftSequence+ A n)
 
   cofibSequenceIso : (n : ℕ)
-    → SequenceIso (ShiftSequenceExpl (cofibSequence n) n)
+    → SequenceIso (ShiftSequence+ (cofibSequence n) n)
                    (cofibSequenceShifted n)
   cofibSequenceIso n = theIso , theCoh
     where
@@ -597,10 +379,10 @@ module _ {ℓ} (A : Sequence ℓ) where
            (cofib {A = Sequence.obj A n} {B = SeqColim A} (incl {n = n}))
   colimCofibSequenceIso n =
     compIso (Iso-SeqColim→SeqColimShift _ n)
-      (compIso (sequenceIso→ColimIso {A = ShiftSequenceIt (cofibSequence n) n}
+      (compIso (sequenceIso→ColimIso {A = ShiftSequence+Rec (cofibSequence n) n}
                                       {B = cofibSequenceShifted n}
-                 (compSequenceIso {A = ShiftSequenceIt (cofibSequence n) n}
-                                  {B = ShiftSequenceExpl (cofibSequence n) n}
+                 (compSequenceIso {A = ShiftSequence+Rec (cofibSequence n) n}
+                                  {B = ShiftSequence+ (cofibSequence n) n}
                                   {C = cofibSequenceShifted n}
                    (ShiftSequenceIso {A = cofibSequence n} n)
                                   (cofibSequenceIso n)))
