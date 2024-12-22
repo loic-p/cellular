@@ -95,13 +95,17 @@ Scard (suc n) (suc m) with (m ≟ᵗ n)
 Sα : (n m : ℕ) → Fin (Scard n m) × S⁻ m → Sfam n m
 Sα n (suc m) _ = Sfam∙ n m
 
-
-
 ¬Scard : (n m : ℕ) → n <ᵗ m → ¬ Fin (Scard n m)
 ¬Scard zero (suc m) p = ¬Fin0
 ¬Scard (suc n) (suc m) p with (m ≟ᵗ n)
 ... | lt x = snd
 ... | eq x = λ _ → ¬m<ᵗm (subst (n <ᵗ_) x p)
+... | gt x = snd
+
+¬Scard' : (n m : ℕ) → (n <ᵗ m) → ¬ (Fin (Scard (suc m) (suc n)))
+¬Scard' n m p with (n ≟ᵗ m)
+... | lt x = snd
+... | eq x = ⊥.rec (¬m<ᵗm (subst (_<ᵗ m) x p))
 ... | gt x = snd
 
 module _  {ℓ ℓ' ℓ''} {A : Type ℓ} {B : Type ℓ'} {C : Type ℓ''} (b : B) (g : A → C) where
@@ -219,3 +223,76 @@ snd (isCWSphere n) = compEquiv (SfamTopElement n) (isoToEquiv (converges→Colim
 Sᶜʷ : (n : ℕ) → CW ℓ-zero
 fst (Sᶜʷ n) = S₊ n
 snd (Sᶜʷ n) = ∣ isCWSphere n ∣₁
+
+-- open import
+
+sucn≠n : {n : ℕ} → ¬ (suc n ≡ n)
+sucn≠n {n = zero} = snotz
+sucn≠n {n = suc n} p = sucn≠n {n = n} (cong predℕ p)
+
+open import Cubical.Algebra.Group.Instances.Int
+open import Cubical.Algebra.AbGroup.Instances.Int
+
+module _ (n : ℕ) where
+  ScardDiag : isContr (Fin (Scard (suc n) (suc n)))
+  ScardDiag with (n ≟ᵗ n)
+  ... | lt x = ⊥.rec (¬m<ᵗm x)
+  ... | eq x = inhProp→isContr fzero isPropFin1
+  ... | gt x = ⊥.rec (¬m<ᵗm x)
+
+  HₙSⁿ→ℤ-fun : (a : Fin (Scard (suc n) (suc n)) → ℤ) → ℤ
+  HₙSⁿ→ℤ-fun a = a (ScardDiag .fst)
+
+  HₙSⁿ→ℤ-coh :
+       (a b : Fin (Scard (suc n) (suc n)) → ℤ)
+    → (aker : ∂ (Sˢᵏᵉˡ (suc n)) n .fst a ≡ λ _ → 0)
+    → (bker : ∂ (Sˢᵏᵉˡ (suc n)) n .fst b ≡ λ _ → 0)
+    → (r : Σ[ t ∈ (Fin (Scard (suc n) (suc (suc n))) → ℤ) ]
+             ∂ (Sˢᵏᵉˡ (suc n)) (suc n) .fst t ≡ λ q → a q - b q)
+    → HₙSⁿ→ℤ-fun a ≡ HₙSⁿ→ℤ-fun b
+  HₙSⁿ→ℤ-coh a b aker bker r with (n ≟ᵗ n) | (suc n ≟ᵗ n)
+  ... | lt x | t = ⊥.rec (¬m<ᵗm x) 
+  ... | eq x | lt x₁ = ⊥.rec (¬-suc-n<ᵗn x₁)
+  ... | eq x | eq x₁ = ⊥.rec (sucn≠n x₁)
+  ... | eq x | gt x₁ = sym (+Comm (b fzero) 0
+                     ∙ cong (_+ b fzero) (funExt⁻ (snd r) fzero)
+                     ∙ sym (+Assoc (a fzero) (- b fzero) (b fzero))
+                     ∙ cong (a fzero +_) (-Cancel' (b fzero)))
+  ... | gt x | t = ⊥.rec (¬m<ᵗm x)
+
+  HₙSⁿ→ℤ : Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) n . fst → ℤ
+  HₙSⁿ→ℤ = SQ.elim (λ _ → isSetℤ) (λ a → HₙSⁿ→ℤ-fun (fst a))
+    λ a b → PT.elim (λ _ → isSetℤ _ _)
+      λ x →  HₙSⁿ→ℤ-coh (fst a) (fst b) (snd a) (snd b) (fst x , cong fst (snd x))
+
+  ∂VanishS : (n : ℕ) (t : _) → ∂ (Sˢᵏᵉˡ (suc n)) n .fst t ≡ λ _ → pos 0 
+  ∂VanishS zero t = funExt λ { (zero , p) → ·Comm (t fzero) (pos 0)}
+  ∂VanishS (suc n) t = funExt λ y → ⊥.rec (¬Scard' _ _ <ᵗsucm y)
+
+  ℤ→HₙSⁿ-fun : ℤ → Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) n . fst
+  ℤ→HₙSⁿ-fun z = [ (λ _ → z) , ∂VanishS n (λ _ → z) ]
+
+  ℤ→HₙSⁿ : GroupHom ℤGroup (Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) n)
+  fst (ℤ→HₙSⁿ) = ℤ→HₙSⁿ-fun
+  snd (ℤ→HₙSⁿ) = makeIsGroupHom λ x y
+    → cong [_] (Σ≡Prop (λ _ → isOfHLevelPath' 1 (isSetΠ (λ _ → isSetℤ)) _ _)
+                refl)
+
+  HₙSⁿ→ℤ→HₙSⁿ : (x : _) → ℤ→HₙSⁿ-fun (HₙSⁿ→ℤ x) ≡ x
+  HₙSⁿ→ℤ→HₙSⁿ =
+    SQ.elimProp (λ _ → GroupStr.is-set (snd (Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) n)) _ _)
+        λ {(a , p) → cong [_] (Σ≡Prop (λ _ → isSetΠ (λ _ → isSetℤ) _ _)
+                               (funExt λ t → cong a (ScardDiag .snd t)))}
+
+  ℤ≅HₙSⁿ : GroupIso ℤGroup (Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) n)
+  Iso.fun (fst ℤ≅HₙSⁿ) = ℤ→HₙSⁿ .fst
+  Iso.inv (fst ℤ≅HₙSⁿ) = HₙSⁿ→ℤ
+  Iso.rightInv (fst ℤ≅HₙSⁿ) = HₙSⁿ→ℤ→HₙSⁿ
+  Iso.leftInv (fst ℤ≅HₙSⁿ) _ = refl
+  snd ℤ≅HₙSⁿ = ℤ→HₙSⁿ .snd
+
+  HₙSⁿ≅ℤ : GroupIso (Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) n) ℤGroup
+  HₙSⁿ≅ℤ = invGroupIso ℤ≅HₙSⁿ
+
+  genHₙSⁿ : Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) n .fst
+  genHₙSⁿ = [ (λ _ → 1) , (∂VanishS n (λ _ → 1)) ]
