@@ -65,6 +65,7 @@ open import Cubical.Data.Int
 open import Cubical.Algebra.Group.QuotientGroup
 
 open import Cubical.Algebra.Group.Abelianization.Base
+open import Cubical.Algebra.Group.Abelianization.Properties as Abi --rec
 
 
 diff<ᵗ : {n m : ℕ} → n <ᵗ m → Σ[ k ∈ ℕ ] k +ℕ n ≡ m
@@ -329,16 +330,6 @@ realiseSubComplexFun C n t = incl {n = n} (realiseSubComplexFunPre C n t)
 realiseSubComplexFun←' : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ) → realise (subComplex C n) → fst C n
 realiseSubComplexFun←' C n = Iso.inv (realiseSubComplex n C)
 
-realiseSubComplexFun← : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ) → realise (subComplex C n) → fst C n
-realiseSubComplexFun← C n (incl {n = m} x) = {!!} -- invEq (_ , isEqrealiseSubComplexPre C n) {!x!}
-realiseSubComplexFun← C n (push x i) = {!!}
-
-
-
- 
-isEqrealiseSubComplex : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ) → isEquiv (realiseSubComplexFun C n)
-isEqrealiseSubComplex C n = isoToIsEquiv {!!}
-
 
 finCellApproxRealiseCellMap : ∀ {ℓ ℓ'} {C : CWskel ℓ} {D : CWskel ℓ'}
   (f : cellMap C D) (n : ℕ) → finCellApprox C D (realiseCellMap f) n
@@ -394,33 +385,85 @@ snd (snd (∃HomologyEquivalentSubStructure (C∞ , C , e) n)) =
                (isoToIsEquiv (fst (subComplex→GrIso C n)))
 
 
+-- todo : fix univ levels
+groupHom→AbelianisationGroupHom : ∀ {ℓ} {A : Group ℓ} {B : Group ℓ}
+  → (ϕ : GroupHom A B)
+  → ((x y : fst B) → GroupStr._·_ (snd B) x y ≡ GroupStr._·_ (snd B) y x)
+  → GroupHom (AbGroup→Group (AbelianizationAbGroup A))
+              B
+fst (groupHom→AbelianisationGroupHom {B = B} ϕ commB) =
+  Abi.rec _ (GroupStr.is-set (snd B)) (ϕ .fst)
+            λ a b c → IsGroupHom.pres· (ϕ .snd) _ _
+            ∙ cong₂ (GroupStr._·_ (snd B)) refl
+                    (IsGroupHom.pres· (ϕ .snd) _ _
+                   ∙ commB _ _
+                   ∙ sym (IsGroupHom.pres· (ϕ .snd) _ _))
+            ∙ sym (IsGroupHom.pres· (ϕ .snd) _ _)
+snd (groupHom→AbelianisationGroupHom {B = B} ϕ commB) =
+  makeIsGroupHom (Abi.elimProp2 _
+    (λ _ _ → GroupStr.is-set (snd B) _ _)
+    λ a b → IsGroupHom.pres· (ϕ .snd) _ _)
 
-∃HomologyEquivalentSubComplex : ∀ {ℓ} (C : CW ℓ) (n : ℕ)
-  → ∃[ C' ∈ CW ℓ ] Σ[ ι ∈ (fst C' → fst C) ] isEquiv (Hᶜʷ→ {C = C'} {D = C} n ι .fst)
-∃HomologyEquivalentSubComplex = uncurry λ C → PT.elim (λ _ → isPropΠ λ _ → squash₁)
-  λ C n → ∣ ((fst (fst C) (suc (suc n)))
-          , {!C -- subComplex!})
-          , {!subComplex !} ∣₁
-  where
-  main : {!!}
-  main = {!!}
+isInducedAbelianisationGroupEquiv : ∀ {ℓ} (A : Group ℓ) (B : Group ℓ)
+  → ((x y : fst B) → GroupStr._·_ (snd B) x y ≡ GroupStr._·_ (snd B) y x)
+  → (f : fst A → fst B)
+  → Type ℓ
+isInducedAbelianisationGroupEquiv A B iscomm f =
+  Σ[ ishom ∈ IsGroupHom (snd A) f (snd B) ]
+    isEquiv (fst (groupHom→AbelianisationGroupHom (f , ishom) iscomm))
 
+isPropIsInducedAbelianisationGroupEquiv : ∀ {ℓ} {A : Group ℓ} {B : Group ℓ}
+  → {isc : (x y : fst B) → GroupStr._·_ (snd B) x y ≡ GroupStr._·_ (snd B) y x}
+  → {f : fst A → fst B} → isProp (isInducedAbelianisationGroupEquiv A B isc f)
+isPropIsInducedAbelianisationGroupEquiv =
+  isPropΣ (isPropIsGroupHom _ _) λ _ → isPropIsEquiv _
 
-module _ (Sskel : (n : ℕ) → CWskel ℓ-zero)
-         (S∞ : (n : ℕ) → S₊ n ≃ realise (Sskel n))
-         where
-  Sᶜʷ : (n : ℕ) → CW ℓ-zero
-  fst (Sᶜʷ n) = S₊ n
-  snd (Sᶜʷ n) = ∣ (Sskel n) , S∞ n ∣₁
+open import Hurewicz.Sn
+-- todo: update universe level after fixing it in abelianisaion file
+module _ where
+  preHurewiczMap : {n : ℕ} (X : CW ℓ-zero) (x : fst X) (f : S₊∙ (suc n) →∙ (fst X , x))
+    → GroupHom (Hᶜʷ (Sᶜʷ (suc n)) n) (Hᶜʷ X n)
+  preHurewiczMap {n = n} X x f = Hᶜʷ→ {C = Sᶜʷ (suc n)} {D = X} n (fst f)
 
-  preHurewiczMap : ∀ {ℓ} {n : ℕ} (X : CW ℓ) (x : fst X) (f : S₊∙ n →∙ (fst X , x))
-    → GroupHom (Hᶜʷ (Sᶜʷ n) n) (Hᶜʷ X n)
-  preHurewiczMap {n = n} X x f = Hᶜʷ→ {C = Sᶜʷ n} {D = X} n (fst f)
+  HurewiczMapUntrunc :  {n : ℕ} (X : CW ℓ-zero) (x : fst X)
+    (f : S₊∙ (suc n) →∙ (fst X , x)) → Hᶜʷ X n .fst
+  HurewiczMapUntrunc {n = n} X x f = preHurewiczMap X x f .fst (genHₙSⁿ n)
 
-  HurewiczMap : ∀ {ℓ} {n : ℕ} (X : CW ℓ) (x : fst X)
-    → π' n (fst X , x)
-    → GroupHom (Hᶜʷ (Sᶜʷ n) n) (Hᶜʷ X n)
-  HurewiczMap X x = ST.rec isSetGroupHom (preHurewiczMap X x)
+  HurewiczMap : {n : ℕ} (X : CW ℓ-zero) (x : fst X)
+    → π' (suc n) (fst X , x)
+    → fst (Hᶜʷ X n)
+  HurewiczMap X x = ST.rec (GroupStr.is-set (snd (Hᶜʷ X _))) (HurewiczMapUntrunc X x)
 
-  HurewiczMapAb : {!!}
-  HurewiczMapAb = {!!}
+HurewiczMapFunct : {n : ℕ} (X Y : CW ℓ-zero) (x : fst X) (y : fst Y)
+                    (f : S₊∙ (suc n) →∙ (fst X , x)) (g : (fst X , x) →∙ (fst Y , y))
+    → Hᶜʷ→ {C = X} {D = Y} n (fst g) .fst ∘ HurewiczMap X x
+    ≡ HurewiczMap Y y ∘ π'∘∙Hom' n g .fst
+HurewiczMapFunct = {!!}
+
+Hˢᵏᵉˡ-comm : ∀ {ℓ} {n : ℕ} {X : CWskel ℓ} (x y : Hˢᵏᵉˡ X n .fst)
+  → GroupStr._·_ (Hˢᵏᵉˡ X n .snd) x y ≡ GroupStr._·_ (Hˢᵏᵉˡ X n .snd) y x
+Hˢᵏᵉˡ-comm = SQ.elimProp2 (λ _ _ → GroupStr.is-set (Hˢᵏᵉˡ _ _ .snd) _ _)
+  λ a b → cong [_] (Σ≡Prop (λ _ → isSetΠ (λ _ → isSetℤ) _ _)
+    (funExt λ _ → +Comm _ _))
+
+Hᶜʷ-comm : ∀ {ℓ} {n : ℕ} (X : CW ℓ) (x y : Hᶜʷ X n .fst)
+  → GroupStr._·_ (Hᶜʷ X n .snd) x y ≡ GroupStr._·_ (Hᶜʷ X n .snd) y x
+Hᶜʷ-comm {n = n} = uncurry λ X
+  → PT.elim (λ _ → isPropΠ2 λ _ _ → GroupStr.is-set (Hᶜʷ (X , _) n .snd) _ _)
+            λ x → Hˢᵏᵉˡ-comm 
+
+HurewiczLemmas : {n : ℕ} (X : CW ℓ-zero) (x : fst X) (f : S₊∙ (suc n) →∙ (fst X , x))
+  → isInducedAbelianisationGroupEquiv
+      (π'Gr n (fst X , x)) (Hᶜʷ X n) (Hᶜʷ-comm X) (HurewiczMap X x)
+HurewiczLemmas {n} =
+  uncurry λ X → PT.elim (λ _ →
+                 isPropΠ2 λ _ _ → isPropIsInducedAbelianisationGroupEquiv)
+   (uncurry λ Xsk → EquivJ (λ X y → (x : X) →
+      S₊∙ (suc n) →∙ (X , x)
+      → isInducedAbelianisationGroupEquiv
+          (π'Gr n (X , x)) (Hᶜʷ (X , ∣ Xsk , y ∣₁) n)
+          (Hᶜʷ-comm (X , ∣ Xsk , y ∣₁)) (HurewiczMap (X , ∣ Xsk , y ∣₁) x))
+    λ x f → PT.rec {!!} {!!}
+             (CWmap→finCellMap (Sˢᵏᵉˡ (suc n)) Xsk
+             (fst f ∘ invEq (isCWSphere (suc n) .snd)) (2 +ℕ n)))
+             -- isCw x f → PT.rec {!!} {!CWmap→finCellMap!} {!!}
