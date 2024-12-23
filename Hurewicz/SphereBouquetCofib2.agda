@@ -74,6 +74,76 @@ open import Cubical.HITs.Wedge
 open import Cubical.HITs.SphereBouquet.Degree
 open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup
 
+
+module _ {ℓ} (C : CWskel ℓ) (n : ℕ) (ptC : fst C (suc n))
+         (α≡0 : (x : _) → CWskel-fields.α C (suc n) (x , ptSn n) ≡ ptC) where
+  open preboundary C n
+  open CWskel-fields C
+  pre∂-alt : SphereBouquet n (Fin (preboundary.An+1 C n)) → SphereBouquet n (Fin (preboundary.An C n))
+  pre∂-alt = fst (Bouquet≃-gen n An (α n) (e n))
+            ∘ to_cofibCW n C ∘ λ { (inl x) → ptC
+                                ; (inr x) → α (suc n) x
+                                ; (push a i) → α≡0 a (~ i)}
+
+Susp-pred∂ : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ) (ptC : fst C (suc n))
+       (ptCn : Fin (fst (C .snd) n))
+       (α≡0 : (x : _) → CWskel-fields.α C (suc n) (x , ptSn n) ≡ ptC)
+       (e≡ : CWskel-fields.e C n .fst ptC ≡ inr ptCn)
+       (x : _) → preboundary.pre∂ C n x ≡ bouquetSusp→ (pre∂-alt C n ptC α≡0) x
+Susp-pred∂ C zero ptC ptCn α≡0 e≡ (inl x) = refl
+Susp-pred∂ C zero ptC ptCn α≡0 e≡ (inr (x , base)) = refl
+Susp-pred∂ C zero ptC ptCn α≡0 e≡ (inr (x , loop i)) j = lem j i
+  where
+  open preboundary C zero
+  open CWskel-fields C
+  lem : cong (pre∂ ∘ inr ∘ (x ,_)) loop
+      ≡ λ i → bouquetSusp→ (pre∂-alt C zero ptC α≡0) (inr (x , loop i))
+  lem = cong (cong (isoSuspBouquet ∘ (suspFun isoCofBouquet)
+           ∘ (suspFun (to_cofibCW 0 C))))
+             (cong-∙∙ (δ 1 C) (push (αn+1 (x , false)))
+             (λ i → inr (invEq (e 1) ((push (x , false) ∙ sym (push (x , true))) i)))
+             (sym (push (αn+1 (x , true))))
+             ∙ (λ j → (λ i → merid (αn+1 (x , false)) (i ∧ ~ j)) ∙∙
+                    (λ i → merid (αn+1 (x , false)) (~ j ∨ i)) ∙∙ sym (merid (α 1 (x , true)))))
+          ∙ (cong-∙ (isoSuspBouquet ∘ suspFun isoCofBouquet ∘ suspFun (to 0 cofibCW C))
+             (merid (αn+1 (x , false))) (sym (merid (α 1 (x , true)))))
+      ∙ sym (cong-∙ sphereBouquetSuspFun
+               (merid (pre∂-alt C zero ptC α≡0 (inr (x , false))))
+               (sym (merid (pre∂-alt C zero ptC α≡0 (inr (x , true))))))
+      ∙ cong (cong (sphereBouquetSuspFun))
+             ( sym (cong-∙ (suspFun (pre∂-alt C zero ptC α≡0))
+                   (merid (inr (x , false))) (sym (merid (inr (x , true))))))
+      ∙ cong (cong (sphereBouquetSuspFun ∘ (suspFun (pre∂-alt C zero ptC α≡0))))
+             (sym (cong-∙ (Iso.inv (Iso-SuspBouquet-Bouquet (Fin An+1) λ _ → S₊∙ zero)
+                         ∘ inr ∘ (x ,_))
+                         (merid false) (sym (merid true))))
+Susp-pred∂ C zero ptC ptCn α≡0 e≡ (push a i) = refl
+Susp-pred∂ C (suc n) ptC ptCn α≡0 e≡ (inl x) = refl
+Susp-pred∂ C (suc n) ptC ptCn α≡0 e≡ (inr (x , north)) = refl
+Susp-pred∂ C (suc n) ptC ptCn α≡0 e≡ (inr (x , south)) = refl
+Susp-pred∂ C (suc n) ptC ptCn α≡0 e≡ (inr (x , merid a i)) j = lem j i
+  where
+  open preboundary C (suc n)
+  open CWskel-fields C
+  F = isoSuspBouquet ∘ (suspFun isoCofBouquet)
+           ∘ (suspFun (to_cofibCW (suc n) C))
+  lem : cong (pre∂ ∘ inr ∘ (x ,_)) (merid a)
+      ≡ λ i → bouquetSusp→ (pre∂-alt C (suc n) ptC α≡0) (inr (x , merid a i))
+  lem = cong-∙∙ (F ∘ δ (suc (suc n)) C)
+           (push (αn+1 (x , a)))
+                    (λ i → inr (invEq (e (2 +ℕ n)) ((push (x , a) ∙ sym (push (x , ptSn (suc n)))) i)))
+                    (sym (push (αn+1 (x , ptSn (suc n)))))
+      ∙ cong₃ _∙∙_∙∙_ refl refl
+              (cong (cong F) (cong (sym ∘ merid) (α≡0 x))
+            ∙ cong (sym ∘ Bouquet→ΩBouquetSusp (Fin An) (λ _ → S₊∙ (suc n)))
+                   (cong (Pushout→Bouquet (suc n) (snd C .fst (suc n))
+                           (snd C .snd .fst (suc n)) (snd C .snd .snd .snd (suc n)))
+                             e≡)
+            ∙ cong sym ((λ i → push ptCn ∙∙ (λ j → inr (ptCn , rCancel (merid (ptSn (suc n))) i j)) ∙∙ sym (push ptCn)) ∙ ∙∙lCancel (sym (push ptCn))))
+      ∙ sym (compPath≡compPath' _ _)
+      ∙ sym (rUnit _)
+Susp-pred∂ C (suc n) ptC ptCn α≡0 e≡ (push (x , y) i) = refl
+
 module _ {ℓ ℓ' ℓ'' ℓ'''} {A : Type ℓ} {B : Type ℓ'} {C : Type ℓ''} {D : Type ℓ'''}
   (f1 : A → B) (f2 : B → C) {g : A → D} where
   PushoutComp→IteratedPushout : Pushout (f2 ∘ f1) g → Pushout {C = Pushout f1 g} f2 inl
@@ -213,6 +283,23 @@ isContrLem* c1 n =
      ∙ compPath-filler (push (fst a , ptSn (suc n))) (sym (push a)) (~ i)) j
 
 
+{-
+inr a ≡
+      BouquetFuns.BTC (suc n) c2 (λ _ → tt)
+      (compEquiv (SphereBouquet/EqBottomMain* c1 c2 α)
+       (pathToEquiv (λ i → cofib (λ r₁ → fst r₁))))
+      a
+————————————————————————————————————————————————————————————
+a      : SphereBouquet (suc n) (Fin c2)
+-}
+
+BTC-inr : ∀ {ℓ} {Cₙ Cₙ₊₁ : Type ℓ} (n mₙ : ℕ)
+    (αₙ : Fin mₙ × S⁻ n → Cₙ)
+    (e : Cₙ₊₁ ≃ Pushout αₙ fst)
+    (t : _)
+    → Pushout→Bouquet n mₙ αₙ e {!αₙ !} ≡ {!!} -- inr {!!}
+BTC-inr = {!!}
+
 module _ (c1 c2 : ℕ) {n : ℕ} where
   SphereBouquet/Fam* : (α : SphereBouquetMap c1 c2 n)
     → (m : ℕ) → Trichotomyᵗ m (suc (suc n)) → Type
@@ -266,154 +353,69 @@ module _ (c1 c2 : ℕ) {n : ℕ} where
                (invIso (Iso-cofibFst-⋁ λ _ → S₊∙ n)))
 
 
-  SphereBouquet/EqBottom* : (α : SphereBouquetMap c1 c2 n)
-      (p : Trichotomyᵗ (suc n) (suc n)) (q : Trichotomyᵗ (suc n) (suc (suc n)))
-    → SphereBouquet (suc n) (Fin c2) ≃ Pushout (SphereBouquet/α* α (suc n) p q) fst
-  SphereBouquet/EqBottom* a (lt x) q = ⊥.rec (¬m<ᵗm x)
-  SphereBouquet/EqBottom* a (eq x) (lt x₁) = SphereBouquet/EqBottomMain* a
-  SphereBouquet/EqBottom* a (eq x) (eq x₁) = ⊥.rec (falseDichotomies.eq-eq (x , x₁))
-  SphereBouquet/EqBottom* a (eq x) (gt x₁) = ⊥.rec (falseDichotomies.eq-gt (x , x₁))
-  SphereBouquet/EqBottom* a (gt x) q = ⊥.rec (¬m<ᵗm x)
+  SphereBouquet/EqBottom* : (α : SphereBouquetMap c1 c2 n) (m : ℕ) → (m ≡ suc n) →
+      (p : Trichotomyᵗ m (suc n)) (q : Trichotomyᵗ m (suc (suc n)))
+    → SphereBouquet (suc n) (Fin c2) ≃ Pushout (SphereBouquet/α* α m p q) fst
+  SphereBouquet/EqBottom* a m m< (lt x) q = ⊥.rec (¬m<ᵗm (subst (_<ᵗ suc n) m< x))
+  SphereBouquet/EqBottom* a zero m< (eq x) (lt x₁) = ⊥.rec (snotz (sym x))
+  SphereBouquet/EqBottom* a (suc m) m< (eq x) (lt x₁) =
+    compEquiv (SphereBouquet/EqBottomMain* a)
+              (pathToEquiv λ i → cofib {A = Fin c2 × S₊ (predℕ (m< (~ i)))} {B = Fin c2} fst)
+  SphereBouquet/EqBottom* a m m< (eq x) (eq x₁) = ⊥.rec (falseDichotomies.eq-eq (x , x₁))
+  SphereBouquet/EqBottom* a m m< (eq x) (gt x₁) = ⊥.rec (falseDichotomies.eq-gt (x , x₁))
+  SphereBouquet/EqBottom* a m m< (gt x) q = ⊥.rec (¬m<ᵗm (subst (suc n <ᵗ_) m< x))
+
+  SphereBouquet/EqTop** : (m : ℕ) (α : SphereBouquetMap c1 c2 n) (p : m ≡ suc n)
+    → cofib α ≃ Pushout (α ∘ (λ x → inr (fst x , subst S₊ p (snd x)))) fst
+  SphereBouquet/EqTop** m a p =
+    compEquiv (compEquiv (symPushout _ _)
+              (pushoutEquiv _ _ _ _ (idEquiv _) (idEquiv _)
+                (invEquiv (isContr→≃Unit (isContrLem* c1 n m (sym p))))
+                (λ i x → a x)
+                λ i x → isContrLem* c1 n m (sym p) .snd (inl x) i))
+              (invEquiv (isoToEquiv
+                (Iso-PushoutComp-IteratedPushout
+                (λ x → inr (fst x , subst S₊ p (snd x))) a)))
+
+  SphereBouquet/EqTop* : (m : ℕ) (α : SphereBouquetMap c1 c2 n)
+    → suc n <ᵗ m → (p : Trichotomyᵗ m (suc n)) (q : Trichotomyᵗ m (suc (suc n)))
+    → cofib α ≃ Pushout (SphereBouquet/α* α m p q) fst
+  SphereBouquet/EqTop* (suc m) a m< (lt x) q = ⊥.rec (¬m<ᵗm (<ᵗ-trans m< x))
+  SphereBouquet/EqTop* (suc m) a m< (eq x) q = ⊥.rec (¬m<ᵗm (subst (_<ᵗ suc m) (sym x) m<))
+  SphereBouquet/EqTop* (suc m) a m< (gt x) (lt x₁) = ⊥.rec (¬squeeze (x₁ , x))
+  SphereBouquet/EqTop* (suc m) a m< (gt x) (eq x₁) = SphereBouquet/EqTop** m a (cong predℕ x₁)
+  SphereBouquet/EqTop* (suc m) a m< (gt x) (gt x₁) = isoToEquiv (PushoutEmptyFam (λ()) λ())
 
   SphereBouquet/Eq* : (m : ℕ) (α : SphereBouquetMap c1 c2 n)
        (p : Trichotomyᵗ (suc m) (suc (suc n)))
        (q : Trichotomyᵗ m (suc n)) (q' : Trichotomyᵗ m (suc (suc n)))
     → (SphereBouquet/Fam* α (suc m) p) ≃ Pushout (SphereBouquet/α* α m q q') fst
-  SphereBouquet/Eq* m a (lt x) q q' = invEquiv (isContr→≃Unit {!isContrLem* ? ? ? ?!})
-  SphereBouquet/Eq* m a (eq x) q q' = {!SphereBouquet/EqBottom* a ?!}
-  SphereBouquet/Eq* m a (gt x) q q' = {!!}
+  SphereBouquet/Eq* m a (lt x) q q' =
+    invEquiv (isContr→≃Unit (SphereBouquet/EqContr* a m x q q'))
+  SphereBouquet/Eq* m a (eq x) q q' = SphereBouquet/EqBottom* a m (cong predℕ x) q q'
+  SphereBouquet/Eq* m a (gt x) q q' = SphereBouquet/EqTop* m a x q q'
 
--- module _ {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 n)
---          (dich1 : (m : ℕ) → Trichotomyᵗ m n)
---          (dich2 : (m : ℕ) → Trichotomyᵗ m (suc n)) where
---   SphereBouquet/Fam : ℕ → Type
---   SphereBouquet/Fam zero = ⊥
---   SphereBouquet/Fam (suc m) with (dich2 m)
---   ... | lt x = Unit
---   ... | eq x = SphereBouquet (suc n) (Fin c2)
---   ... | gt x = cofib α
+  ¬SphereBouquet/Card* : (k : ℕ) (ineq : suc (suc n) <ᵗ k) (p : _) (q : _)
+    → ¬ (Fin (SphereBouquet/Card* k p q))
+  ¬SphereBouquet/Card* (suc k) ineq (eq x) q c = falseDichotomies.eq-gt (x , ineq)
+  ¬SphereBouquet/Card* (suc k) ineq (gt x) (eq x₁) c =
+    ¬m<ᵗm (subst (suc n <ᵗ_) (cong predℕ x₁) ineq)
 
---   SphereBouquet/Card : ℕ → ℕ
---   SphereBouquet/Card zero = 1
---   SphereBouquet/Card (suc m) with (dich1 m) | (dich2 m)
---   ... | lt x | s = 0
---   ... | eq x | s = c2
---   ... | gt x | lt x₁ = 0
---   ... | gt x | eq x₁ = c1
---   ... | gt x | gt x₁ = 0
+  SphereBouquet/ˢᵏᵉˡConverges : (k : ℕ) (α : SphereBouquetMap c1 c2 n)
+    → suc (suc n) <ᵗ k 
+    → (p : _) (q : _)
+    → isEquiv {B = Pushout (SphereBouquet/α* α k p q) fst} inl
+  SphereBouquet/ˢᵏᵉˡConverges k a ineq p q =
+    isoToIsEquiv (PushoutEmptyFam (¬SphereBouquet/Card* k ineq p q ∘ fst)
+                                  (¬SphereBouquet/Card* k ineq p q))
 
---   SphereBouquet/α : (m : ℕ) → Fin (SphereBouquet/Card m) × S⁻ m → SphereBouquet/Fam m
---   SphereBouquet/α  (suc m) with (dich1 m) | (dich2 m)
---   ... | lt x | t = λ()
---   ... | eq x | lt x₁ = λ _ → tt -- 
---   ... | eq x | eq x₁ = λ _ → inl tt
---   ... | eq x | gt x₁ =  λ _ → inl tt
---   ... | gt x | lt x₁ = λ()
---   ... | gt x | eq x₁ = λ x → α (inr (fst x , subst S₊ x₁ (snd x)))
---   ... | gt x | gt x₁ = λ()
-
---   SphereBouquet/EqContr : (m : ℕ) → m <ᵗ suc n → isContr (Pushout (SphereBouquet/α m) (λ r → fst r))
---   SphereBouquet/EqContr zero p = (inr fzero) , λ { (inr (zero , tt)) → refl}
---   SphereBouquet/EqContr (suc m) p with (dich1 m) | (dich2 m)
---   ... | lt x | lt x₁ = (inl tt) , λ { (inl x) → refl}
---   ... | lt x | eq x₁ = ⊥.rec (falseDichotomies.lt-eq (x , x₁))
---   ... | lt x | gt x₁ = ⊥.rec (falseDichotomies.lt-gt (x , x₁))
---   ... | eq x | q = ⊥.rec (¬m<ᵗm (subst (_<ᵗ n) x p))
---   ... | gt x | q = ⊥.rec (¬m<ᵗm (<ᵗ-trans p x))
-
---   SphereBouquet/EqBottomMain : SphereBouquet (suc n) (Fin c2)
---                              ≃ cofib {A = Fin c2 × S₊ n} {B = Fin c2} fst
---   SphereBouquet/EqBottomMain =
---     isoToEquiv 
---       (compIso (pushoutIso _ _ _ _ (idEquiv _) (idEquiv Unit)
---                   (Σ-cong-equiv-snd (λ a → isoToEquiv (IsoSucSphereSusp n)))
---                   refl
---                   (funExt (λ a → ΣPathP (refl , IsoSucSphereSusp∙' n))))
---                (invIso (Iso-cofibFst-⋁ λ _ → S₊∙ n)))
-
---   SphereBouquet/EqBottom : SphereBouquet (suc n) (Fin c2) ≃ Pushout (SphereBouquet/α (suc n)) fst
---   SphereBouquet/EqBottom with (dich1 n) | (dich2 n)
---   ... | lt x | q = ⊥.rec (¬m<ᵗm x)
---   ... | eq x | lt x₁ = SphereBouquet/EqBottomMain
---   ... | eq x | eq x₁ = ⊥.rec (falseDichotomies.eq-eq (x , x₁))
---   ... | eq x | gt x₁ = ⊥.rec (falseDichotomies.eq-gt (x , x₁))
---   ... | gt x | q = ⊥.rec (¬m<ᵗm x)
-
---   isContrLem : (m : ℕ) (x : suc n ≡ m)
---     → isContr (Pushout  {A = Fin c1 × S₊ m} {B = SphereBouquet (suc n) (Fin c1)}
---                          (λ x₂ → inr (fst x₂ , subst S₊ (sym x) (snd x₂))) fst)
---   isContrLem =
---     J> subst isContr (λ i → Pushout {B = SphereBouquet (suc n) (Fin c1)}
---                        (λ x₂ → inr (fst x₂ , transportRefl (snd x₂) (~ i))) fst)
---        main
---      where
---      main : isContr (Pushout inr fst)
---      fst main = inl (inl tt)
---      snd main (inl (inl x)) = refl
---      snd main (inl (inr x)) =
---        (λ i → inl (push (fst x) i))
---         ∙ push (fst x , ptSn (suc n))
---         ∙ sym (push x)
---      snd main (inl (push a i)) j = lem i j
---        where
---        lem : Square refl ((λ i₁ → inl (push a i₁))
---                         ∙ push (a , ptSn (suc n))
---                         ∙ sym (push (a , ptSn (suc n))))
---                     refl λ i → inl (push a i)
---        lem = (λ i j → inl (push a (i ∧ j)))
---           ▷ (rUnit _
---            ∙ cong ((λ i₁ → inl (push a i₁)) ∙_)
---                   (sym (rCancel (push (a , ptSn (suc n))))))
---      snd main (inr x) = (λ i → inl (push x i)) ∙ push (x , ptSn (suc n))
---      snd main (push a i) j =
---        ((λ i₁ → inl (push (fst a) i₁))
---        ∙ compPath-filler (push (fst a , ptSn (suc n))) (sym (push a)) (~ i)) j
-  
---   SphereBouquet/EqTop : (m : ℕ) → suc n <ᵗ m → cofib α ≃ Pushout (SphereBouquet/α m) fst 
---   SphereBouquet/EqTop (suc m) p with (dich1 m) | (dich2 m)
---   ... | lt x | a = ⊥.rec (¬m<ᵗm (<ᵗ-trans x p))
---   ... | eq x | a = ⊥.rec (¬m<ᵗm (subst (_<ᵗ m) (sym x) p))
---   ... | gt x | lt x₁ = ⊥.rec (¬squeeze (x₁ , x))
---   ... | gt x | eq x₁ =
---       compEquiv (compEquiv (symPushout _ _)
---         (pushoutEquiv _ _ _ _
---           (idEquiv _) (idEquiv _) (invEquiv (isContr→≃Unit (isContrLem m (sym x₁))))
---           (λ _ x → α x)
---           λ i x → isContrLem m (sym x₁) .snd (inl x) i))
---         (invEquiv (isoToEquiv (Iso-PushoutComp-IteratedPushout
---           (λ x → inr (fst x , subst S₊ x₁ (snd x))) α)))
---   ... | gt x | gt x₁ = isoToEquiv (PushoutEmptyFam (λ()) λ())
-
---   SphereBouquet/Eq : (m : ℕ) → (SphereBouquet/Fam (suc m))
---                                ≃ Pushout (SphereBouquet/α m) fst
---   SphereBouquet/Eq m with (dich2 m)
---   ... | lt x = invEquiv (isContr→≃Unit (SphereBouquet/EqContr m x))
---   ... | eq x = subst (λ m → SphereBouquet (suc n) (Fin c2)
---                            ≃ Pushout (SphereBouquet/α m) fst)
---                      (sym x)
---                      SphereBouquet/EqBottom
---   ... | gt x = SphereBouquet/EqTop m x
-
---   SphereBouquet/ˢᵏᵉˡ : (m : ℕ) → CWskel ℓ-zero
---   fst (SphereBouquet/ˢᵏᵉˡ m) = SphereBouquet/Fam
---   fst (snd (SphereBouquet/ˢᵏᵉˡ m)) = SphereBouquet/Card
---   fst (snd (snd (SphereBouquet/ˢᵏᵉˡ m))) = SphereBouquet/α
---   fst (snd (snd (snd (SphereBouquet/ˢᵏᵉˡ m)))) x = x
---   snd (snd (snd (snd (SphereBouquet/ˢᵏᵉˡ m)))) = SphereBouquet/Eq
-
---   SphereBouquet/ˢᵏᵉˡConverges : (k : ℕ)
---     → isEquiv {B = Pushout (SphereBouquet/α (k +ℕ suc (suc (suc n)))) fst} inl
---   SphereBouquet/ˢᵏᵉˡConverges k =
---     isoToIsEquiv (PushoutEmptyFam (l (k +ℕ (3 +ℕ n)) (<→<ᵗ (k , refl)) ∘ fst)
---                                   (l (k +ℕ (3 +ℕ n)) (<→<ᵗ (k , refl))))
---     where
---     l : (m : ℕ) → suc (suc n) <ᵗ m → ¬ Fin (SphereBouquet/Card m)
---     l (suc m) p with (dich1 m) | (dich2 m)
---     ... | lt x | b = snd
---     ... | eq x | b = λ _ → falseDichotomies.eq-gt (x , p)
---     ... | gt x | lt x₁ = snd
---     ... | gt x | eq x₁ = λ _ → ¬m<ᵗm (subst (suc n <ᵗ_) x₁ p)
---     ... | gt x | gt x₁ = snd
+  SphereBouquet/FamTopElement* : (k : ℕ) (α : SphereBouquetMap c1 c2 n)
+    → suc (suc n) <ᵗ k → (p : _)
+    → cofib α ≃ (SphereBouquet/Fam* α k p)
+  SphereBouquet/FamTopElement* (suc k) α ineq (lt x) = ⊥.rec (¬m<ᵗm (<ᵗ-trans x ineq))
+  SphereBouquet/FamTopElement* (suc k) α ineq (eq x) =
+    ⊥.rec (¬m<ᵗm (subst (_<ᵗ k) (cong predℕ (sym x)) ineq))
+  SphereBouquet/FamTopElement* (suc k) α ineq (gt x) = idEquiv _
 
 --   SphereBouquet/FamTopElement : cofib α ≃ SphereBouquet/Fam (3 +ℕ n)
 --   SphereBouquet/FamTopElement with (dich2 (suc (suc n)))
@@ -421,37 +423,238 @@ module _ (c1 c2 : ℕ) {n : ℕ} where
 --   ... | eq x = ⊥.rec (falseDichotomies.eq-eq (x , refl))
 --   ... | gt x = idEquiv _
 
---   isCWSphereBouquet/ : (n : ℕ) → isCW (cofib α)
---   fst (isCWSphereBouquet/ n) = SphereBouquet/ˢᵏᵉˡ n
---   snd (isCWSphereBouquet/ m) =
---     compEquiv SphereBouquet/FamTopElement
---       (isoToEquiv (converges→ColimIso (suc (suc (suc n)))
---       λ k → compEquiv (inl , SphereBouquet/ˢᵏᵉˡConverges k)
---         (invEquiv (SphereBouquet/Eq _)) .snd))
 
---   SphereBouquet/ᶜʷ : CW ℓ-zero
---   fst SphereBouquet/ᶜʷ = cofib α
---   snd SphereBouquet/ᶜʷ = ∣ isCWSphereBouquet/ n ∣₁
 
---   open import Cubical.Algebra.Group.Subgroup
---   ℤ[]/ImSphereMap : Group₀
---   ℤ[]/ImSphereMap = (AbGroup→Group ℤ[Fin c2 ])
---                   / (imSubgroup (bouquetDegree α)
---                   , isNormalIm (bouquetDegree α)
---                     λ _ _ → AbGroupStr.+Comm (snd ℤ[Fin c2 ]) _ _)
+module _ {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 n) where
+  private
+    α∙ : ∥ α (inl tt) ≡ inl tt ∥₁
+    α∙ = isConnectedSphereBouquet _
 
---   ℤ[]/ImSphereMap→HₙSphereBouquetⁿ/ : ℤ[]/ImSphereMap .fst → Hˢᵏᵉˡ (SphereBouquet/ˢᵏᵉˡ n) n .fst
---   ℤ[]/ImSphereMap→HₙSphereBouquetⁿ/ = SQ.elim {!!}
---     (λ f → {!!})
---     {!!}
+  SphereBouquet/ˢᵏᵉˡ : CWskel ℓ-zero
+  fst SphereBouquet/ˢᵏᵉˡ m = SphereBouquet/Fam* c1 c2 α m (m ≟ᵗ (suc (suc n)))
+  fst (snd SphereBouquet/ˢᵏᵉˡ) m =
+    SphereBouquet/Card* c1 c2 m (m ≟ᵗ suc n) (m ≟ᵗ suc (suc n))
+  fst (snd (snd SphereBouquet/ˢᵏᵉˡ)) m =
+    SphereBouquet/α* c1 c2 α m (m ≟ᵗ suc n) (m ≟ᵗ suc (suc n))
+  fst (snd (snd (snd SphereBouquet/ˢᵏᵉˡ))) ()
+  snd (snd (snd (snd SphereBouquet/ˢᵏᵉˡ))) m =
+    SphereBouquet/Eq* c1 c2 m α (suc m ≟ᵗ suc (suc n)) (m ≟ᵗ suc n) (m ≟ᵗ suc (suc n))
 
---   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' : (Fin (SphereBouquet/Card (suc n)) → ℤ) → ℤ[Fin c2 ] .fst
---   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' with dich1 n | (dich2 (suc n))
---   ... | lt x | t = λ _ _ → 0
---   ... | eq x | lt x₁ = λ f → f
---   ... | eq x | eq x₁ = λ f → f
---   ... | eq x | gt x₁ = λ f → f
---   ... | gt x | t = λ _ _ → 0
+  isCWSphereBouquet/ : isCW (cofib α)
+  fst isCWSphereBouquet/ = SphereBouquet/ˢᵏᵉˡ
+  snd isCWSphereBouquet/ = 
+    compEquiv (SphereBouquet/FamTopElement* c1 c2 (suc (suc (suc n))) α <ᵗsucm
+              ((suc (suc (suc n))) ≟ᵗ (suc (suc n))))
+      (isoToEquiv (converges→ColimIso (suc (suc (suc n)))
+      λ k → compEquiv (inl , SphereBouquet/ˢᵏᵉˡConverges c1 c2 (k +ℕ suc (suc (suc n))) α
+                               (<→<ᵗ (k , refl))
+                               ((k +ℕ suc (suc (suc n))) ≟ᵗ suc n)
+                               ((k +ℕ suc (suc (suc n))) ≟ᵗ suc (suc n)))
+        (invEquiv (SphereBouquet/Eq* c1 c2 (k +ℕ suc (suc (suc n)))
+                  α
+                  ((suc (k +ℕ suc (suc (suc n)))) ≟ᵗ suc (suc n))
+                  ((k +ℕ suc (suc (suc n))) ≟ᵗ suc n) _)) .snd))
+
+  SphereBouquet/ᶜʷ : CW ℓ-zero
+  fst SphereBouquet/ᶜʷ = cofib α
+  snd SphereBouquet/ᶜʷ = ∣ isCWSphereBouquet/ ∣₁
+
+  open import Cubical.Algebra.Group.Subgroup
+  ℤ[]/ImSphereMap : Group₀
+  ℤ[]/ImSphereMap = (AbGroup→Group ℤ[Fin c2 ])
+                  / (imSubgroup (bouquetDegree α)
+                  , isNormalIm (bouquetDegree α)
+                    λ _ _ → AbGroupStr.+Comm (snd ℤ[Fin c2 ]) _ _)
+
+  HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' : (p : Trichotomyᵗ (suc n) (suc n)) (q :  Trichotomyᵗ (suc n) (suc (suc n)))
+    → (Fin (SphereBouquet/Card* c1 c2 (suc n) p q) → ℤ) → ℤ[Fin c2 ] .fst
+  HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (lt x) q = λ _ _ → 0
+  HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (eq x) (lt x₁) = λ f → f
+  HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (eq x) (eq x₁) = λ f → f
+  HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (eq x) (gt x₁) = λ f → f
+  HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (gt x) q = λ _ _ → 0
+  {- with dich1 n | (dich2 (suc n))
+  ... | lt x | t = λ _ _ → 0
+  ... | eq x | lt x₁ = λ f → f
+  ... | eq x | eq x₁ = λ f → f
+  ... | eq x | gt x₁ = λ f → f
+  ... | gt x | t = λ _ _ → 0
+-}
+
+  HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap : Hˢᵏᵉˡ SphereBouquet/ˢᵏᵉˡ n .fst → ℤ[]/ImSphereMap .fst
+  HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap =
+    SQ.elim {!!}
+      (λ f → [ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (suc n ≟ᵗ suc n) (suc n ≟ᵗ suc (suc n)) (fst f) ])
+      λ {(a , ak) (b , bk) → PT.elim {!!} λ {(t , s) → main a b ak bk (t , cong fst s)}}
+      where
+{-
+-- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh* :
+-- --     (a b : Fin (SphereBouquet/Card (suc n)) → ℤ)
+-- --     → ∂ (SphereBouquet/ˢᵏᵉˡ n) n .fst a ≡ (λ _ → 0)
+-- --     → ∂ (SphereBouquet/ˢᵏᵉˡ n) n .fst b ≡ (λ _ → 0)
+-- --     → (r : Σ[ t ∈ (Fin (SphereBouquet/Card (suc (suc n))) → ℤ) ]
+-- --              ∂ (SphereBouquet/ˢᵏᵉˡ n) (suc n) .fst t ≡ λ q → a q - b q)
+-- --     → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun a
+-- --      ≡ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun b
+-}
+
+      card1≡ : (p : _) (q : _) → c1 ≡ SphereBouquet/Card* c1 c2 {n = n} (suc (suc n)) p q
+      card1≡ (lt x) q = ⊥.rec (¬-suc-n<ᵗn x)
+      card1≡ (eq x) q = ⊥.rec (falseDichotomies.eq-eq (refl , (cong predℕ (sym x))))
+      card1≡ (gt x) (lt x₁) = ⊥.rec (¬m<ᵗm x₁)
+      card1≡ (gt x) (eq x₁) = refl
+      card1≡ (gt x) (gt x₁) = ⊥.rec (¬m<ᵗm x₁)
+
+      card2≡ : (p : _) (q : _) → c2 ≡ SphereBouquet/Card* c1 c2 {n = n} (suc n) p q
+      card2≡ (lt x) q = ⊥.rec (¬m<ᵗm x)
+      card2≡ (eq x) q = refl
+      card2≡ (gt x) q = ⊥.rec (¬m<ᵗm x)
+
+      toho : PathP (λ i → SphereBouquet (suc (suc n)) (Fin (card1≡ (suc (suc n) ≟ᵗ suc n) (suc (suc n) ≟ᵗ suc (suc n)) i))
+                        → SphereBouquet (suc (suc n)) (Fin (card2≡ (suc n ≟ᵗ suc n) (suc n ≟ᵗ suc (suc n)) i)))
+                   (bouquetSusp→ α)
+                   (preboundary.pre∂ SphereBouquet/ˢᵏᵉˡ (suc n))
+      toho with (n ≟ᵗ n) | (n ≟ᵗ suc n) | (suc n ≟ᵗ n)
+      ... | lt x | b | c = ⊥.rec (¬m<ᵗm x)
+      ... | eq x | lt x₁ | lt x₂ = ⊥.rec (¬-suc-n<ᵗn x₂)
+      ... | eq x | lt x₁ | eq x₂ = ⊥.rec (falseDichotomies.eq-eq (x , sym x₂))
+      ... | eq x | lt x₁ | gt x₂ = {!!}
+      ... | eq x | eq x₁ | c = ⊥.rec (falseDichotomies.eq-eq (x , x₁))
+      ... | eq x | gt x₁ | c = ⊥.rec (¬-suc-n<ᵗn x₁)
+      ... | gt x | b | c = ⊥.rec (¬m<ᵗm x)
+
+
+      module _ (a b : Fin (SphereBouquet/Card* c1 c2 (suc n) (suc n ≟ᵗ suc n) (suc n ≟ᵗ suc (suc n))) → ℤ)
+               (ak : ∂ SphereBouquet/ˢᵏᵉˡ n .fst a ≡ (λ _ → 0)) (bk : ∂ SphereBouquet/ˢᵏᵉˡ n .fst b ≡ (λ _ → 0))
+               (r : Σ[ t ∈ (Fin (SphereBouquet/Card* c1 c2 (suc (suc n)) (suc (suc n) ≟ᵗ suc n) (suc (suc n) ≟ᵗ suc (suc n))) → ℤ) ]
+                      ∂ SphereBouquet/ˢᵏᵉˡ (suc n) .fst t ≡ λ q → a q - b q) where
+
+        cons : Σ[ a ∈ fst SphereBouquet/ˢᵏᵉˡ (suc (suc n)) ]
+                 Σ[ b ∈ Fin (fst (SphereBouquet/ˢᵏᵉˡ .snd) (suc n)) ]
+                 ((x : _) → CWskel-fields.α SphereBouquet/ˢᵏᵉˡ (suc (suc n)) (x , ptSn (suc n))  ≡ a)
+               × (CWskel-fields.e SphereBouquet/ˢᵏᵉˡ (suc n) .fst a ≡ inr b)
+        cons with (n ≟ᵗ n) | (n ≟ᵗ suc n)
+        ... | lt x | q = ⊥.rec (¬m<ᵗm x)
+        ... | eq x | lt x₁ = (inl tt) , ({!!} , {!!} , {!!})
+        ... | eq x | eq x₁ = ⊥.rec (falseDichotomies.eq-eq (x , x₁))
+        ... | eq x | gt x₁ = ⊥.rec (falseDichotomies.eq-gt (x , x₁))
+        ... | gt x | q = ⊥.rec (¬m<ᵗm x)
+
+        lem* = Susp-pred∂ SphereBouquet/ˢᵏᵉˡ (suc n) (fst cons)
+                          (fst (snd cons))
+                          (snd (snd cons) .fst) (snd (snd cons) .snd)
+
+        main : Path (ℤ[]/ImSphereMap .fst)
+                 [ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (suc n ≟ᵗ suc n) (suc n ≟ᵗ suc (suc n)) a ]
+                [ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (suc n ≟ᵗ suc n) (suc n ≟ᵗ suc (suc n)) b ]
+        main  with (n ≟ᵗ n) | (n ≟ᵗ suc n) | (suc n ≟ᵗ n)
+        ... | lt x | st | ah = ⊥.rec (¬m<ᵗm x)
+        ... | eq x | lt x₁ | lt x₂ = ⊥.rec (¬-suc-n<ᵗn x₂)
+        ... | eq x | lt x₁ | eq x₂ = ⊥.rec (falseDichotomies.eq-eq (x , sym x₂))
+        ... | eq x | lt x₁ | gt x₂ = PT.rec (squash/ _ _) (λ apt →
+          eq/ _ _ ∣ (fst r) , ((λ i → bouquetDegree α .fst (fst r))
+                            ∙ funExt⁻ (cong fst (bouquetDegreeSusp α)) (fst r) -- preboundary.An+1 SphereBouquet/ˢᵏᵉˡ (suc n)
+                            ∙ λ i → bouquetDegree (M {!!} x (isSetℕ _ _ refl x) (~ i)) .fst (fst r)) ∙ snd r ∣₁) α∙
+          where
+          -- MO : (x : _) → (Iso.fun sphereBouquetSuspIso
+          --   ∘ suspFun (Iso.fun (BouquetIso-gen (suc n) c2
+          --               (λ _ → tt)
+          --               (SphereBouquet/EqBottomMain* c1 c2 α)))
+          --  ∘ suspFun inr
+          --  ∘ δ-pre ((invEq (SphereBouquet/EqTop** c1 c2 (suc n) α refl) ∘ inl))
+          --   ∘ Iso.inv (BouquetIso-gen (suc (suc n)) c1
+          --       (λ x₃ → α (inr (fst x₃ , subst (S₊ ∘ suc) refl (snd x₃))))
+          --       (SphereBouquet/EqTop** c1 c2 (suc n) α refl))) x ≡ bouquetSusp→ α x
+          -- MO (inl x) = refl
+          -- MO (inr (x , north)) = refl
+          -- MO (inr (x , south)) = refl
+          -- MO (inr (x , merid a i)) = {!!}
+          -- MO (push a i) = refl
+
+          module _ (x : n ≡ n) where
+            FIs : Iso _ _
+            FIs = (BouquetIso-gen (suc n) c2
+                          (λ _ → tt)
+                          (compEquiv (SphereBouquet/EqBottomMain* c1 c2 α)
+                          (pathToEquiv (λ i → cofib {A = Fin c2 × S₊ (x (~ i))} fst))))
+
+            F2' = Iso.fun (BouquetIso-gen (suc n) c2
+                          (λ _ → tt)
+                          (compEquiv (SphereBouquet/EqBottomMain* c1 c2 α)
+                          (pathToEquiv (λ i → cofib {A = Fin c2 × S₊ (x (~ i))} fst))))
+                          
+            F1 = Iso.fun sphereBouquetSuspIso
+            F2 = suspFun (Iso.fun (BouquetIso-gen (suc n) c2
+                          (λ _ → tt)
+                          (compEquiv (SphereBouquet/EqBottomMain* c1 c2 α)
+                            (pathToEquiv (λ i → cofib {A = Fin c2 × S₊ (x (~ i))} fst)))))
+            F3 = suspFun inr
+            F4 = δ-pre ((invEq (SphereBouquet/EqTop** c1 c2 (suc n) α (cong suc x)) ∘ inl))
+            F5 = F1 ∘ F2 ∘ F3 ∘ F4
+            F5' = F1 ∘ F2 ∘ F3
+
+          F2'help : {!!}
+          F2'help = {!Pushout→Bouquet (suc n) c2 (λ _ → tt)
+(compEquiv (SphereBouquet/EqBottomMain* c1 c2 α)
+ (pathToEquiv (λ i → cofib (λ r₁ → fst r₁))))
+(Cubical.HITs.Pushout.Base.transpPushout (λ i _ → tt)
+ (λ i r₁ → fst r₁) i0
+ (⋁→cofibFst (λ _ → S₊∙ n)
+  (Cubical.HITs.Pushout.Properties.pushoutIso→ (λ _ → tt)
+   (λ z → z , ptSn (suc n)) (λ _ → tt) (λ z → z , north)
+   (idEquiv (Fin c2)) (idEquiv Unit)
+   (Σ-cong-equiv-snd (λ a₁ → isoToEquiv (IsoSucSphereSusp n)))
+   (λ _ a₁ → tt)
+   (funExt (λ a₁ → ΣPathP ((λ _ → a₁) , IsoSucSphereSusp∙' n))) a)))!}
+      
+          F2'≡id : (a : _) → F2' refl (inr a) ≡ a
+          F2'≡id a = (cong (Pushout→Bouquet (suc n) c2 (λ _ → tt)
+              (compEquiv (SphereBouquet/EqBottomMain* c1 c2 α)
+               (pathToEquiv (λ i → cofib (λ r₁ → fst r₁))))) (transportRefl {!a!}) ∙ {!!})
+                   ∙ {!Iso.inv (FIs refl) a!}
+
+          MaIn : (α (inl tt) ≡ inl tt) → (x : Fin c1) (a : S₊ (suc n))
+            → cong (F5 refl)
+                   (push (α (inr (x , transport refl a)))
+                   ∙∙ (λ i → inr (invEq (SphereBouquet/EqTop** c1 c2 (suc n) α refl)
+                               ((push (x , a) ∙ sym (push (x , ptSn (suc n)))) i)))
+                   ∙∙ sym (push (α (inr (x , transport refl (ptSn (suc n)))))))
+                   ≡ Bouquet→ΩBouquetSusp (Fin c2) (λ _ → S₊∙ (suc n)) (α (inr (x , a)))
+          MaIn apt x a = cong-∙∙ (F5 refl) _ _ _
+                   ∙ cong₃ _∙∙_∙∙_
+                           (λ i → Bouquet→ΩBouquetSusp (Fin c2) (λ _ → S₊∙ (suc n))
+                                     (F2' refl (inr (α (inr (x , transportRefl a i))))))
+                           refl
+                           ((λ j i → F5 refl (push (((cong α ((λ j → inr (x , transportRefl (ptSn (suc n)) j))
+                                                             ∙  sym (push x)) ∙ apt) j)) (~ i))))
+                          ∙ (sym (compPath≡compPath' _ _) ∙ sym (rUnit _))
+                   ∙ cong (Bouquet→ΩBouquetSusp (Fin c2) (λ _ → S₊∙ (suc n)))
+                          (F2'≡id (α (inr (x , a))))
+
+          M : (α (inl tt) ≡ inl tt) → (x : _) → refl ≡ x
+            → F1 x ∘ F2 x ∘ F3 x ∘ F4 x
+            ∘ Iso.inv (BouquetIso-gen (suc (suc n)) c1 (λ x₃ → α (inr (fst x₃ , subst (S₊ ∘ suc) x (snd x₃))))
+                (SphereBouquet/EqTop** c1 c2 (suc n) α (cong suc x)))
+            ≡ bouquetSusp→ α 
+          M = {!!}
+          -- J> funExt λ { (inl x) → refl
+          --                 ; (inr (x , north)) → refl
+          --                 ; (inr (x , south)) → refl
+          --                 ; (inr (x , merid a i)) j → MaIn x a j i
+          --                 ; (push a i) → refl}
+          bouquetDegreeEq : ∀ {a b c : ℕ} {α β : SphereBouquet a (Fin b) → SphereBouquet a (Fin c)} → α ≡ β → (r : fst ℤ[Fin b ]) → bouquetDegree α .fst r ≡ bouquetDegree β .fst r
+          bouquetDegreeEq = {!!}
+          lem : bouquetDegree α ≡ bouquetDegree {!!}
+          lem = {!!}
+        ... | eq x | eq x₁ | ah = ⊥.rec (falseDichotomies.eq-eq (x , x₁))
+        ... | eq x | gt x₁ | ah = ⊥.rec (¬-suc-n<ᵗn x₁)
+        ... | gt x | st | ah = ⊥.rec (¬m<ᵗm x)
+{-
+  ℤ[]/ImSphereMap→HₙSphereBouquetⁿ/ : ℤ[]/ImSphereMap .fst → Hˢᵏᵉˡ SphereBouquet/ˢᵏᵉˡ n .fst
+  ℤ[]/ImSphereMap→HₙSphereBouquetⁿ/ = SQ.elim {!!}
+    (λ f → [ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' {!f!} {!!} f , {!!} ])
+    {!!}
+-}
 
 --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres- : (f : _) (a : _)
 --     → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (-_ ∘ f) a
@@ -463,187 +666,94 @@ module _ (c1 c2 : ℕ) {n : ℕ} where
 --   ... | eq x | gt x₁ = refl
 --   ... | gt x | q = refl
 
---   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres+ : (f g : _) (a : _)
---     → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (λ x → f x + g x) a
---     ≡ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' f a + HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' g a
---   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres+ f g a with dich1 n | (dich2 (suc n))
---   ... | lt x | q = refl
---   ... | eq x | lt x₁ = refl
---   ... | eq x | eq x₁ = refl
---   ... | eq x | gt x₁ = refl
---   ... | gt x | q = refl
+-- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres+ : (f g : _) (a : _)
+-- --     → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (λ x → f x + g x) a
+-- --     ≡ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' f a + HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' g a
+-- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres+ f g a with dich1 n | (dich2 (suc n))
+-- --   ... | lt x | q = refl
+-- --   ... | eq x | lt x₁ = refl
+-- --   ... | eq x | eq x₁ = refl
+-- --   ... | eq x | gt x₁ = refl
+-- --   ... | gt x | q = refl
 
 
---   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun : (Fin (SphereBouquet/Card (suc n)) → ℤ) → ℤ[]/ImSphereMap .fst
---   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun = [_] ∘ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'
+-- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun : (Fin (SphereBouquet/Card (suc n)) → ℤ) → ℤ[]/ImSphereMap .fst
+-- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun = [_] ∘ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'
 
---   SphereBouquet/Card2≡ : SphereBouquet/Card (suc n) ≡ c2
---   SphereBouquet/Card2≡ with  dich1 n | (dich2 (suc n))
---   ... | lt x | q = ⊥.rec (¬m<ᵗm x)
---   ... | eq x | lt x₁ = refl
---   ... | eq x | eq x₁ = refl
---   ... | eq x | gt x₁ = refl
---   ... | gt x | q = ⊥.rec (¬m<ᵗm x)
+-- --   SphereBouquet/Card2≡ : SphereBouquet/Card (suc n) ≡ c2
+-- --   SphereBouquet/Card2≡ with  dich1 n | (dich2 (suc n))
+-- --   ... | lt x | q = ⊥.rec (¬m<ᵗm x)
+-- --   ... | eq x | lt x₁ = refl
+-- --   ... | eq x | eq x₁ = refl
+-- --   ... | eq x | gt x₁ = refl
+-- --   ... | gt x | q = ⊥.rec (¬m<ᵗm x)
 
---   SphereBouquet/Card1≡ : SphereBouquet/Card (suc (suc n)) ≡ c1
---   SphereBouquet/Card1≡ with dich1 (suc n) | dich2 (suc n)
---   ... | p | lt x = ⊥.rec (¬m<ᵗm x)
---   ... | lt x₁ | eq x = ⊥.rec (¬-suc-n<ᵗn x₁)
---   ... | eq x₁ | eq x = ⊥.rec (falseDichotomies.eq-eq (x₁ , refl))
---   ... | gt x₁ | eq x = refl
---   ... | p | gt x = ⊥.rec (¬m<ᵗm x)
+-- --   SphereBouquet/Card1≡ : SphereBouquet/Card (suc (suc n)) ≡ c1
+-- --   SphereBouquet/Card1≡ with dich1 (suc n) | dich2 (suc n)
+-- --   ... | p | lt x = ⊥.rec (¬m<ᵗm x)
+-- --   ... | lt x₁ | eq x = ⊥.rec (¬-suc-n<ᵗn x₁)
+-- --   ... | eq x₁ | eq x = ⊥.rec (falseDichotomies.eq-eq (x₁ , refl))
+-- --   ... | gt x₁ | eq x = refl
+-- --   ... | p | gt x = ⊥.rec (¬m<ᵗm x)
 
---   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'≡transport :
---     HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'
---     ≡ subst (λ p → Fin p → ℤ) SphereBouquet/Card2≡
---   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'≡transport with dich1 n | dich2 (suc n)
---   ... | lt x | q = ⊥.rec (¬m<ᵗm x)
---   ... | eq x | lt x₁ = funExt λ _ → sym (transportRefl _)
---   ... | eq x | eq x₁ = funExt λ _ → sym (transportRefl _)
---   ... | eq x | gt x₁ = funExt λ _ → sym (transportRefl _)
---   ... | gt x | q = ⊥.rec (¬m<ᵗm x)
+-- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'≡transport :
+-- --     HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'
+-- --     ≡ subst (λ p → Fin p → ℤ) SphereBouquet/Card2≡
+-- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'≡transport with dich1 n | dich2 (suc n)
+-- --   ... | lt x | q = ⊥.rec (¬m<ᵗm x)
+-- --   ... | eq x | lt x₁ = funExt λ _ → sym (transportRefl _)
+-- --   ... | eq x | eq x₁ = funExt λ _ → sym (transportRefl _)
+-- --   ... | eq x | gt x₁ = funExt λ _ → sym (transportRefl _)
+-- --   ... | gt x | q = ⊥.rec (¬m<ᵗm x)
 
---   α↑ = subst2 (λ p q → SphereBouquet (suc n) (Fin p)
---                                      → SphereBouquet (suc n) (Fin q))
---                               (sym SphereBouquet/Card1≡)
---                               (sym SphereBouquet/Card2≡) α
-
-
---   -- l2 : bouquetSusp→ α↑ ≡ preboundary.pre∂ (SphereBouquet/ˢᵏᵉˡ n) (suc n)
---   -- l2 with dich1 n | dich2 n
---   -- ... | s | t = ?
-
---   T0 : SphereBouquet/Fam (suc (suc n)) ≡ SphereBouquet (suc n) (Fin c2)
---   T0 with (dich2 (suc n))
---   ... | lt x = ⊥.rec (¬m<ᵗm x)
---   ... | eq x = refl
---   ... | gt x = ⊥.rec (¬m<ᵗm x)
-
---   T0' : SphereBouquet/Fam (suc (suc (suc n))) ≡ cofib α
---   T0' with (dich2 (suc (suc n)))
---   ... | lt x = ⊥.rec (¬-suc-n<ᵗn x)
---   ... | eq x = ⊥.rec (falseDichotomies.eq-eq (refl , sym x))
---   ... | gt x = refl
-
---   T1 : PathP (λ i → Fin (SphereBouquet/Card1≡ i) × S₊ (suc n) → T0 i) (SphereBouquet/α (suc (suc n))) (α ∘ inr)
---   T1 with dich1 (suc n)  | dich2 (suc n)
---   ... | q | lt x = ⊥.rec (¬m<ᵗm x)
---   ... | lt x₁ | eq x = ⊥.rec (¬-suc-n<ᵗn x₁)
---   ... | eq x₁ | eq x = ⊥.rec (falseDichotomies.eq-eq (refl , sym x₁))
---   ... | gt x₁ | eq x = λ i s → α (inr (fst s , ((λ i → subst S₊ (isSetℕ _ _ x refl i) (snd s)) ∙ transportRefl (snd s)) i))
---   ... | q | gt x = ⊥.rec (¬m<ᵗm x)
-
---   T2 : PathP (λ i → T0' i ≃ Pushout (T1 i) fst) (SphereBouquet/Eq (suc (suc n))) {!preboundary.isoCofBouquet!}
---   {- (compEquiv (compEquiv (symPushout _ _)
---         (pushoutEquiv _ _ _ _
---           (idEquiv _) (idEquiv _) (invEquiv (isContr→≃Unit (isContrLem (suc n) {!refl!})))
---           (λ _ x → α x)
---           λ i x → isContrLem {!!} (sym {!!}) .snd (inl x) i))
---         (invEquiv (isoToEquiv (Iso-PushoutComp-IteratedPushout
---           (λ x → inr x) α))))
---           -}
---   T2 = {!SphereBouquet/Eq (suc (suc n))!}
-
---   QQ : (i : I) → _
---   QQ i = BouquetFuns.BTC (suc (suc n))
---                         (SphereBouquet/Card1≡ i)
---                         (T1 i)
---                         {!!} -- (SphereBouquet/Eq (suc (suc n)))
-
---   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh* :
---     (a b : Fin (SphereBouquet/Card (suc n)) → ℤ)
---     → ∂ (SphereBouquet/ˢᵏᵉˡ n) n .fst a ≡ (λ _ → 0)
---     → ∂ (SphereBouquet/ˢᵏᵉˡ n) n .fst b ≡ (λ _ → 0)
---     → (r : Σ[ t ∈ (Fin (SphereBouquet/Card (suc (suc n))) → ℤ) ]
---              ∂ (SphereBouquet/ˢᵏᵉˡ n) (suc n) .fst t ≡ λ q → a q - b q)
---     → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun a
---      ≡ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun b
---   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh* a b aker bker (t , q) =
---     eq/ _ _ ∣ (subst (λ p → Fin p → ℤ) SphereBouquet/Card1≡ t)
---            , (λ i → transp (λ j → Fin (SphereBouquet/Card2≡ (j ∨ ~ i)) → ℤ) (~ i)
---                       (bouquetDegree
---                         (transp (λ j → SphereBouquet (suc n) (Fin (SphereBouquet/Card1≡ (~ j ∨ ~ i)))
---                                      → SphereBouquet (suc n) (Fin (SphereBouquet/Card2≡ (~ j ∨ ~ i))))
---                          (~ i) α) .fst
---                         (transp (λ j → Fin (SphereBouquet/Card1≡ (j ∧ ~ i)) → ℤ) i t)))
---            ∙ cong (subst (λ p → Fin p → ℤ) SphereBouquet/Card2≡)
---                   (funExt⁻ (cong fst lem) t)
---            ∙ sym (funExt⁻ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'≡transport
---                  (∂ (SphereBouquet/ˢᵏᵉˡ n) (suc n) .fst t))
---            ∙ haha ∣₁
---     where
---     -- α* : _
---     -- α* = {!!}
+-- --   α↑ = subst2 (λ p q → SphereBouquet (suc n) (Fin p)
+-- --                                      → SphereBouquet (suc n) (Fin q))
+-- --                               (sym SphereBouquet/Card1≡)
+-- --                               (sym SphereBouquet/Card2≡) α
 
 
-    
---     -- _ : α* ≡ α↑
---     -- _ = {!!}
+-- --   -- l2 : bouquetSusp→ α↑ ≡ preboundary.pre∂ (SphereBouquet/ˢᵏᵉˡ n) (suc n)
+-- --   -- l2 with dich1 n | dich2 n
+-- --   -- ... | s | t = ?
 
---     -- l1 : α↑ ≡ BouquetFuns.CTB (suc n)
---     --    (SphereBouquet/Card (suc n))
---     --    (SphereBouquet/α (suc n))
---     --    (SphereBouquet/Eq (suc n))
---     --    ∘ inr ∘ {!!}
---     -- l1 = {!!}
+-- --   T0 : SphereBouquet/Fam (suc (suc n)) ≡ SphereBouquet (suc n) (Fin c2)
+-- --   T0 with (dich2 (suc n))
+-- --   ... | lt x = ⊥.rec (¬m<ᵗm x)
+-- --   ... | eq x = refl
+-- --   ... | gt x = ⊥.rec (¬m<ᵗm x)
 
+-- --   T0' : SphereBouquet/Fam (suc (suc (suc n))) ≡ cofib α
+-- --   T0' with (dich2 (suc (suc n)))
+-- --   ... | lt x = ⊥.rec (¬-suc-n<ᵗn x)
+-- --   ... | eq x = ⊥.rec (falseDichotomies.eq-eq (refl , sym x))
+-- --   ... | gt x = refl
 
---     {- (λ _ → SuspBouquet→Bouquet (Fin (SphereBouquet/Card (suc n))) (λ _ → S₊∙ (suc n))
---        ∘ suspFun α↑
---        ∘ Bouquet→SuspBouquet (Fin (SphereBouquet/Card (suc (suc n)))) (λ _ → S₊∙ (suc n)))
---        ∙ funExt (λ x → cong (SuspBouquet→Bouquet (Fin (SphereBouquet/Card (suc n))) (λ _ → S₊∙ (suc n)))
---                              ({!BouquetFuns.BTC (suc (suc n))
---                         (SphereBouquet/Card (suc (suc n)))
---                         (SphereBouquet/α (suc (suc n)))
---                         (SphereBouquet/Eq (suc (suc n))) (inr ?)!}
---                            ∙ funExt⁻ (suspFunComp _ inr) (δ-pre (invEq (SphereBouquet/Eq (suc (suc n))) ∘ inl)
---                        (BouquetFuns.BTC (suc (suc n))
---                         (SphereBouquet/Card (suc (suc n)))
---                         (SphereBouquet/α (suc (suc n)))
---                         (SphereBouquet/Eq (suc (suc n))) x))))
---        ∙ λ i x → SuspBouquet→Bouquet (Fin (SphereBouquet/Card (suc n))) (λ _ → S₊∙ (suc n))
---                    (suspFun (BouquetFuns.CTB (suc n)
---                                              (SphereBouquet/Card (suc n))
---                                              (SphereBouquet/α (suc n))
---                                              (SphereBouquet/Eq (suc n)))
---                      (suspFun inr
---                       (δ-pre (invEq (SphereBouquet/Eq (suc (suc n))) ∘ inl)
---                        (BouquetFuns.BTC (suc (suc n))
---                         (SphereBouquet/Card (suc (suc n)))
---                         (SphereBouquet/α (suc (suc n)))
---                         (SphereBouquet/Eq (suc (suc n))) x))))
---                         -}
---     {-
---     isoSuspBouquet ∘ (suspFun isoCofBouquet)
---            ∘ (suspFun (to_cofibCW n C)) ∘ (δ (suc n) C) ∘ isoCofBouquetInv↑
---     -}
---     -- funExt λ t → cong sphereBouquetSuspFun {!!}
---       -- where
---       -- P : cofibCW (suc n) (SphereBouquet/ˢᵏᵉˡ n) ≡ SphereBouquet (suc n) (Fin c1)
---       -- P with (n ≟ᵗ n)
---       -- ... | q = {!!}
---       -- l1 : PathP (λ i → P i → {!!}) (preboundary.isoCofBouquet (SphereBouquet/ˢᵏᵉˡ n) (suc n)) α
---       -- l1 = {!!}
--- {-
--- sphereBouquetSuspFun ∘ (suspFun f) ∘ sphereBouquetSuspInvFun
--- -}
+-- --   T1 : PathP (λ i → Fin (SphereBouquet/Card1≡ i) × S₊ (suc n) → T0 i) (SphereBouquet/α (suc (suc n))) (α ∘ inr)
+-- --   T1 with dich1 (suc n)  | dich2 (suc n)
+-- --   ... | q | lt x = ⊥.rec (¬m<ᵗm x)
+-- --   ... | lt x₁ | eq x = ⊥.rec (¬-suc-n<ᵗn x₁)
+-- --   ... | eq x₁ | eq x = ⊥.rec (falseDichotomies.eq-eq (refl , sym x₁))
+-- --   ... | gt x₁ | eq x = λ i s → α (inr (fst s , ((λ i → subst S₊ (isSetℕ _ _ x refl i) (snd s)) ∙ transportRefl (snd s)) i))
+-- --   ... | q | gt x = ⊥.rec (¬m<ᵗm x)
 
---     lem : bouquetDegree (subst2 (λ p q → SphereBouquet (suc n) (Fin p)
---                                        → SphereBouquet (suc n) (Fin q))
---                                 (sym SphereBouquet/Card1≡)
---                                 (sym SphereBouquet/Card2≡) α)
---         ≡ ∂ (SphereBouquet/ˢᵏᵉˡ n) (suc n)
---     lem = bouquetDegreeSusp _ ∙ cong bouquetDegree {!!} -- l2
+-- --   T2 : PathP (λ i → T0' i ≃ Pushout (T1 i) fst) (SphereBouquet/Eq (suc (suc n))) {!preboundary.isoCofBouquet!}
+-- --   {- (compEquiv (compEquiv (symPushout _ _)
+-- --         (pushoutEquiv _ _ _ _
+-- --           (idEquiv _) (idEquiv _) (invEquiv (isContr→≃Unit (isContrLem (suc n) {!refl!})))
+-- --           (λ _ x → α x)
+-- --           λ i x → isContrLem {!!} (sym {!!}) .snd (inl x) i))
+-- --         (invEquiv (isoToEquiv (Iso-PushoutComp-IteratedPushout
+-- --           (λ x → inr x) α))))
+-- --           -}
+-- --   T2 = {!SphereBouquet/Eq (suc (suc n))!}
 
---     haha = cong HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' q
---          ∙ funExt (HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres+ a (-_ ∘ b))
---          ∙ funExt (λ x → cong₂ _+_ refl (HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres- b x))
+-- --   QQ : (i : I) → _
+-- --   QQ i = BouquetFuns.BTC (suc (suc n))
+-- --                         (SphereBouquet/Card1≡ i)
+-- --                         (T1 i)
+-- --                         {!!} -- (SphereBouquet/Eq (suc (suc n)))
 
---     main : {!bouquetDegree α .fst
---       (subst (λ p → Fin p → ℤ) SphereBouquet/Card1≡ t)!}
---     main = {!!}
-
--- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh :
+-- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh* :
 -- --     (a b : Fin (SphereBouquet/Card (suc n)) → ℤ)
 -- --     → ∂ (SphereBouquet/ˢᵏᵉˡ n) n .fst a ≡ (λ _ → 0)
 -- --     → ∂ (SphereBouquet/ˢᵏᵉˡ n) n .fst b ≡ (λ _ → 0)
@@ -651,131 +761,224 @@ module _ (c1 c2 : ℕ) {n : ℕ} where
 -- --              ∂ (SphereBouquet/ˢᵏᵉˡ n) (suc n) .fst t ≡ λ q → a q - b q)
 -- --     → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun a
 -- --      ≡ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun b
--- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh a b ak bk with (suc n ≟ᵗ n)
--- --   ... | lt x = ⊥.rec {!!}
--- --   ... | eq x = ⊥.rec {!!}
--- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh a b ak bk | gt x with (Trichotomyᵗ-suc (n ≟ᵗ n))
--- --   ... | lt x₁ = ⊥.rec {!!}
--- --   ... | eq x₁ = help*
+-- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh* a b aker bker (t , q) =
+-- --     eq/ _ _ ∣ (subst (λ p → Fin p → ℤ) SphereBouquet/Card1≡ t)
+-- --            , (λ i → transp (λ j → Fin (SphereBouquet/Card2≡ (j ∨ ~ i)) → ℤ) (~ i)
+-- --                       (bouquetDegree
+-- --                         (transp (λ j → SphereBouquet (suc n) (Fin (SphereBouquet/Card1≡ (~ j ∨ ~ i)))
+-- --                                      → SphereBouquet (suc n) (Fin (SphereBouquet/Card2≡ (~ j ∨ ~ i))))
+-- --                          (~ i) α) .fst
+-- --                         (transp (λ j → Fin (SphereBouquet/Card1≡ (j ∧ ~ i)) → ℤ) i t)))
+-- --            ∙ cong (subst (λ p → Fin p → ℤ) SphereBouquet/Card2≡)
+-- --                   (funExt⁻ (cong fst lem) t)
+-- --            ∙ sym (funExt⁻ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'≡transport
+-- --                  (∂ (SphereBouquet/ˢᵏᵉˡ n) (suc n) .fst t))
+-- --            ∙ haha ∣₁
 -- --     where
--- --     help* : _
--- --     help* = {!!}
--- --   ... | gt x₁ = ⊥.rec {!!}
--- --   {- | gt x with (n ≟ᵗ n)
--- --   ... | t = ?
--- --     where
--- --     H : {!SphereBouquet/Card (suc n)!}
--- --     H = {!!}
+-- --     -- α* : _
+-- --     -- α* = {!!}
+
+
+    
+-- --     -- _ : α* ≡ α↑
+-- --     -- _ = {!!}
+
+-- --     -- l1 : α↑ ≡ BouquetFuns.CTB (suc n)
+-- --     --    (SphereBouquet/Card (suc n))
+-- --     --    (SphereBouquet/α (suc n))
+-- --     --    (SphereBouquet/Eq (suc n))
+-- --     --    ∘ inr ∘ {!!}
+-- --     -- l1 = {!!}
+
+
+-- --     {- (λ _ → SuspBouquet→Bouquet (Fin (SphereBouquet/Card (suc n))) (λ _ → S₊∙ (suc n))
+-- --        ∘ suspFun α↑
+-- --        ∘ Bouquet→SuspBouquet (Fin (SphereBouquet/Card (suc (suc n)))) (λ _ → S₊∙ (suc n)))
+-- --        ∙ funExt (λ x → cong (SuspBouquet→Bouquet (Fin (SphereBouquet/Card (suc n))) (λ _ → S₊∙ (suc n)))
+-- --                              ({!BouquetFuns.BTC (suc (suc n))
+-- --                         (SphereBouquet/Card (suc (suc n)))
+-- --                         (SphereBouquet/α (suc (suc n)))
+-- --                         (SphereBouquet/Eq (suc (suc n))) (inr ?)!}
+-- --                            ∙ funExt⁻ (suspFunComp _ inr) (δ-pre (invEq (SphereBouquet/Eq (suc (suc n))) ∘ inl)
+-- --                        (BouquetFuns.BTC (suc (suc n))
+-- --                         (SphereBouquet/Card (suc (suc n)))
+-- --                         (SphereBouquet/α (suc (suc n)))
+-- --                         (SphereBouquet/Eq (suc (suc n))) x))))
+-- --        ∙ λ i x → SuspBouquet→Bouquet (Fin (SphereBouquet/Card (suc n))) (λ _ → S₊∙ (suc n))
+-- --                    (suspFun (BouquetFuns.CTB (suc n)
+-- --                                              (SphereBouquet/Card (suc n))
+-- --                                              (SphereBouquet/α (suc n))
+-- --                                              (SphereBouquet/Eq (suc n)))
+-- --                      (suspFun inr
+-- --                       (δ-pre (invEq (SphereBouquet/Eq (suc (suc n))) ∘ inl)
+-- --                        (BouquetFuns.BTC (suc (suc n))
+-- --                         (SphereBouquet/Card (suc (suc n)))
+-- --                         (SphereBouquet/α (suc (suc n)))
+-- --                         (SphereBouquet/Eq (suc (suc n))) x))))
+-- --                         -}
+-- --     {-
+-- --     isoSuspBouquet ∘ (suspFun isoCofBouquet)
+-- --            ∘ (suspFun (to_cofibCW n C)) ∘ (δ (suc n) C) ∘ isoCofBouquetInv↑
+-- --     -}
+-- --     -- funExt λ t → cong sphereBouquetSuspFun {!!}
+-- --       -- where
+-- --       -- P : cofibCW (suc n) (SphereBouquet/ˢᵏᵉˡ n) ≡ SphereBouquet (suc n) (Fin c1)
+-- --       -- P with (n ≟ᵗ n)
+-- --       -- ... | q = {!!}
+-- --       -- l1 : PathP (λ i → P i → {!!}) (preboundary.isoCofBouquet (SphereBouquet/ˢᵏᵉˡ n) (suc n)) α
+-- --       -- l1 = {!!}
+-- -- {-
+-- -- sphereBouquetSuspFun ∘ (suspFun f) ∘ sphereBouquetSuspInvFun
 -- -- -}
 
--- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap :
--- --     Hˢᵏᵉˡ (SphereBouquet/ˢᵏᵉˡ n) n .fst → ℤ[]/ImSphereMap .fst
--- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap =
--- --     SQ.rec squash/
--- --       (λ a → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun (a .fst))
--- --        λ {(a , ak) (b , bk) → PT.elim (λ _ → squash/ _ _)
--- --        λ r → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh a b ak bk
--- --                (fst r , cong fst (snd r))}
+-- --     lem : bouquetDegree (subst2 (λ p q → SphereBouquet (suc n) (Fin p)
+-- --                                        → SphereBouquet (suc n) (Fin q))
+-- --                                 (sym SphereBouquet/Card1≡)
+-- --                                 (sym SphereBouquet/Card2≡) α)
+-- --         ≡ ∂ (SphereBouquet/ˢᵏᵉˡ n) (suc n)
+-- --     lem = bouquetDegreeSusp _ ∙ cong bouquetDegree {!!} -- l2
 
--- -- module _ {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 (suc n)) where
--- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' : (m : ℕ) → (Fin (SphereBouquet/Card α m) → ℤ) → ℤ[Fin c2 ] .fst
--- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' zero = λ _ _ → 0
--- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (suc m) with m ≟ᵗ suc n | m ≟ᵗ suc (suc n)
--- --   ... | lt x | t = λ _ _ → 0
--- --   ... | eq x | lt x₁ = λ f → f
--- --   ... | eq x | eq x₁ = λ f → f
--- --   ... | eq x | gt x₁ = λ f → f
--- --   ... | gt x | t = λ _ _ → 0
+-- --     haha = cong HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' q
+-- --          ∙ funExt (HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres+ a (-_ ∘ b))
+-- --          ∙ funExt (λ x → cong₂ _+_ refl (HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres- b x))
 
--- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres- : (m : ℕ) (f : _) (a : _)
--- --     → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' m (-_ ∘ f) a
--- --      ≡ - HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' m f a
--- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres- zero f a = refl
--- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres- (suc m) f a with m ≟ᵗ suc n | m ≟ᵗ suc (suc n)
--- --   ... | lt x | q = refl
--- --   ... | eq x | lt x₁ = refl
--- --   ... | eq x | eq x₁ = refl
--- --   ... | eq x | gt x₁ = refl
--- --   ... | gt x | q = refl
+-- --     main : {!bouquetDegree α .fst
+-- --       (subst (λ p → Fin p → ℤ) SphereBouquet/Card1≡ t)!}
+-- --     main = {!!}
 
--- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres+ : (m : ℕ) (f g : _) (a : _)
--- --     → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' m (λ x → f x + g x) a
--- --     ≡ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' m f a + HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' m g a
--- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres+ zero f g a = refl
--- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres+ (suc m) f g a with m ≟ᵗ suc n | m ≟ᵗ suc (suc n)
--- --   ... | lt x | q = refl
--- --   ... | eq x | lt x₁ = refl
--- --   ... | eq x | eq x₁ = refl
--- --   ... | eq x | gt x₁ = refl
--- --   ... | gt x | q = refl
-
--- -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh'' : {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 (suc n))
--- --   (m : ℕ)
--- --   (a b : Fin c2 → ℤ)
--- --   (p : SphereBouquet/Card α (suc m) ≡ c2)
--- --   (p2 : SphereBouquet/Card α (suc (suc m)) ≡ c1)
--- --   → ∂ (SphereBouquet/ˢᵏᵉˡ α n) m .fst (subst (λ p → Fin p → ℤ) (sym p) a) ≡ (λ _ → 0)
--- --   → ∂ (SphereBouquet/ˢᵏᵉˡ α n) m .fst (subst (λ p → Fin p → ℤ) (sym p) b) ≡ (λ _ → 0)
--- --    → (r : Σ[ t ∈ (Fin c1 → ℤ) ]
--- --          ((q : Fin c2) → ∂ (SphereBouquet/ˢᵏᵉˡ α n) (suc m) .fst (subst (λ p → Fin p → ℤ) (sym p2) t) (subst Fin (sym p) q) ≡ a q - b q))
--- --   → Σ[ k ∈ _ ] (bouquetDegree α .fst k
--- --     ≡ λ x → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' α (suc m) (subst (λ p → Fin p → ℤ) (sym p) a) x
--- --            - HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' α (suc m) (subst (λ p → Fin p → ℤ) (sym p) b) x)
--- -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh'' {n = n} α m a b p p2 aa aaa r = {!!}
-
-
--- -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh' : {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 (suc n))
--- --   (a b : Fin (SphereBouquet/Card α (2 +ℕ n)) → ℤ)
--- --   → ∂ (SphereBouquet/ˢᵏᵉˡ α n) (suc n) .fst a ≡ (λ _ → 0)
--- --   → ∂ (SphereBouquet/ˢᵏᵉˡ α n) (suc n) .fst b ≡ (λ _ → 0)
--- --    → (r : Σ[ t ∈ (Fin (SphereBouquet/Card α (3 +ℕ n)) → ℤ) ]
--- --          ∂ (SphereBouquet/ˢᵏᵉˡ α n) ((2 +ℕ n)) .fst t ≡ λ q → a q - b q)
--- --   → Σ[ k ∈ _ ] (bouquetDegree α .fst k
--- --     ≡ λ x → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' α (2 +ℕ n) a x
--- --            - HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' α (2 +ℕ n) b x)
--- -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh' {n = n} α a b ak bk (r , q) = {!r!} , ({!!} ∙ haha)
--- --   where
--- --   haha : HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' α (2 +ℕ n) (∂ (SphereBouquet/ˢᵏᵉˡ α n) (2 +ℕ n) .fst r)
--- --       ≡ _
--- --   haha = cong (HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' α (2 +ℕ n)) q
--- --        ∙ funExt (HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres+ α (2 +ℕ n) a (-_ ∘ b))
--- --        ∙ funExt (λ x → cong₂ _+_ refl (HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres- α (2 +ℕ n) b x))
-
--- -- -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh' {n = suc n} α m a b ak bk with (m ≟ᵗ suc n) | (Trichotomyᵗ-suc (m ≟ᵗ suc (suc n)))
--- -- -- ... | lt x | q = {!!}
--- -- -- ... | eq x | lt x₁ = {!!}
--- -- -- ... | eq x | eq x₁ = {!a!}
--- -- -- ... | eq x | gt x₁ = {!!}
--- -- -- ... | gt x | q = {!!}
--- -- -- {- with (Trichotomyᵗ-suc (m ≟ᵗ n)) | (Trichotomyᵗ-suc (m ≟ᵗ suc n))
--- -- -- ... | lt x | qq = {!!}
--- -- -- ... | eq x | lt x₁ = {!!}
--- -- -- ... | eq x | eq x₁ = {!!}
--- -- -- ... | eq x | gt x₁ = {!!}
--- -- -- ... | gt x | qq = {!!}
+-- -- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh :
+-- -- --     (a b : Fin (SphereBouquet/Card (suc n)) → ℤ)
+-- -- --     → ∂ (SphereBouquet/ˢᵏᵉˡ n) n .fst a ≡ (λ _ → 0)
+-- -- --     → ∂ (SphereBouquet/ˢᵏᵉˡ n) n .fst b ≡ (λ _ → 0)
+-- -- --     → (r : Σ[ t ∈ (Fin (SphereBouquet/Card (suc (suc n))) → ℤ) ]
+-- -- --              ∂ (SphereBouquet/ˢᵏᵉˡ n) (suc n) .fst t ≡ λ q → a q - b q)
+-- -- --     → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun a
+-- -- --      ≡ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun b
+-- -- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh a b ak bk with (suc n ≟ᵗ n)
+-- -- --   ... | lt x = ⊥.rec {!!}
+-- -- --   ... | eq x = ⊥.rec {!!}
+-- -- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh a b ak bk | gt x with (Trichotomyᵗ-suc (n ≟ᵗ n))
+-- -- --   ... | lt x₁ = ⊥.rec {!!}
+-- -- --   ... | eq x₁ = help*
+-- -- --     where
+-- -- --     help* : _
+-- -- --     help* = {!!}
+-- -- --   ... | gt x₁ = ⊥.rec {!!}
+-- -- --   {- | gt x with (n ≟ᵗ n)
+-- -- --   ... | t = ?
+-- -- --     where
+-- -- --     H : {!SphereBouquet/Card (suc n)!}
+-- -- --     H = {!!}
 -- -- -- -}
 
--- -- --   {-
--- -- --     SQ.rec squash/ (λ a → [ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (suc m) (fst a) ])
--- -- --                    λ {(a , ak) (b , bk) → PT.elim {!!}
--- -- --                    (λ r → eq/ _ _ ∣ {!!} , {!!} ∣₁)}
--- -- -- -}
+-- -- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap :
+-- -- --     Hˢᵏᵉˡ (SphereBouquet/ˢᵏᵉˡ n) n .fst → ℤ[]/ImSphereMap .fst
+-- -- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap =
+-- -- --     SQ.rec squash/
+-- -- --       (λ a → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun (a .fst))
+-- -- --        λ {(a , ak) (b , bk) → PT.elim (λ _ → squash/ _ _)
+-- -- --        λ r → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh a b ak bk
+-- -- --                (fst r , cong fst (snd r))}
+
+-- -- -- module _ {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 (suc n)) where
+-- -- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' : (m : ℕ) → (Fin (SphereBouquet/Card α m) → ℤ) → ℤ[Fin c2 ] .fst
+-- -- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' zero = λ _ _ → 0
+-- -- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (suc m) with m ≟ᵗ suc n | m ≟ᵗ suc (suc n)
+-- -- --   ... | lt x | t = λ _ _ → 0
+-- -- --   ... | eq x | lt x₁ = λ f → f
+-- -- --   ... | eq x | eq x₁ = λ f → f
+-- -- --   ... | eq x | gt x₁ = λ f → f
+-- -- --   ... | gt x | t = λ _ _ → 0
+
+-- -- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres- : (m : ℕ) (f : _) (a : _)
+-- -- --     → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' m (-_ ∘ f) a
+-- -- --      ≡ - HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' m f a
+-- -- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres- zero f a = refl
+-- -- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres- (suc m) f a with m ≟ᵗ suc n | m ≟ᵗ suc (suc n)
+-- -- --   ... | lt x | q = refl
+-- -- --   ... | eq x | lt x₁ = refl
+-- -- --   ... | eq x | eq x₁ = refl
+-- -- --   ... | eq x | gt x₁ = refl
+-- -- --   ... | gt x | q = refl
+
+-- -- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres+ : (m : ℕ) (f g : _) (a : _)
+-- -- --     → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' m (λ x → f x + g x) a
+-- -- --     ≡ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' m f a + HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' m g a
+-- -- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres+ zero f g a = refl
+-- -- --   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres+ (suc m) f g a with m ≟ᵗ suc n | m ≟ᵗ suc (suc n)
+-- -- --   ... | lt x | q = refl
+-- -- --   ... | eq x | lt x₁ = refl
+-- -- --   ... | eq x | eq x₁ = refl
+-- -- --   ... | eq x | gt x₁ = refl
+-- -- --   ... | gt x | q = refl
+
+-- -- -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh'' : {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 (suc n))
+-- -- --   (m : ℕ)
+-- -- --   (a b : Fin c2 → ℤ)
+-- -- --   (p : SphereBouquet/Card α (suc m) ≡ c2)
+-- -- --   (p2 : SphereBouquet/Card α (suc (suc m)) ≡ c1)
+-- -- --   → ∂ (SphereBouquet/ˢᵏᵉˡ α n) m .fst (subst (λ p → Fin p → ℤ) (sym p) a) ≡ (λ _ → 0)
+-- -- --   → ∂ (SphereBouquet/ˢᵏᵉˡ α n) m .fst (subst (λ p → Fin p → ℤ) (sym p) b) ≡ (λ _ → 0)
+-- -- --    → (r : Σ[ t ∈ (Fin c1 → ℤ) ]
+-- -- --          ((q : Fin c2) → ∂ (SphereBouquet/ˢᵏᵉˡ α n) (suc m) .fst (subst (λ p → Fin p → ℤ) (sym p2) t) (subst Fin (sym p) q) ≡ a q - b q))
+-- -- --   → Σ[ k ∈ _ ] (bouquetDegree α .fst k
+-- -- --     ≡ λ x → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' α (suc m) (subst (λ p → Fin p → ℤ) (sym p) a) x
+-- -- --            - HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' α (suc m) (subst (λ p → Fin p → ℤ) (sym p) b) x)
+-- -- -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh'' {n = n} α m a b p p2 aa aaa r = {!!}
+
+
+-- -- -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh' : {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 (suc n))
+-- -- --   (a b : Fin (SphereBouquet/Card α (2 +ℕ n)) → ℤ)
+-- -- --   → ∂ (SphereBouquet/ˢᵏᵉˡ α n) (suc n) .fst a ≡ (λ _ → 0)
+-- -- --   → ∂ (SphereBouquet/ˢᵏᵉˡ α n) (suc n) .fst b ≡ (λ _ → 0)
+-- -- --    → (r : Σ[ t ∈ (Fin (SphereBouquet/Card α (3 +ℕ n)) → ℤ) ]
+-- -- --          ∂ (SphereBouquet/ˢᵏᵉˡ α n) ((2 +ℕ n)) .fst t ≡ λ q → a q - b q)
+-- -- --   → Σ[ k ∈ _ ] (bouquetDegree α .fst k
+-- -- --     ≡ λ x → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' α (2 +ℕ n) a x
+-- -- --            - HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' α (2 +ℕ n) b x)
+-- -- -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh' {n = n} α a b ak bk (r , q) = {!r!} , ({!!} ∙ haha)
+-- -- --   where
+-- -- --   haha : HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' α (2 +ℕ n) (∂ (SphereBouquet/ˢᵏᵉˡ α n) (2 +ℕ n) .fst r)
+-- -- --       ≡ _
+-- -- --   haha = cong (HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' α (2 +ℕ n)) q
+-- -- --        ∙ funExt (HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres+ α (2 +ℕ n) a (-_ ∘ b))
+-- -- --        ∙ funExt (λ x → cong₂ _+_ refl (HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'pres- α (2 +ℕ n) b x))
+
+-- -- -- -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh' {n = suc n} α m a b ak bk with (m ≟ᵗ suc n) | (Trichotomyᵗ-suc (m ≟ᵗ suc (suc n)))
+-- -- -- -- ... | lt x | q = {!!}
+-- -- -- -- ... | eq x | lt x₁ = {!!}
+-- -- -- -- ... | eq x | eq x₁ = {!a!}
+-- -- -- -- ... | eq x | gt x₁ = {!!}
+-- -- -- -- ... | gt x | q = {!!}
+-- -- -- -- {- with (Trichotomyᵗ-suc (m ≟ᵗ n)) | (Trichotomyᵗ-suc (m ≟ᵗ suc n))
+-- -- -- -- ... | lt x | qq = {!!}
+-- -- -- -- ... | eq x | lt x₁ = {!!}
+-- -- -- -- ... | eq x | eq x₁ = {!!}
+-- -- -- -- ... | eq x | gt x₁ = {!!}
+-- -- -- -- ... | gt x | qq = {!!}
+-- -- -- -- -}
+
+-- -- -- --   {-
+-- -- -- --     SQ.rec squash/ (λ a → [ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (suc m) (fst a) ])
+-- -- -- --                    λ {(a , ak) (b , bk) → PT.elim {!!}
+-- -- -- --                    (λ r → eq/ _ _ ∣ {!!} , {!!} ∣₁)}
+-- -- -- -- -}
  
 
--- -- -- -- with n ≟ᵗ n | n ≟ᵗ suc n
--- -- -- --   ... | lt x | b = [ (λ _ → 0) ]
--- -- -- --   ... | eq x | lt x₁ = [ f ]
--- -- -- --   ... | eq x | eq x₁ = [ (λ _ → 0) ]
--- -- -- --   ... | eq x | gt x₁ = [ (λ _ → 0) ]
--- -- -- --   ... | gt x | b = [ (λ _ → 0) ]
+-- -- -- -- -- with n ≟ᵗ n | n ≟ᵗ suc n
+-- -- -- -- --   ... | lt x | b = [ (λ _ → 0) ]
+-- -- -- -- --   ... | eq x | lt x₁ = [ f ]
+-- -- -- -- --   ... | eq x | eq x₁ = [ (λ _ → 0) ]
+-- -- -- -- --   ... | eq x | gt x₁ = [ (λ _ → 0) ]
+-- -- -- -- --   ... | gt x | b = [ (λ _ → 0) ]
 
 
--- -- --   -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh :
--- -- --   --   (a b : Fin (SphereBouquet/Card (suc n)) → ℤ)
--- -- --   --   → ∂ (SphereBouquet/ˢᵏᵉˡ n) n .fst a ≡ (λ _ → 0)
--- -- --   --   → ∂ (SphereBouquet/ˢᵏᵉˡ n) n .fst b ≡ (λ _ → 0)
--- -- --   --   → (r : Σ[ t ∈ (Fin (SphereBouquet/Card (suc (suc n))) → ℤ) ]
--- -- --   --            ∂ (SphereBouquet/ˢᵏᵉˡ n) (suc n) .fst t ≡ λ q → a q - b q)
--- -- --   --   → ? -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun a
--- -- --   --    ≡ ? -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun b
--- -- --   -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh a b ak bk = {!!}
+-- -- -- --   -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh :
+-- -- -- --   --   (a b : Fin (SphereBouquet/Card (suc n)) → ℤ)
+-- -- -- --   --   → ∂ (SphereBouquet/ˢᵏᵉˡ n) n .fst a ≡ (λ _ → 0)
+-- -- -- --   --   → ∂ (SphereBouquet/ˢᵏᵉˡ n) n .fst b ≡ (λ _ → 0)
+-- -- -- --   --   → (r : Σ[ t ∈ (Fin (SphereBouquet/Card (suc (suc n))) → ℤ) ]
+-- -- -- --   --            ∂ (SphereBouquet/ˢᵏᵉˡ n) (suc n) .fst t ≡ λ q → a q - b q)
+-- -- -- --   --   → ? -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun a
+-- -- -- --   --    ≡ ? -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun b
+-- -- -- --   -- HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-coh a b ak bk = {!!}
