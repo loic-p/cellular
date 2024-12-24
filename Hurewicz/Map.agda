@@ -435,10 +435,14 @@ module _ where
   HurewiczMap X x = ST.rec (GroupStr.is-set (snd (Hᶜʷ X _))) (HurewiczMapUntrunc X x)
 
 HurewiczMapFunct : {n : ℕ} (X Y : CW ℓ-zero) (x : fst X) (y : fst Y)
-                    (f : S₊∙ (suc n) →∙ (fst X , x)) (g : (fst X , x) →∙ (fst Y , y))
+                    (g : (fst X , x) →∙ (fst Y , y))
     → Hᶜʷ→ {C = X} {D = Y} n (fst g) .fst ∘ HurewiczMap X x
-    ≡ HurewiczMap Y y ∘ π'∘∙Hom' n g .fst
-HurewiczMapFunct = {!!}
+    ≡ HurewiczMap Y y ∘ π'∘∙Hom n g .fst
+HurewiczMapFunct {n = n} X Y x y g =
+  funExt (ST.elim (λ _ → isOfHLevelPath 2 (GroupStr.is-set (Hᶜʷ Y n .snd)) _ _)
+    λ f → funExt⁻ (sym (cong fst (Hᶜʷ→comp
+             {C = Sᶜʷ (suc n)} {D = X} {E = Y} n (fst g) (fst f))))
+             (genHₙSⁿ n))
 
 Hˢᵏᵉˡ-comm : ∀ {ℓ} {n : ℕ} {X : CWskel ℓ} (x y : Hˢᵏᵉˡ X n .fst)
   → GroupStr._·_ (Hˢᵏᵉˡ X n .snd) x y ≡ GroupStr._·_ (Hˢᵏᵉˡ X n .snd) y x
