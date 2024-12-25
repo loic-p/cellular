@@ -434,6 +434,51 @@ module _ where
     → fst (Hᶜʷ X n)
   HurewiczMap X x = ST.rec (GroupStr.is-set (snd (Hᶜʷ X _))) (HurewiczMapUntrunc X x)
 
+  HurewiczMapHom :  {n : ℕ} (X : CW ℓ-zero) (x : fst X) (f g : π' (suc n) (fst X , x))
+                 → HurewiczMap X x (·π' n f g)
+                  ≡ GroupStr._·_ (snd (Hᶜʷ X n))
+                      (HurewiczMap X x f) (HurewiczMap X x g)
+  HurewiczMapHom {n = n} = {!!}
+  {- uncurry λ X
+    → PT.elim (λ q → isPropΠ3 λ _ _ _ → GroupStr.is-set (snd (Hᶜʷ (X , q) n)) _ _)
+     (uncurry λ Xsk
+       → EquivJ (λ X y → (x : X) (f g : π' (suc n) (X , x)) →
+            HurewiczMap (X , ∣ Xsk , y ∣₁) x (·π' n f g) ≡
+            (snd (Hᶜʷ (X , ∣ Xsk , y ∣₁) n) GroupStr.·
+             HurewiczMap (X , ∣ Xsk , y ∣₁) x f)
+            (HurewiczMap (X , ∣ Xsk , y ∣₁) x g))
+            λ x → ST.elim2 {!Xsk!}
+              λ f g → PT.rec3 {!!} (λ apf apg apfg
+              → {!!} ∙ funExt⁻ (cong fst (Hˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n)) Xsk n {f = (fst (∙Π f g) ∘ invEq (isCWSphere (suc n) .snd))} apfg)) (genHₙSⁿ n)
+              ∙ {!fst (Hˢᵏᵉˡ→-pre (Sˢᵏᵉˡ (suc n)) Xsk n (apfg .fst))
+      (genHₙSⁿ n)!}
+              ∙ {!GroupStr._·_ (snd (Hᶜʷ (X , ∣ Xsk , ? ∣₁)))!})
+                (CWmap→finCellMap (Sˢᵏᵉˡ (suc n)) Xsk (fst f ∘ invEq (isCWSphere (suc n) .snd)) (3 +ℕ n))
+                ((CWmap→finCellMap (Sˢᵏᵉˡ (suc n)) Xsk (fst g ∘ invEq (isCWSphere (suc n) .snd)) (3 +ℕ n)))
+                (CWmap→finCellMap (Sˢᵏᵉˡ (suc n)) Xsk (fst (∙Π f g) ∘ invEq (isCWSphere (suc n) .snd)) (3 +ℕ n)))
+                -}
+     where
+     approxMultMap : ∀ {ℓ} (X : CWskel ℓ) (x : realise X)  (n m : ℕ)
+       → (n₂ : Fin (suc m))
+       → (f g : Sfam (suc n) (fst n₂) → fst X (fst n₂))
+       → (Sfam (suc n) (fst n₂) → fst X (fst n₂))
+     approxMultMap X x n m (zero , y) f g = {!!}
+     approxMultMap X x n m (suc z , y) f g with (z ≟ᵗ suc n)
+     ... | lt x₁ = {!!}
+     ... | eq x₁ = ∙Π (f , {!!}) (g , {!!}) .fst
+     ... | gt x₁ = {!!}
+
+     approxMult : ∀ {ℓ} (X : CWskel ℓ) (x : realise X)  (n m : ℕ) (f g : S₊∙ (suc n) →∙ (realise X , x))
+                → finCellApprox (Sˢᵏᵉˡ (suc n)) X (fst f ∘ invEq (isCWSphere (suc n) .snd)) m
+                → finCellApprox (Sˢᵏᵉˡ (suc n)) X (fst g ∘ invEq (isCWSphere (suc n) .snd)) m
+                → finCellApprox (Sˢᵏᵉˡ (suc n)) X (fst (∙Π f g) ∘ invEq (isCWSphere (suc n) .snd)) m
+     FinSequenceMap.fmap (fst (approxMult X x n m f g apf apg)) (suc k , k<) w with (k ≟ᵗ suc n)
+     ... | lt x₁ = {!!}
+     ... | eq x₁ = {!FinSequenceMap.fmap (fst apf)!}
+     ... | gt x₁ = {!!}
+     FinSequenceMap.fcomm (fst (approxMult X x n m f g apf apg)) = {!!}
+     snd (approxMult X x n m f g apf apg) = {!!}
+
 HurewiczMapFunct : {n : ℕ} (X Y : CW ℓ-zero) (x : fst X) (y : fst Y)
                     (g : (fst X , x) →∙ (fst Y , y))
     → Hᶜʷ→ {C = X} {D = Y} n (fst g) .fst ∘ HurewiczMap X x
@@ -444,30 +489,162 @@ HurewiczMapFunct {n = n} X Y x y g =
              {C = Sᶜʷ (suc n)} {D = X} {E = Y} n (fst g) (fst f))))
              (genHₙSⁿ n))
 
-Hˢᵏᵉˡ-comm : ∀ {ℓ} {n : ℕ} {X : CWskel ℓ} (x y : Hˢᵏᵉˡ X n .fst)
-  → GroupStr._·_ (Hˢᵏᵉˡ X n .snd) x y ≡ GroupStr._·_ (Hˢᵏᵉˡ X n .snd) y x
-Hˢᵏᵉˡ-comm = SQ.elimProp2 (λ _ _ → GroupStr.is-set (Hˢᵏᵉˡ _ _ .snd) _ _)
-  λ a b → cong [_] (Σ≡Prop (λ _ → isSetΠ (λ _ → isSetℤ) _ _)
-    (funExt λ _ → +Comm _ _))
+compsToHom→Hom : ∀ {ℓ ℓ' ℓ'' ℓ'''} {G₀ : Group ℓ} {G₁ : Group ℓ'} {G₂ : Group ℓ''} {G₃ : Group ℓ'''}
+  (ϕ : GroupEquiv G₀ G₁) (ψ : GroupEquiv G₂ G₃)
+  (f : fst G₁ → fst G₂)
+  → IsGroupHom (snd G₀) (fst (fst ψ) ∘ f ∘ fst (fst ϕ)) (snd G₃)
+  → IsGroupHom (snd G₁) f (snd G₂)
+compsToHom→Hom = {!!}
 
-Hᶜʷ-comm : ∀ {ℓ} {n : ℕ} (X : CW ℓ) (x y : Hᶜʷ X n .fst)
-  → GroupStr._·_ (Hᶜʷ X n .snd) x y ≡ GroupStr._·_ (Hᶜʷ X n .snd) y x
-Hᶜʷ-comm {n = n} = uncurry λ X
-  → PT.elim (λ _ → isPropΠ2 λ _ _ → GroupStr.is-set (Hᶜʷ (X , _) n .snd) _ _)
-            λ x → Hˢᵏᵉˡ-comm 
+open import Cubical.Homotopy.Connected
+open import Cubical.CW.Properties
+open import Hurewicz.random
+open import Cubical.HITs.Truncation as TR
 
-HurewiczLemmas : {n : ℕ} (X : CW ℓ-zero) (x : fst X) (f : S₊∙ (suc n) →∙ (fst X , x))
-  → isInducedAbelianisationGroupEquiv
-      (π'Gr n (fst X , x)) (Hᶜʷ X n) (Hᶜʷ-comm X) (HurewiczMap X x)
-HurewiczLemmas {n} =
-  uncurry λ X → PT.elim (λ _ →
-                 isPropΠ2 λ _ _ → isPropIsInducedAbelianisationGroupEquiv)
-   (uncurry λ Xsk → EquivJ (λ X y → (x : X) →
-      S₊∙ (suc n) →∙ (X , x)
-      → isInducedAbelianisationGroupEquiv
-          (π'Gr n (X , x)) (Hᶜʷ (X , ∣ Xsk , y ∣₁) n)
-          (Hᶜʷ-comm (X , ∣ Xsk , y ∣₁)) (HurewiczMap (X , ∣ Xsk , y ∣₁) x))
-    λ x f → PT.rec {!!} {!!}
-             (CWmap→finCellMap (Sˢᵏᵉˡ (suc n)) Xsk
-             (fst f ∘ invEq (isCWSphere (suc n) .snd)) (2 +ℕ n)))
-             -- isCw x f → PT.rec {!!} {!CWmap→finCellMap!} {!!}
+
+module _ (X : Type) (x : X) (isConn : isConnected 0 X)
+  (isCW : isCW X)
+  where
+  X' : ℕ → Type
+  X' = isCW .fst .fst
+
+  Xₙ→X∞ : (n : ℕ) → X' (suc (suc (suc n))) → X
+  Xₙ→X∞ n = invEq (isCW .snd) ∘ incl
+
+  connXₙ→X∞ : (n : ℕ) → isConnectedFun (suc (suc (suc n))) (Xₙ→X∞ n)
+  connXₙ→X∞ n = isConnectedComp (invEq (isCW .snd)) incl (suc (suc (suc n)))
+                  (isEquiv→isConnected _ (snd (invEquiv (isCW .snd))) _)
+                  (isConnected-CW↪∞ (suc (suc (suc n))) (fst isCW))
+
+  oh : (n : ℕ) → ∃[ t ∈ X' (suc (suc (suc n))) ] Xₙ→X∞ n t ≡ x
+  oh n = TR.rec (isProp→isOfHLevelSuc (suc (suc n)) squash₁)
+                (λ {(y , q) → {!!}})
+                (connXₙ→X∞ n x .fst)
+
+  subCW : (n : ℕ) → CW ℓ-zero
+  fst (subCW n) = X' (suc (suc (suc n)))
+  snd (subCW n) = ∣ (subComplex (fst isCW) (suc (suc (suc n))))
+                , (isoToEquiv (realiseSubComplex (suc (suc (suc n))) (fst isCW))) ∣₁
+
+  iso2 : (n : ℕ) → GroupEquiv {!!} {!!}
+  iso2 = {!!}
+
+  assumption : (n : ℕ) (t* : Σ[ t ∈ X' (suc (suc (suc n))) ] Xₙ→X∞ n t ≡ x)
+           → IsGroupHom (π'Gr n (X' (suc (suc (suc n))) , fst t*) .snd)
+                         (HurewiczMap (subCW n) (fst t*))
+                         (Hᶜʷ (subCW n) n .snd)
+  assumption n (t , q) = {!!}
+
+  main : (n : ℕ) → Σ[ t ∈ X' (suc (suc (suc n))) ] Xₙ→X∞ n t ≡ x
+    → IsGroupHom (snd (π'Gr n (X , x))) (HurewiczMap (X , ∣ isCW ∣₁) x) (Hᶜʷ (X , ∣ isCW ∣₁) n .snd)
+  main n (t , q) =
+    compsToHom→Hom {G₂ = Hᶜʷ (X , ∣ isCW ∣₁) n} {G₃ = Hᶜʷ (subCW n) n}
+      (connected→π'Equiv n (_ , q) (connXₙ→X∞ n))
+      (GroupIso→GroupEquiv (subComplexHomology (fst isCW) (suc (suc (suc n))) n <ᵗsucm))
+      (HurewiczMap (X , ∣ isCW ∣₁) x)
+      (subst (λ f → IsGroupHom (π'Gr n (X' (suc (suc (suc n))) , t) .snd)
+                    f
+                    (Hᶜʷ (subCW n) n .snd))
+             (funExt (ST.elim {!!} λ f → {!fst (subComplexHomology (fst isCW) (suc (suc (suc n))) n <ᵗsucm)!}))
+             (assumption n (t , q)))
+    where
+    mains : (f : S₊∙ (suc n) →∙ (X' (suc (suc (suc n))) , t))
+      →  HurewiczMap (subCW n) t ∣ f ∣₂
+        ≡ (fst (subComplexHomology (fst isCW) (suc (suc (suc n))) n <ᵗsucm) .Iso.fun
+          ∘ HurewiczMap (X , ∣ isCW ∣₁) x ∘ ST.map (_∘∙_ (Xₙ→X∞ n , q)))
+            ∣ f ∣₂
+    mains f = {!!}
+    {- with (suc (suc n) ≟ᵗ suc (suc (suc n))) | (suc n ≟ᵗ suc (suc (suc n))) | (n ≟ᵗ suc (suc (suc n)))
+    ... | a | b | c = ?
+    -}
+{-
+  | suc (suc n) ≟ᵗ suc (suc (suc n))
+  | suc n ≟ᵗ suc (suc (suc n))
+  | n ≟ᵗ suc (suc (suc n))
+-}
+
+TTT : {n : ℕ} (X : CW ℓ-zero) (x : fst X)
+  → isConnected 0 (fst X)
+  → IsGroupHom (snd (π'Gr n (fst X , x))) (HurewiczMap X x) (Hᶜʷ X n .snd)
+TTT {n = N} = uncurry λ X → PT.elim {!!}
+  λ CWX x → λ conX → compsToHom→Hom {!isConnectedIncl∞!} {!!} {!!} {!!}
+
+
+
+-- Hˢᵏᵉˡ-comm : ∀ {ℓ} {n : ℕ} {X : CWskel ℓ} (x y : Hˢᵏᵉˡ X n .fst)
+--   → GroupStr._·_ (Hˢᵏᵉˡ X n .snd) x y ≡ GroupStr._·_ (Hˢᵏᵉˡ X n .snd) y x
+-- Hˢᵏᵉˡ-comm = SQ.elimProp2 (λ _ _ → GroupStr.is-set (Hˢᵏᵉˡ _ _ .snd) _ _)
+--   λ a b → cong [_] (Σ≡Prop (λ _ → isSetΠ (λ _ → isSetℤ) _ _)
+--     (funExt λ _ → +Comm _ _))
+
+-- Hᶜʷ-comm : ∀ {ℓ} {n : ℕ} (X : CW ℓ) (x y : Hᶜʷ X n .fst)
+--   → GroupStr._·_ (Hᶜʷ X n .snd) x y ≡ GroupStr._·_ (Hᶜʷ X n .snd) y x
+-- Hᶜʷ-comm {n = n} = uncurry λ X
+--   → PT.elim (λ _ → isPropΠ2 λ _ _ → GroupStr.is-set (Hᶜʷ (X , _) n .snd) _ _)
+--             λ x → Hˢᵏᵉˡ-comm
+
+-- oooh = subComplex
+
+-- subCWExplicit : ∀ {ℓ} (n : ℕ) → CWexplicit ℓ → CWexplicit ℓ
+-- fst (subCWExplicit n (X , Xsk , e)) = Xsk .fst n
+-- fst (snd (subCWExplicit n (X , Xsk , e))) = subComplex Xsk n
+-- snd (snd (subCWExplicit n (X , Xsk , e))) = isoToEquiv (realiseSubComplex n Xsk)
+
+
+-- CWexplicit→CW : ∀ {ℓ} → CWexplicit ℓ → CW ℓ
+-- CWexplicit→CW C = fst C , ∣ snd C ∣₁
+
+-- subCW : ∀ {ℓ} (n : ℕ) → CWexplicit ℓ → CW ℓ
+-- subCW n X = CWexplicit→CW (subCWExplicit n X)
+
+-- ConnectedCW : (ℓ : Level) (n : ℕ) → Type (ℓ-suc ℓ)
+-- ConnectedCW ℓ n = Σ[ X ∈ Type ℓ ] isConnectedCW n X
+
+-- ConnectedCW→CWexplicit : ∀ {ℓ} {n : ℕ} → ConnectedCW ℓ n → CWexplicit ℓ
+-- fst (ConnectedCW→CWexplicit (X , p , con)) = X
+-- fst (fst (snd (ConnectedCW→CWexplicit (X , (Xsk , _ , _) , con)))) = Xsk
+-- snd (fst (snd (ConnectedCW→CWexplicit (X , (Xsk , p , _) , con)))) = p
+-- snd (snd (ConnectedCW→CWexplicit (X , (Xsk , _ , _) , con))) = invEquiv con
+
+-- ConnectedCW→CW : ∀ {ℓ} {n : ℕ} → ConnectedCW ℓ n → CW ℓ
+-- ConnectedCW→CW X = CWexplicit→CW (ConnectedCW→CWexplicit X)
+
+-- HurewiczMainLemma : (n : ℕ) (X : ConnectedCW ℓ-zero (suc n))
+--   → ((x : fst (fst (snd X)) (suc (suc (suc n))))
+--     → isInducedAbelianisationGroupEquiv
+--          (π'Gr n ((fst (fst (snd X)) (suc (suc (suc n)))) , x))
+--          (Hᶜʷ (subCW (suc (suc (suc n))) (ConnectedCW→CWexplicit X)) n)
+--          (Hᶜʷ-comm (subCW (suc (suc (suc n))) (ConnectedCW→CWexplicit X)))
+--          (HurewiczMap (subCW (suc (suc (suc n))) (ConnectedCW→CWexplicit X)) x))
+--   → (x : fst X)
+--   → isInducedAbelianisationGroupEquiv
+--       (π'Gr n (fst X , x)) (Hᶜʷ (ConnectedCW→CW X) n)
+--         (Hᶜʷ-comm (ConnectedCW→CW X)) (HurewiczMap (ConnectedCW→CW X) x)
+-- HurewiczMainLemma n (X , (Xfam , Xsk , t) , sk) indhyp x = {!Xsk!} , {!!}
+--   where
+--   mainEquiv : GroupEquiv (Hᶜʷ (X , ∣ (Xfam , Xsk) , invEquiv sk ∣₁) n)
+--                          (AbGroup→Group (AbelianizationAbGroup (π'Gr n (X , x))))
+                         
+--   mainEquiv = {!!}
+  
+--   mainEquivCharacInv : invEq (fst mainEquiv) ≡ {!!} -- groupHom→AbelianisationGroupHom {!HurewiczMap (ConnectedCW→CW (X , (Xfam , Xsk , t) , sk)) x!} {!!} .fst -- ? ∘ 
+--   mainEquivCharacInv = {!!}
+
+-- -- HurewiczLemmas : {n : ℕ} (X : CW ℓ-zero) (x : fst X) (f : S₊∙ (suc n) →∙ (fst X , x))
+-- --   → isInducedAbelianisationGroupEquiv
+-- --       (π'Gr n (fst X , x)) (Hᶜʷ X n) (Hᶜʷ-comm X) (HurewiczMap X x)
+-- -- HurewiczLemmas {n} =
+-- --   uncurry λ X → PT.elim (λ _ →
+-- --                  isPropΠ2 λ _ _ → isPropIsInducedAbelianisationGroupEquiv)
+-- --    (uncurry λ Xsk → EquivJ (λ X y → (x : X) →
+-- --       S₊∙ (suc n) →∙ (X , x)
+-- --       → isInducedAbelianisationGroupEquiv
+-- --           (π'Gr n (X , x)) (Hᶜʷ (X , ∣ Xsk , y ∣₁) n)
+-- --           (Hᶜʷ-comm (X , ∣ Xsk , y ∣₁)) (HurewiczMap (X , ∣ Xsk , y ∣₁) x))
+-- --     λ x f → PT.rec isPropIsInducedAbelianisationGroupEquiv
+-- --             (λ apf → {!snd apf!} , {!!})
+-- --              (CWmap→finCellMap (Sˢᵏᵉˡ (suc n)) Xsk
+-- --              (fst f ∘ invEq (isCWSphere (suc n) .snd)) (2 +ℕ n)))
+-- --   where
+-- --   help : {!!}
+-- --   help = {!!}
