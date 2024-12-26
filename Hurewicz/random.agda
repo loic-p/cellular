@@ -14,7 +14,7 @@ open import Cubical.CW.Base
 open import Cubical.CW.Map
 open import Cubical.CW.Connected
 open import Cubical.CW.Homology
-open import Cubical.CW.Subcomplex
+open import Hurewicz.SubcomplexNew
 
 
 open import Cubical.Data.Empty
@@ -326,18 +326,47 @@ module falseDichotomies where
 -- ... | eq q = CW↪ C n (subst (fst C) (sym q) x)
 -- ... | lt s = ⊥.rec (¬squeeze (p , s))
 
-CW↑ : ∀ {ℓ} (C : CWskel ℓ) (m n : ℕ) →  m <ᵗ n → fst C m → fst C n
-CW↑ C zero (suc n) p q = ⊥.rec (C .snd .snd .snd .fst q)
-CW↑ C (suc m) (suc n) p x with (n ≟ᵗ suc m)
-... | gt s = CW↪ C n (CW↑ C (suc m) n s x)
-... | eq q = CW↪ C n (subst (fst C) (sym q) x)
-... | lt s = ⊥.rec (¬squeeze (p , s))
+-- TrichotomyᵗSucR : {n m : ℕ} →  Trichotomyᵗ n m → Trichotomyᵗ n (suc m)
+-- TrichotomyᵗSucR {n = n} {m} (lt x) = {!lt ?!}
+-- TrichotomyᵗSucR {n = n} {m} (eq x) = {!!}
+-- TrichotomyᵗSucR {n = n} {m} (gt x) = {!!}
+
+CW↑Gen : ∀ {ℓ} (C : CWskel ℓ) (m n : ℕ) → Trichotomyᵗ n (suc m) → m <ᵗ n → fst C m → fst C n
+CW↑Gen C zero (suc n) s p q = ⊥.rec (C .snd .snd .snd .fst q)
+CW↑Gen C (suc m) (suc n) (lt x₁) p x = ⊥.rec (¬squeeze (p , x₁))
+CW↑Gen C (suc m) (suc n) (eq x₁) p x =
+  CW↪ C n (subst (fst C) (sym (cong predℕ x₁)) x)
+CW↑Gen C (suc m) (suc n) (gt x₁) p x =
+  CW↪ C n (CW↑Gen C (suc m) n (n ≟ᵗ suc (suc m)) x₁ x)
+
+CW↑Gen≡ : ∀ {ℓ} (C : CWskel ℓ) (m n : ℕ)
+     (p : Trichotomyᵗ n (suc m)) (q : m <ᵗ n) (x : fst C m)
+  → Path (realise C) (incl x) (incl {n = n} (CW↑Gen C m n p q x))
+CW↑Gen≡ C zero (suc n) p q x = ⊥.rec (C .snd .snd .snd .fst x)
+CW↑Gen≡ C (suc m) (suc n) (lt x₁) q x = ⊥.rec (¬squeeze (q , x₁))
+CW↑Gen≡ C (suc m) (suc n) (eq x₁) q x = help _ (cong predℕ (sym x₁))
+  where
+  help : (n : ℕ) (p : suc m ≡ n) → Path (realise C) (incl x) (incl (CW↪ C n (subst (fst C) p x)))
+  help = J> push x ∙ λ i → incl {n = suc (suc m)} (CW↪ C (suc m) (transportRefl x (~ i)))
+CW↑Gen≡ C (suc m) (suc n) (gt x₁) q x =
+    CW↑Gen≡ C (suc m) n (n ≟ᵗ suc (suc m)) x₁ x
+  ∙ push (CW↑Gen C (suc m) n (n ≟ᵗ suc (suc m)) x₁ x)
+
+module subComplexMapGen {ℓ : Level} (C : CWskel ℓ) where
+  subComplex→map' : (m n : ℕ) (p : Trichotomyᵗ n m)
+    → SubComplexGen.subComplexFam C m n p → fst C n
+  subComplex→map' m n (lt x) = idfun _
+  subComplex→map' m n (eq x) = idfun _
+  subComplex→map' m n (gt x) = CW↑Gen C m n (n ≟ᵗ suc m) x
+  {-
+  subComplex→map' C m n with (n ≟ᵗ m)
+  ... | lt x = idfun _
+  ... | eq x = idfun _
+  ... | gt x = CW↑Gen C m n x
+-}
 
 subComplex→map : ∀ {ℓ} (C : CWskel ℓ) (m n : ℕ) → subComplexFam C m n → fst C n
-subComplex→map C m n with (n ≟ᵗ m)
-... | lt x = idfun _
-... | eq x = idfun _
-... | gt x = CW↑ C m n x
+subComplex→map C m n = subComplexMapGen.subComplex→map' C m n (n ≟ᵗ m)
 
 ⊥elimLem : ∀ {ℓ ℓ'} {A : Type ℓ} {B : Type ℓ'} {f : A → B} {x : B} {s : _} → x ≡ f (⊥.rec s)
 ⊥elimLem {s = ()}
@@ -367,17 +396,6 @@ FinSequenceMap.fcomm (subComplex→ C (suc m) (suc n)) (t , q) with (t ≟ᵗ m)
   ... | lt x = ⊥.rec {!!}
   ... | eq x = λ o → cong (CW↪ C t) (sym (cong (subst (fst C) (sym x)) (transportRefl _) ∙ subst⁻Subst (fst C) x o ))
   ... | gt x = λ _ → refl
-  as = subComplexFam≃Pushout
--- --  | (t ≟ᵗ suc m)
--- ... | lt x | lt x₁ = λ _ → refl
--- ... | lt x | eq x₁ = ⊥.rec {!!}
--- ... | lt x | gt x₁ = ⊥.rec {!!}
--- ... | eq x | lt x₁ = λ _ → refl
--- ... | eq x | eq x₁ = ⊥.rec {!!}
--- ... | eq x | gt x₁ = ⊥.rec {!!}
--- ... | gt x | lt x₁ = ⊥.rec {!!}
--- ... | gt x | eq x₁ = {!⊥.rec ?!}
--- ... | gt x | gt x₁ = {!!}
 
 
 subComplexHomologyEquiv≡ : ∀ {ℓ} (C : CWskel ℓ) (m n : ℕ) (p : suc (suc n) <ᵗ m)
@@ -392,21 +410,118 @@ subComplexHomologyEquiv≡ C m n p = {!→FinSeqColimHomotopy ? ?!}
   fst help = subComplex→ C m (suc (suc (suc n)))
   snd help = →FinSeqColimHomotopy _ _ aa
    where
-   LL : (m : ℕ) (p : suc (suc n) <ᵗ m) → subComplexFam C m (suc (suc (suc n))) ≡ fst C m
-   LL m p with ( suc (suc (suc n)) ≟ᵗ m)
-   ... | lt x = ⊥.rec {!!}
-   ... | eq x = ⊥.rec {!!}
-   ... | gt x = refl
+   main! : (m : ℕ) (p : suc (suc n) <ᵗ m) (x : subComplexFam C m (suc (suc (suc n)))) (q : _)
+     → (CW↑Gen C (suc (suc (suc n))) (suc m))
+       q p
+       (subComplex→map C m (suc (suc (suc n))) x)
+       ≡ CW↪ C m (Iso.inv (realiseSubComplex m C) (incl x))
+   main! m p x (lt x₁) = ⊥.rec (¬squeeze (p , x₁))
+   main! m p x (eq x₁) = cong (CW↪ C m) (L m (sym (cong predℕ x₁)) x)
+     where
+     FF : (x : _) → (fst (SubComplexGen.complex≃subcomplex' C (suc (suc (suc n))) (suc (suc (suc n))) <ᵗsucm
+                      (Trichotomyᵗ-suc (Trichotomyᵗ-suc (Trichotomyᵗ-suc (n ≟ᵗ n))))))
+                      (subComplex→map C (suc (suc (suc n))) (suc (suc (suc n))) x)
+                  ≡ x
+     FF x with (n ≟ᵗ n)
+     ... | lt x₁ = ⊥.rec (¬m<ᵗm x₁)
+     ... | eq x₁ = refl
+     ... | gt x₁ = ⊥.rec (¬m<ᵗm x₁)
 
-   l2 : (x : _) (m : ℕ) (p : _) → Iso.leftInv (realiseSubComplex m C) {!x!} ≡ {!!}
-   l2 = {!!}
+     L : (m : ℕ) (p : suc (suc (suc n)) ≡ m) (x : _)
+       → subst (fst C) p (subComplex→map C m (suc (suc (suc n))) x)
+        ≡ Iso.inv (realiseSubComplex m C) (incl x)
+     L = J> λ x → transportRefl _
+       ∙ sym (Iso.leftInv (realiseSubComplex (suc (suc (suc n))) C) _)
+       ∙ cong (Iso.inv (realiseSubComplex (suc (suc (suc n))) C)) (cong incl (FF x))
+   main! (suc m) p x (gt x₁) =
+     cong (CW↪ C (suc m)) (sym (Iso.leftInv (realiseSubComplex (suc m) C) _)
+     ∙ cong (Iso.inv (realiseSubComplex (suc m) C)) (MA _))
+     where
+     MA : (p : _) → Iso.fun (realiseSubComplex (suc m) C) (CW↑Gen C (suc (suc (suc n))) (suc m) p x₁
+      (subComplex→map C (suc m) (suc (suc (suc n))) x))
+      ≡ incl x
+     MA p = cong (incl {n = suc m}) (OHA _ _)
+           ∙ sym (CW↑Gen≡ (subComplex C (suc m)) (suc (suc (suc n))) (suc m) p x₁ x)
+       where
+       OHA : (p : _) (x : _) → G.complex≃subcomplex' C (suc m) (suc m) <ᵗsucm
+                                (Trichotomyᵗ-suc (m ≟ᵗ m)) .fst
+                                (CW↑Gen C (suc (suc (suc n))) (suc m) p x₁
+                                 (subComplex→map C (suc m) (suc (suc (suc n))) x))
+                                ≡ CW↑Gen (subComplex C (suc m)) (suc (suc (suc n))) (suc m) p x₁ x
+       OHA (lt e) x = ⊥.rec (¬squeeze (x₁ , e)) -- ⊥.rec (¬squeeze (x₂ , x₁))
+       OHA (eq e) x with (m ≟ᵗ m)
+       ... | lt w = ⊥.rec (¬m<ᵗm w)
+       ... | eq w = lemma m (cong predℕ (sym e)) w (isSetℕ _ _ _ _) x
+         where
+         me : (inq : _) (x : _) → CW↪ C (suc (suc (suc n)))
+                   (subComplexMapGen.subComplex→map' C (suc (suc (suc (suc n)))) (suc (suc (suc n))) inq x)
+                       ≡
+                       invEq
+                       (G.subComplexFam≃Pushout C (suc (suc (suc (suc n))))
+                        (suc (suc (suc n))) inq
+                        (eq (λ _ → suc (suc (suc (suc n))))))
+                       (inl x)
+         me (lt x₁) x = refl
+         me (eq x₁) x = ⊥.rec {!!}
+         me (gt x₁) x = ⊥.rec (¬-suc-n<ᵗn x₁)
+         lemma : (m : ℕ)  (e : suc (suc (suc n)) ≡ m) (w : m ≡ m) (wr : refl ≡ w) (x : _)
+           → CW↪ C m (subst (fst C) e (subComplex→map C (suc m) (suc (suc (suc n))) x))
+           ≡ invEq (G.subComplexFam≃Pushout C (suc m) m (m ≟ᵗ suc m) (eq (cong suc w)))
+                   (inl (transport (λ i → G.subComplexFam C (suc m) (e i) (e i ≟ᵗ suc m)) x))
+         lemma = J> (J> λ x → cong (CW↪ C (suc (suc (suc n)))) (transportRefl _)
+           ∙ me _ x
+           ∙ cong (invEq (G.subComplexFam≃Pushout C (suc (suc (suc (suc n)))) (suc (suc (suc n))) ( (suc (suc (suc n))) ≟ᵗ suc  (suc (suc (suc n)))) (eq refl)) ∘ inl) (sym (transportRefl x)))
+       ... | gt w = ⊥.rec (¬m<ᵗm w)
+       OHA (gt e) x with (m ≟ᵗ m)
+       ... | lt w = ⊥.rec (¬m<ᵗm w)
+       ... | eq w = {!refl!}
+         where
+         TO : (x : _) → idfun (fst C (suc m))
+               (snd (snd (snd (snd (snd C))) m) .equiv-proof
+                (inl
+                 (CW↑Gen C (suc (suc (suc n))) m (m ≟ᵗ suc (suc (suc (suc n)))) e
+                  (subComplexMapGen.subComplex→map' C (suc m) (suc (suc (suc n)))
+                   (Trichotomyᵗ-suc (suc (suc n) ≟ᵗ m)) x)))
+                .fst .fst)
+               ≡
+               snd
+               (G.subComplexFam≃Pushout C (suc m) m (m ≟ᵗ suc m)
+                (eq (λ i → suc (w i))))
+               .equiv-proof
+               (inl
+                (CW↑Gen (subComplex C (suc m)) (suc (suc (suc n))) m
+                 (m ≟ᵗ suc (suc (suc (suc n)))) e x))
+               .fst .fst
+         TO = {!!}
+         lemma : (w : m ≡ m) (wr : refl ≡ w) (aa : {!!}) (bb : {!!}) (x : _)
+           → snd (snd (snd (snd (snd C))) m) .equiv-proof
+                (inl
+                 (CW↑Gen C (suc (suc (suc n))) m aa e
+                  (subComplexMapGen.subComplex→map' C (suc m) (suc (suc (suc n)))
+                   (Trichotomyᵗ-suc (suc (suc n) ≟ᵗ m)) x)))
+                .fst .fst
+                ≡
+                snd
+                (G.subComplexFam≃Pushout C (suc m) m (m ≟ᵗ suc m)
+                 (eq (λ i → suc (w i))))
+                .equiv-proof
+                (inl
+                 (CW↑Gen (subComplex C (suc m)) (suc (suc (suc n))) m
+                  bb e x))
+                .fst .fst
+         lemma w p (lt x₁) bb x = {!!}
+         lemma w p (eq x₁) bb x = {!!}
+         lemma w p (gt x₁) bb x = {!!}
+       ... | gt w = ⊥.rec (¬m<ᵗm w)
 
    aa : (x : subComplexFam C m (suc (suc (suc n)))) →
       incl (subComplex→map C m (suc (suc (suc n))) x) ≡
       incl (Iso.inv (realiseSubComplex m C) (incl x))
-   aa x = {!subComplex→mapsubComplex→map C m (suc (suc (suc n))) x!}
- {- {!subComplex→map C m (suc (suc (suc n))) x!} ∙ cong (incl {n = m}) (Iso.leftInv (realiseSubComplex m C) {!x!}) ∙ {!!}
- -}
+   aa x = CW↑Gen≡ C (suc (suc (suc n))) (suc m) (Trichotomyᵗ-suc (m ≟ᵗ suc (suc (suc n)))) -- (Trichotomyᵗ-suc (m ≟ᵗ suc (suc (suc n))))
+                    p (subComplex→map C m (suc (suc (suc n))) x)
+        ∙ cong (incl {n = suc m}) (main! m p x _)
+        ∙ sym (push _)
+
 subComplexHomologyEquiv : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ) (m : ℕ) (p : suc (suc n) <ᵗ m)
   → GroupEquiv (Hˢᵏᵉˡ (subComplex C (suc (suc (suc n)))) n)
                 (Hˢᵏᵉˡ C n)

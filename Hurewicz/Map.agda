@@ -14,7 +14,7 @@ open import Cubical.CW.Base
 open import Cubical.CW.Map
 open import Cubical.CW.Connected
 open import Cubical.CW.Homology
-open import Cubical.CW.Subcomplex
+open import Hurewicz.SubcomplexNew
 
 
 open import Cubical.Data.Empty
