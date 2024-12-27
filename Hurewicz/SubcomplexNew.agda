@@ -90,17 +90,87 @@ module SubComplexGen (C : CWskel ℓ) (n : ℕ) where
   subComplexFam≃Pushout m (gt x) (gt x₁) =
     isoToEquiv (PushoutEmptyFam (λ x → ¬Fin0 (fst x)) ¬Fin0)
 
+  subComplexCW↪Gen : (m : ℕ) (p : Trichotomyᵗ m n) (q : Trichotomyᵗ (suc m) n) 
+    → subComplexFam m p → subComplexFam (suc m) q
+  subComplexCW↪Gen m p q x = invEq (subComplexFam≃Pushout m p q) (inl x)
+
   subComplexFinEquiv' : (m : ℕ) (ineq : n <ᵗ suc m) (p : _)
     → isEquiv {B = Pushout (subComplexα m p) fst} inl
   subComplexFinEquiv' m ineq (lt x) = ⊥.rec (¬squeeze (x , ineq))
   subComplexFinEquiv' m ineq (eq x) = isoToIsEquiv (PushoutEmptyFam (¬Fin0 ∘ fst) ¬Fin0)
   subComplexFinEquiv' m ineq (gt x) = isoToIsEquiv (PushoutEmptyFam (¬Fin0 ∘ fst) ¬Fin0)
 
-  complex≃subcomplex' : (m : ℕ) (ineq : m <ᵗ suc n) (p : _)
-    → fst C m  ≃ subComplexFam m p
-  complex≃subcomplex' m ineq (lt x) = idEquiv _
-  complex≃subcomplex' m ineq (eq x) = idEquiv _
-  complex≃subcomplex' m ineq (gt x) = ⊥.rec (¬squeeze (x , ineq))
+CW↑Gen : ∀ {ℓ} (C : CWskel ℓ) (m n : ℕ) → Trichotomyᵗ n (suc m) → m <ᵗ n → fst C m → fst C n
+CW↑Gen C zero (suc n) s p q = ⊥.rec (C .snd .snd .snd .fst q)
+CW↑Gen C (suc m) (suc n) (lt x₁) p x = ⊥.rec (¬squeeze (p , x₁))
+CW↑Gen C (suc m) (suc n) (eq x₁) p x =
+  CW↪ C n (subst (fst C) (sym (cong predℕ x₁)) x)
+CW↑Gen C (suc m) (suc n) (gt x₁) p x =
+  CW↪ C n (CW↑Gen C (suc m) n (n ≟ᵗ suc (suc m)) x₁ x)
+
+{-
+Goal: CW↑Gen C (suc (suc (suc n))) m (eq x₁) e
+      (transp
+       (λ i → G.subComplexFam C (suc m) (suc (suc (suc n))) (q2 i)) i0 x₃)
+      ≡
+      transp (λ i → G.subComplexFam C (suc m) m (q i)) i0
+      (CW↑Gen (subComplex C (suc m)) (suc (suc (suc n))) m (eq x₁) e x₃)
+-}
+
+open import Cubical.HITs.SequentialColimit
+CW↑Gen≡ : ∀ {ℓ} (C : CWskel ℓ) (m n : ℕ)
+     (p : Trichotomyᵗ n (suc m)) (q : m <ᵗ n) (x : fst C m)
+  → Path (realise C) (incl x) (incl {n = n} (CW↑Gen C m n p q x))
+CW↑Gen≡ C zero (suc n) p q x = ⊥.rec (C .snd .snd .snd .fst x)
+CW↑Gen≡ C (suc m) (suc n) (lt x₁) q x = ⊥.rec (¬squeeze (q , x₁))
+CW↑Gen≡ C (suc m) (suc n) (eq x₁) q x = help _ (cong predℕ (sym x₁))
+  where
+  help : (n : ℕ) (p : suc m ≡ n) → Path (realise C) (incl x) (incl (CW↪ C n (subst (fst C) p x)))
+  help = J> push x ∙ λ i → incl {n = suc (suc m)} (CW↪ C (suc m) (transportRefl x (~ i)))
+CW↑Gen≡ C (suc m) (suc n) (gt x₁) q x =
+    CW↑Gen≡ C (suc m) n (n ≟ᵗ suc (suc m)) x₁ x
+  ∙ push (CW↑Gen C (suc m) n (n ≟ᵗ suc (suc m)) x₁ x)
+
+module subComplexMapGen {ℓ : Level} (C : CWskel ℓ) where
+  subComplex→map' : (m n : ℕ) (p : Trichotomyᵗ n m)
+    → SubComplexGen.subComplexFam C m n p → fst C n
+  subComplex→map' m n (lt x) = idfun _
+  subComplex→map' m n (eq x) = idfun _
+  subComplex→map' m n (gt x) = CW↑Gen C m n (n ≟ᵗ suc m) x
+
+  subComplex←map' : (m n : ℕ) (ineq : n <ᵗ suc m) (p : Trichotomyᵗ n m)
+    → fst C n → SubComplexGen.subComplexFam C m n p
+  subComplex←map' m n ineq (lt x) = idfun _
+  subComplex←map' m n ineq (eq x) = idfun _
+  subComplex←map' m n ineq (gt x) = ⊥.rec (¬squeeze (x , ineq))
+
+  private
+    retr-sect : (m n : ℕ) (ineq : n <ᵗ suc m) (p : Trichotomyᵗ n m)
+      → retract (subComplex→map' m n p) (subComplex←map' m n ineq p)
+       × section (subComplex→map' m n p) (subComplex←map' m n ineq p)
+    retr-sect m n ineq (lt x) = (λ x → refl) , λ x → refl
+    retr-sect m n ineq (eq x) = (λ x → refl) , (λ x → refl)
+    retr-sect m n ineq (gt x) = ⊥.rec (¬squeeze (x , ineq))
+
+  subComplexIso : (m n : ℕ) (ineq : n <ᵗ suc m) (p : Trichotomyᵗ n m)
+    → Iso (fst C n) (SubComplexGen.subComplexFam C m n p)
+  Iso.fun (subComplexIso m n ineq p) = subComplex←map' m n ineq p
+  Iso.inv (subComplexIso m n ineq p) = subComplex→map' m n p
+  Iso.rightInv (subComplexIso m n ineq p) = retr-sect m n ineq p .fst
+  Iso.leftInv (subComplexIso m n ineq p) = retr-sect m n ineq p .snd
+
+subComplex→map : ∀ {ℓ} (C : CWskel ℓ) (m n : ℕ) → SubComplexGen.subComplexFam C m n (n ≟ᵗ m) → fst C n
+subComplex→map C m n = subComplexMapGen.subComplex→map' C m n (n ≟ᵗ m)
+
+
+subComplex→Equiv : ∀ {ℓ} (C : CWskel ℓ) (n m : ℕ) (p : m <ᵗ suc n)
+  → SubComplexGen.subComplexFam C n m (m ≟ᵗ n) ≃ fst C m
+subComplex→Equiv C n m p =
+  isoToEquiv (invIso (subComplexMapGen.subComplexIso C n m p (m ≟ᵗ n)))
+
+complex≃subcomplex' : (C : CWskel ℓ) (n m : ℕ) (ineq : m <ᵗ suc n) (p : _)
+  → fst C m ≃ SubComplexGen.subComplexFam C n m p
+complex≃subcomplex' C n m ineq p = isoToEquiv (subComplexMapGen.subComplexIso C n m ineq p)
 
 
 module _ (C : CWskel ℓ) where
@@ -164,7 +234,7 @@ module _ (C : CWskel ℓ) where
 realiseSubComplex : (n : ℕ) (C : CWskel ℓ)
   → Iso (fst C n) (realise (subComplex C n))
 realiseSubComplex n C =
-  compIso (equivToIso (SubComplexGen.complex≃subcomplex' C n n <ᵗsucm (n ≟ᵗ n)))
+  compIso (equivToIso (complex≃subcomplex' C n n <ᵗsucm (n ≟ᵗ n)))
           (realiseFin n (finSubComplex C n))
 
 -- Strictifying finCWskel
@@ -223,13 +293,18 @@ module _ (C : CWskel ℓ) where
   ... | eq x = ⊥.rec (¬m<ᵗm (subst (_<ᵗ n) x p))
   ... | gt x = ⊥.rec (¬m<ᵗm (<ᵗ-trans x p))
 
+open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup 
+subChainIsoGen : (C : CWskel ℓ) (n : ℕ) (m : Fin n) (p : Trichotomyᵗ (fst m) n)
+  → AbGroupIso (CWskel-fields.ℤ[A_] C (fst m))
+                ℤ[Fin SubComplexGen.subComplexCard C n (fst m) p ] -- (CWskel-fields.ℤ[A_] (subComplex C n) (fst m))
+subChainIsoGen C n (m , p) (lt x) = idGroupIso
+subChainIsoGen C n (m , p) (eq x) = ⊥.rec (¬m<ᵗm (subst (m <ᵗ_) (sym x) p))
+subChainIsoGen C n (m , p) (gt x) = ⊥.rec (¬m<ᵗm (<ᵗ-trans x p))
+
 subChainIso : (C : CWskel ℓ) (n : ℕ) (m : Fin n)
   → AbGroupIso (CWskel-fields.ℤ[A_] C (fst m))
                 (CWskel-fields.ℤ[A_] (subComplex C n) (fst m))
-subChainIso C n (m , p) with (m ≟ᵗ n)
-... | lt x = idGroupIso
-... | eq x = ⊥.rec (¬m<ᵗm (subst (m <ᵗ_) (sym x) p))
-... | gt x = ⊥.rec (¬m<ᵗm (<ᵗ-trans x p))
+subChainIso C n (m , p) = subChainIsoGen C n (m , p) _
 
 -- main result
 subComplexHomology : (C : CWskel ℓ) (n m : ℕ) (p : suc (suc m) <ᵗ n)
