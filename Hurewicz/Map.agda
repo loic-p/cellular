@@ -15,7 +15,7 @@ open import Cubical.CW.Map
 open import Cubical.CW.Connected
 open import Cubical.CW.Homology
 open import Hurewicz.SubcomplexNew
-
+open import Hurewicz.random
 
 open import Cubical.Data.Empty
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
@@ -82,62 +82,11 @@ CW↑< : ∀ {ℓ} (C : CWskel ℓ) (n m : ℕ) → n <ᵗ suc m → fst C n →
 CW↑< C n m x = subst (fst C) (snd (diff<ᵗ' x))
              ∘ CW↪Iterate C n (diff<ᵗ' x .fst)
 
+{-
 cellMap→finCellMap : ∀ {ℓ ℓ'} (m : ℕ) {C : CWskel ℓ} {D : CWskel ℓ'} (ϕ : cellMap C D) → finCellMap m C D
 FinSequenceMap.fmap (cellMap→finCellMap m ϕ) (x , p) = SequenceMap.map ϕ x
 FinSequenceMap.fcomm (cellMap→finCellMap m ϕ) (x , p) = SequenceMap.comm ϕ x
 
-subComplex→ : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ) → cellMap (subComplex C n) C
-SequenceMap.map (subComplex→ C n) m with (m ≟ᵗ n)
-... | lt x = idfun (fst C m)
-... | eq x = idfun (fst C m)
-... | gt x = CW↑ C _ _ x
-SequenceMap.comm (subComplex→ C n) m with (m ≟ᵗ n) | (suc m ≟ᵗ n)
-... | lt x | lt x₁ = λ _ → refl
-... | lt x | eq x₁ = λ _ → refl
-... | lt x | gt x₁ = ⊥.rec (¬squeeze (x , x₁))
-... | eq x | lt x₁ = ⊥.rec (¬m<ᵗm (subst (_<ᵗ n) x (<ᵗ-trans <ᵗsucm x₁)))
-... | eq x | eq x₁ = ⊥.rec (¬m<ᵗm (subst (_<ᵗ_ m) (x₁ ∙ (λ i → x (~ i))) <ᵗsucm))
-... | eq x | gt x₁ = help m n x x₁
-  where
-  diff<ᵗsucm : (m : ℕ) (x₁ : m <ᵗ suc m) → diff<ᵗ x₁ ≡ (1 , refl)
-  diff<ᵗsucm m t = Σ≡Prop (λ _ → isSetℕ _ _) (inj-+m (diff<ᵗ t .snd))
-
-  help : (m n : ℕ) (p : m ≡ n) (x₁ : n <ᵗ suc m)
-      (x₂ : fst C m) →
-      snd (snd (snd (snd (snd C))) m) .equiv-proof
-      (inl (idfun (fst C m) x₂)) .fst .fst
-      ≡
-      CW↑ C n (suc m) x₁
-      (invEq (pathToEquiv (λ i → fst C (p (~ i))))
-       x₂)
-  help m = J> λ t → λ x
-    → sym (transportRefl _)
-    ∙ (λ j → transport (λ i → fst C (diff<ᵗsucm m t (~ j) .snd i))
-      (CW↪Iterate C m (diff<ᵗsucm m t (~ j) .fst) x))
-    ∙ cong (CW↑ C m (suc m) t)
-      λ i → transp (λ i → fst C m) (~ i) (transp (λ i → fst C m) (~ i) x)
-... | gt x | lt x₁ = ⊥.rec (¬squeeze (x₁ , <ᵗ-trans x (<ᵗ-trans <ᵗsucm <ᵗsucm)))
-... | gt x | eq x₁ = ⊥.rec (¬m<ᵗm (subst (_<ᵗ_ n) x₁ (<ᵗ-trans x <ᵗsucm)))
-... | gt x | gt x₁ = λ x
-  → cong (invEq (snd (snd (snd (snd C))) m) ∘ inl)
-          (λ _ → subst (fst C) (snd D1)
-                   (CW↪Iterate C n (D1 .fst) x))
-   ∙ sym (substCommSlice (fst C) (fst C ∘ suc) (CW↪ C)
-         (snd D1) _)
-   ∙ λ i → (subst (fst C) (snd (BAH (~ i)))
-             ∘ CW↪Iterate C n (BAH (~ i) .fst)) x
-  where
-  D1 = diff<ᵗ x
-  D2 = diff<ᵗ x₁
-
-  BAH : D2 ≡ (suc (fst D1) , cong suc (snd D1))
-  BAH = Σ≡Prop (λ _ → isSetℕ _ _)
-          (cong suc (inj-+m {n = suc (fst (<ᵗ→< x))}
-            (snd  (<ᵗ→< x₁) ∙ cong suc (sym (snd (<ᵗ→< x))))))
-
-finCellApproxSubComplex→ : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ)
-  → finCellApprox (subComplex C n) C {!!} {!!} -- 
-finCellApproxSubComplex→ = {!!}
 
 FinSequenceMapId : ∀ {ℓ ℓ'} {n : ℕ} {S1 : FinSequence n ℓ} {S2 : FinSequence n ℓ'}
   → {f g : FinSequenceMap S1 S2}
@@ -181,7 +130,7 @@ FinSequenceMap.fcomm (finCellMapSubComplex C n) = finCellMapSubComplexComm C n
 
 finCellMapSubComplexMapComp : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ)
   → (m : Fin (suc n)) (x : fst C (fst m))
-    → SequenceMap.map (subComplex→ C n) (fst m) (finCellMapSubComplexMap C n m x) ≡ x
+    → SequenceMap.map (subComplex→Full C n) (fst m) (finCellMapSubComplexMap C n m x) ≡ x
 finCellMapSubComplexMapComp C n m x with (fst m ≟ᵗ n)
 ... | lt x₁ = refl
 ... | eq x₁ = refl
@@ -190,19 +139,19 @@ finCellMapSubComplexMapComp C n m x with (fst m ≟ᵗ n)
 finCellMapSubComplexMapComm : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ)
   (x : Fin n) (a : fst C (fst x)) →
       Square
-      ((SequenceMap.comm (subComplex→ C n) (fst x))
+      ((SequenceMap.comm (subComplex→Full C n) (fst x))
        (finCellMapSubComplexMap C n (injectSuc x) a)
        ∙
        (λ i →
-          (SequenceMap.map (subComplex→ C n) (suc (fst x)))
+          (SequenceMap.map (subComplex→Full C n) (suc (fst x)))
           (finCellMapSubComplexComm C n x a i)))
       refl
       (cong (λ x₁ → CW↪ C (fst x) x₁)
        (finCellMapSubComplexMapComp C n (injectSuc x) a))
       (finCellMapSubComplexMapComp C n (fsuc x) (CW↪ C (fst x) a))
 finCellMapSubComplexMapComm C n x a with (fst x ≟ᵗ n) | (suc (fst x) ≟ᵗ n)
-... | lt x₁ | lt x₂ = sym (rUnit _)
-... | lt x₁ | eq x₂ = sym (rUnit _)
+finCellMapSubComplexMapComm C (suc n) x a | lt x₁ | lt x₂ = sym (rUnit _)
+finCellMapSubComplexMapComm C (suc n) x a | lt x₁ | eq x₂ = sym (rUnit _)
 ... | lt x₁ | gt x₂ = ⊥.rec (¬squeeze (snd (fsuc x) , x₂))
 ... | eq x₁ | lt x₂ = ⊥.rec (¬m<ᵗm (subst (_<ᵗ n) x₁ (<ᵗ-trans <ᵗsucm x₂))) 
 ... | eq x₁ | eq x₂ = ⊥.rec
@@ -211,14 +160,14 @@ finCellMapSubComplexMapComm C n x a with (fst x ≟ᵗ n) | (suc (fst x) ≟ᵗ 
 ... | gt x₁ | q = ⊥.rec (¬squeeze (snd (injectSuc x) , x₁))
 
 finCellMapSubComplexComp : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ)
-  → composeFinCellMap n (cellMap→finCellMap n (subComplex→ C n)) (finCellMapSubComplex C n)
+  → composeFinCellMap n (cellMap→finCellMap n (subComplex→Full C n)) (finCellMapSubComplex C n)
    ≡ idFinCellMap n _
 finCellMapSubComplexComp C n =
   FinSequenceMapId (finCellMapSubComplexMapComp C n)
                    (finCellMapSubComplexMapComm C n)
 
 finCellMapSubComplexComp' : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ)
-  → composeFinCellMap n (finCellMapSubComplex C n) (cellMap→finCellMap n (subComplex→ C n))
+  → composeFinCellMap n (finCellMapSubComplex C n) (cellMap→finCellMap n (subComplex→Full C n))
    ≡ idFinCellMap n _
 finCellMapSubComplexComp' C n =
   FinSequenceMapId (finCellMapSubComplexMapComp' C n)
@@ -226,7 +175,7 @@ finCellMapSubComplexComp' C n =
   where
   finCellMapSubComplexMapComp' : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ)
     → (m : Fin (suc n)) (x : _)
-      → finCellMapSubComplexMap C n m (SequenceMap.map (subComplex→ C n) (fst m) x) ≡ x
+      → finCellMapSubComplexMap C n m (SequenceMap.map (subComplex→Full C n) (fst m) x) ≡ x
   finCellMapSubComplexMapComp' C n m x with (fst m ≟ᵗ n)
   ... | lt x₁ = refl
   ... | eq x₁ = refl
@@ -235,11 +184,11 @@ finCellMapSubComplexComp' C n =
   finCellMapSubComplexMapCoh' : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ) (x : Fin n) (a : subComplexFam C n (fst x)) →
       Square
       (finCellMapSubComplexComm C n x
-       ((SequenceMap.map (subComplex→ C n) (fst x)) a)
+       ((SequenceMap.map (subComplex→Full C n) (fst x)) a)
        ∙
        (λ i →
           finCellMapSubComplexMap C n (fsuc x)
-          ((SequenceMap.comm (subComplex→ C n) (fst x))
+          ((SequenceMap.comm (subComplex→Full C n) (fst x))
            a i)))
       refl
       (cong (λ x₁ → CW↪ (subComplex C n) (fst x) x₁)
@@ -247,8 +196,8 @@ finCellMapSubComplexComp' C n =
       (finCellMapSubComplexMapComp' C n (fsuc x)
        (CW↪ (subComplex C n) (fst x) a))
   finCellMapSubComplexMapCoh' C n x a with (fst x ≟ᵗ n) | (suc (fst x) ≟ᵗ n)
-  ... | lt x₁ | lt x₂ = sym (rUnit _)
-  ... | lt x₁ | eq x₂ = sym (rUnit _)
+  finCellMapSubComplexMapCoh' C (suc n) x a | lt x₁ | lt x₂ = sym (rUnit _)
+  finCellMapSubComplexMapCoh' C (suc n) x a | lt x₁ | eq x₂ = sym (rUnit _)
   ... | lt x₁ | gt x₂ = ⊥.rec (¬squeeze (snd (fsuc x) , x₂))
   ... | eq x₁ | lt x₂ = ⊥.rec (¬m<ᵗm (subst (_<ᵗ n) x₁ (<ᵗ-trans <ᵗsucm x₂))) 
   ... | eq x₁ | eq x₂ = ⊥.rec
@@ -261,12 +210,12 @@ subComplex→GrIso : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ)
 Iso.fun (fst (subComplex→GrIso C n)) =
   finCellMap→HomologyMap n
     (cellMap→finCellMap (suc (suc (suc n)))
-      (subComplex→ C (suc (suc (suc n))))) .fst
+      (subComplex→Full C (suc (suc (suc n))))) .fst
 Iso.inv (fst (subComplex→GrIso C n)) = finCellMap→HomologyMap n (finCellMapSubComplex C (suc (suc (suc n)))) .fst
 Iso.rightInv (fst (subComplex→GrIso C n)) =
   funExt⁻ (cong fst (sym (finCellMap→HomologyMapComp n
              (cellMap→finCellMap (suc (suc (suc n)))
-               (subComplex→ C (suc (suc (suc n)))))
+               (subComplex→Full C (suc (suc (suc n)))))
              (finCellMapSubComplex C (suc (suc (suc n)))))
            ∙ cong (finCellMap→HomologyMap n) (finCellMapSubComplexComp C (suc (suc (suc n))))
            ∙ finCellMap→HomologyMapId n))
@@ -274,17 +223,17 @@ Iso.leftInv (fst (subComplex→GrIso C n)) =
   funExt⁻ (cong fst (sym (finCellMap→HomologyMapComp n
              (finCellMapSubComplex C (suc (suc (suc n))))
              (cellMap→finCellMap (suc (suc (suc n)))
-               (subComplex→ C (suc (suc (suc n))))))
+               (subComplex→Full C (suc (suc (suc n))))))
            ∙ cong (finCellMap→HomologyMap n) (finCellMapSubComplexComp' C (suc (suc (suc n))))
            ∙ finCellMap→HomologyMapId n))
 snd (subComplex→GrIso C n) =
   finCellMap→HomologyMap n
     (cellMap→finCellMap (suc (suc (suc n)))
-      (subComplex→ C (suc (suc (suc n))))) .snd
+      (subComplex→Full C (suc (suc (suc n))))) .snd
 -- (cong fst (sym (finCellMap→HomologyMapComp n g⁻ g)) ∙ {!!})) {!!}) -- 
   where
   g⁻ : finCellMap (suc (suc (suc n))) (subComplex C (suc (suc (suc n)))) C
-  g⁻ = (cellMap→finCellMap (suc (suc (suc n))) (subComplex→ C (suc (suc (suc n)))))
+  g⁻ = (cellMap→finCellMap (suc (suc (suc n))) (subComplex→Full C (suc (suc (suc n)))))
 
   g : finCellMap (suc (suc (suc n))) C (subComplex C (suc (suc (suc n))))
   FinSequenceMap.fmap g (o , s) with (o ≟ᵗ (suc (suc (suc n))))
@@ -299,12 +248,6 @@ snd (subComplex→GrIso C n) =
   ... | eq x | eq x₁ = ⊥.rec (¬m<ᵗm (subst (_<ᵗ suc (suc n)) x (subst (o <ᵗ_) (sym x₁ ∙ x) s)))
   ... | eq x | gt x₁ = ⊥.rec (¬m<ᵗm (<ᵗ-trans s x₁))
   ... | gt x | b = ⊥.rec (¬squeeze (s , x))
-
-realiseSubComplexEq : ∀ {ℓ} (n : ℕ) (C : CWskel ℓ) (x : _)
-  → Iso.fun (realiseSubComplex n C) x ≡ incl {n = n} {!!}
-realiseSubComplexEq = {!!}
-
-
 
 realiseSubComplexFunPre : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ) → fst C n → subComplexFam C n n
 realiseSubComplexFunPre C n x with (n ≟ᵗ n)
@@ -338,22 +281,22 @@ snd (finCellApproxRealiseCellMap f n) = →FinSeqColimHomotopy _ _ λ _ → refl
 
 funCharac? : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ)
   → (CW↪∞ C n ∘ invEq (isoToEquiv (realiseSubComplex n C)))
-   ≡ realiseCellMap (subComplex→ C n)
+   ≡ realiseCellMap (subComplex→Full C n)
 funCharac? C n = funExt λ x
   → better (Iso.inv (realiseSubComplex n C) x)
-   ∙ cong (realiseCellMap (subComplex→ C n))
+   ∙ cong (realiseCellMap (subComplex→Full C n))
        (Iso.rightInv (realiseSubComplex n C) x)
   where
   lem : (n : ℕ) (x : _)
-    → x ≡ SequenceMap.map (subComplex→ C n) n
-            (complex≃subcomplex C n flast .fst x)
-  lem n x with (n ≟ᵗ n)
+    → x ≡ SequenceMap.map (subComplex→Full C n) n
+            (complex≃subcomplex' C n n <ᵗsucm (n ≟ᵗ n) .fst x)
+  lem n x  with (n ≟ᵗ n)
   ... | lt x₁ = refl
   ... | eq x₁ = refl
   ... | gt x₁ = ⊥.rec (¬squeeze (x₁ , <ᵗsucm))
 
   better : (x : _) → CW↪∞ C n x
-    ≡ realiseCellMap (subComplex→ C n)
+    ≡ realiseCellMap (subComplex→Full C n)
         (Iso.fun (realiseSubComplex n C) x)
   better x = cong (incl {n = n}) (lem n x)
 
@@ -375,8 +318,8 @@ snd (snd (∃HomologyEquivalentSubStructure (C∞ , C , e) n)) =
                    {D = C∞ , ∣ C , e ∣₁} n (invEquiv e) .fst) .snd)
   where
   T : (n : ℕ) → finCellApprox (subComplex C n) C (CW↪∞ C n ∘ Iso.inv (realiseSubComplex n C)) n
-  fst (T n) = finCellApproxRealiseCellMap (subComplex→ C n) n .fst
-  snd (T n) = finCellApproxRealiseCellMap (subComplex→ C n) n .snd
+  fst (T n) = finCellApproxRealiseCellMap (subComplex→Full C n) n .fst
+  snd (T n) = finCellApproxRealiseCellMap (subComplex→Full C n) n .snd
             ∙ funExt λ x → funExt⁻ (sym (funCharac? C n)) (FinSeqColim→Colim n x)
 
   ww = SeqColim
@@ -384,6 +327,7 @@ snd (snd (∃HomologyEquivalentSubStructure (C∞ , C , e) n)) =
   main = subst isEquiv (cong fst (sym (Hˢᵏᵉˡ→β _ _ n (T (suc (suc (suc n)))))))
                (isoToIsEquiv (fst (subComplex→GrIso C n)))
 
+-}
 
 -- todo : fix univ levels
 groupHom→AbelianisationGroupHom : ∀ {ℓ} {A : Group ℓ} {B : Group ℓ}
@@ -434,50 +378,83 @@ module _ where
     → fst (Hᶜʷ X n)
   HurewiczMap X x = ST.rec (GroupStr.is-set (snd (Hᶜʷ X _))) (HurewiczMapUntrunc X x)
 
+  open import Cubical.Homotopy.Connected
+  open import Cubical.HITs.Truncation as TR
+  open import Cubical.CW.Properties
+  
+  
   HurewiczMapHom :  {n : ℕ} (X : CW ℓ-zero) (x : fst X) (f g : π' (suc n) (fst X , x))
-                 → HurewiczMap X x (·π' n f g)
-                  ≡ GroupStr._·_ (snd (Hᶜʷ X n))
-                      (HurewiczMap X x f) (HurewiczMap X x g)
-  HurewiczMapHom {n = n} = {!!}
-  {- uncurry λ X
-    → PT.elim (λ q → isPropΠ3 λ _ _ _ → GroupStr.is-set (snd (Hᶜʷ (X , q) n)) _ _)
-     (uncurry λ Xsk
-       → EquivJ (λ X y → (x : X) (f g : π' (suc n) (X , x)) →
-            HurewiczMap (X , ∣ Xsk , y ∣₁) x (·π' n f g) ≡
-            (snd (Hᶜʷ (X , ∣ Xsk , y ∣₁) n) GroupStr.·
-             HurewiczMap (X , ∣ Xsk , y ∣₁) x f)
-            (HurewiczMap (X , ∣ Xsk , y ∣₁) x g))
-            λ x → ST.elim2 {!Xsk!}
-              λ f g → PT.rec3 {!!} (λ apf apg apfg
-              → {!!} ∙ funExt⁻ (cong fst (Hˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n)) Xsk n {f = (fst (∙Π f g) ∘ invEq (isCWSphere (suc n) .snd))} apfg)) (genHₙSⁿ n)
-              ∙ {!fst (Hˢᵏᵉˡ→-pre (Sˢᵏᵉˡ (suc n)) Xsk n (apfg .fst))
-      (genHₙSⁿ n)!}
-              ∙ {!GroupStr._·_ (snd (Hᶜʷ (X , ∣ Xsk , ? ∣₁)))!})
-                (CWmap→finCellMap (Sˢᵏᵉˡ (suc n)) Xsk (fst f ∘ invEq (isCWSphere (suc n) .snd)) (3 +ℕ n))
-                ((CWmap→finCellMap (Sˢᵏᵉˡ (suc n)) Xsk (fst g ∘ invEq (isCWSphere (suc n) .snd)) (3 +ℕ n)))
-                (CWmap→finCellMap (Sˢᵏᵉˡ (suc n)) Xsk (fst (∙Π f g) ∘ invEq (isCWSphere (suc n) .snd)) (3 +ℕ n)))
-                -}
-     where
-     approxMultMap : ∀ {ℓ} (X : CWskel ℓ) (x : realise X)  (n m : ℕ)
-       → (n₂ : Fin (suc m))
-       → (f g : Sfam (suc n) (fst n₂) → fst X (fst n₂))
-       → (Sfam (suc n) (fst n₂) → fst X (fst n₂))
-     approxMultMap X x n m (zero , y) f g = {!!}
-     approxMultMap X x n m (suc z , y) f g with (z ≟ᵗ suc n)
-     ... | lt x₁ = {!!}
-     ... | eq x₁ = ∙Π (f , {!!}) (g , {!!}) .fst
-     ... | gt x₁ = {!!}
+    → isConnected 2 (fst X)
+     → HurewiczMap X x (·π' n f g)
+      ≡ GroupStr._·_ (snd (Hᶜʷ X n))
+          (HurewiczMap X x f) (HurewiczMap X x g)
+  HurewiczMapHom {n = n} = uncurry λ X → PT.elim {!!}
+    (uncurry λ Xsk → EquivJ (λ X y → (x : X) (f g : π' (suc n) (X , x)) →
+      isConnected 2 X →
+      HurewiczMap (X , ∣ Xsk , y ∣₁) x (·π' n f g) ≡
+      (snd (Hᶜʷ (X , ∣ Xsk , y ∣₁) n) GroupStr.·
+       HurewiczMap (X , ∣ Xsk , y ∣₁) x f)
+      (HurewiczMap (X , ∣ Xsk , y ∣₁) x g))
+      (λ x → TR.rec (isPropΠ3 (λ _ _ _ → squash/ _ _))
+        (uncurry λ x₀ → resch Xsk x x₀ x)
+        (isConnected-CW↪∞ 1 Xsk x .fst)))
+    where
+    module _ (Xsk : CWskel ℓ-zero) (x : realise Xsk) where
+      ∥x₀∥ : hLevelTrunc 1 (Xsk .fst 1)
+      ∥x₀∥ = TR.map fst (isConnected-CW↪∞ 1 Xsk x .fst)
 
-     approxMult : ∀ {ℓ} (X : CWskel ℓ) (x : realise X)  (n m : ℕ) (f g : S₊∙ (suc n) →∙ (realise X , x))
-                → finCellApprox (Sˢᵏᵉˡ (suc n)) X (fst f ∘ invEq (isCWSphere (suc n) .snd)) m
-                → finCellApprox (Sˢᵏᵉˡ (suc n)) X (fst g ∘ invEq (isCWSphere (suc n) .snd)) m
-                → finCellApprox (Sˢᵏᵉˡ (suc n)) X (fst (∙Π f g) ∘ invEq (isCWSphere (suc n) .snd)) m
-     FinSequenceMap.fmap (fst (approxMult X x n m f g apf apg)) (suc k , k<) w with (k ≟ᵗ suc n)
-     ... | lt x₁ = {!!}
-     ... | eq x₁ = {!FinSequenceMap.fmap (fst apf)!}
-     ... | gt x₁ = {!!}
-     FinSequenceMap.fcomm (fst (approxMult X x n m f g apf apg)) = {!!}
-     snd (approxMult X x n m f g apf apg) = {!!}
+      X' : CW ℓ-zero
+      X' = realise Xsk , ∣ Xsk , idEquiv (realise Xsk) ∣₁
+
+
+      resch : (x₁ : fst Xsk 1) (x : realise Xsk) (y : CW↪∞ Xsk 1 x₁ ≡ x)
+        (f g : π' (suc n) (realise Xsk , x))
+        → isConnected 2 (realise Xsk)
+        → HurewiczMap X' x (·π' n f g)
+        ≡ GroupStr._·_ (snd (Hᶜʷ X' n))
+           (HurewiczMap X' x f) (HurewiczMap X' x g)
+      resch x₀ = J> ST.elim2 (λ _ _ → isSetΠ λ _ → isProp→isSet (squash/ _ _))
+        λ f g t → PT.rec2 (squash/ _ _)
+          (λ {(f' , fp) (g' , gp) → lem f' g' f fp g gp})
+          (approxSphereMap∙ Xsk x₀ n f)
+          (approxSphereMap∙ Xsk x₀ n g)
+       where
+       X∙ : Pointed₀
+       X∙ = fst Xsk (suc (suc n)) , CW↪ Xsk (suc n) (CWskel∙ Xsk x₀ n)
+
+       GoalTy : (f g : S₊∙ (suc n) →∙ (realise Xsk , CW↪∞ Xsk 1 x₀)) → Type _
+       GoalTy f g =
+         HurewiczMap X' (CW↪∞ Xsk 1 x₀) (·π' n ∣ f ∣₂ ∣ g ∣₂)
+             ≡ GroupStr._·_ (snd (Hᶜʷ X' n))
+               (HurewiczMap X' (CW↪∞ Xsk 1 x₀) ∣ f ∣₂)
+               (HurewiczMap X' (CW↪∞ Xsk 1 x₀) ∣ g ∣₂)
+       module _ (f' g' : S₊∙ (suc n) →∙ X∙) where
+         multCellMap : finCellApprox (Sˢᵏᵉˡ (suc n)) Xsk (fst (∙Π (incl∙ Xsk x₀ ∘∙ f') (incl∙ Xsk x₀ ∘∙ g')) ∘
+           invEq (isCWSphere (suc n) .snd))
+                        (suc (suc (suc n)))
+         multCellMap = betterFinCellApproxS Xsk (suc n) x₀ (∙Π f' g') (∙Π (incl∙ Xsk x₀ ∘∙ f') (incl∙ Xsk x₀ ∘∙ g'))
+                    (λ x → funExt⁻ (cong fst (∙Π∘∙ n f' g' (incl∙ Xsk x₀))) x ∙ refl) (suc (suc (suc n)))
+
+         open import Cubical.HITs.SphereBouquet.Degree
+         al = preboundary.pre∂ 
+         main : GoalTy (incl∙ Xsk x₀ ∘∙ f') (incl∙ Xsk x₀ ∘∙ g')
+         main = funExt⁻ (cong fst (Hˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n)) Xsk n multCellMap)) (genHₙSⁿ n)
+              ∙ cong [_] (Σ≡Prop {!!} {!!})
+              ∙ cong₂ (GroupStr._·_ (snd (Hᶜʷ X' n)))
+                      (funExt⁻ (cong fst (sym (Hˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n)) Xsk n
+                        {f = incl ∘ fst f' ∘ invEq (isCWSphere (suc n) .snd)}
+                        (betterFinCellApproxS Xsk (suc n) x₀ f'
+                        (incl∙ Xsk x₀ ∘∙ f') (λ _ → refl) (suc (suc (suc n))))))) (genHₙSⁿ n))
+                      ((funExt⁻ (cong fst (sym (Hˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n)) Xsk n
+                        {f = incl ∘ fst g' ∘ invEq (isCWSphere (suc n) .snd)}
+                        (betterFinCellApproxS Xsk (suc n) x₀ g'
+                        (incl∙ Xsk x₀ ∘∙ g') (λ _ → refl) (suc (suc (suc n))))))) (genHₙSⁿ n)))
+
+         lem : (f : _) (fp : incl∙ Xsk x₀ ∘∙ f' ≡ f)
+               (g : _) (gp : incl∙ Xsk x₀ ∘∙ g' ≡ g)
+           → GoalTy f g
+         lem = J> (J> main)
+
 
 HurewiczMapFunct : {n : ℕ} (X Y : CW ℓ-zero) (x : fst X) (y : fst Y)
                     (g : (fst X , x) →∙ (fst Y , y))
@@ -501,6 +478,22 @@ open import Cubical.CW.Properties
 open import Hurewicz.random
 open import Cubical.HITs.Truncation as TR
 
+{-
+(n : ℕ) (t* : Σ[ t ∈ X' (suc (suc (suc n))) ] Xₙ→X∞ n t ≡ x)
+           → IsGroupHom (π'Gr n (X' (suc (suc (suc n))) , fst t*) .snd)
+                         (HurewiczMap (subCW n) (fst t*))
+                         (Hᶜʷ (subCW n) n .snd)
+-}
+
+module preHom (X : Type) (x : X) (isConn : isConnected 0 X)
+  (isCW : isCW X)
+  where
+  X' : ℕ → Type
+  X' = isCW .fst .fst
+
+  Xₙ→X∞ : (n : ℕ) → X' (suc (suc (suc n))) → X
+  Xₙ→X∞ n = invEq (isCW .snd) ∘ incl
+
 
 module _ (X : Type) (x : X) (isConn : isConnected 0 X)
   (isCW : isCW X)
@@ -516,24 +509,97 @@ module _ (X : Type) (x : X) (isConn : isConnected 0 X)
                   (isEquiv→isConnected _ (snd (invEquiv (isCW .snd))) _)
                   (isConnected-CW↪∞ (suc (suc (suc n))) (fst isCW))
 
-  oh : (n : ℕ) → ∃[ t ∈ X' (suc (suc (suc n))) ] Xₙ→X∞ n t ≡ x
-  oh n = TR.rec (isProp→isOfHLevelSuc (suc (suc n)) squash₁)
-                (λ {(y , q) → {!!}})
-                (connXₙ→X∞ n x .fst)
-
   subCW : (n : ℕ) → CW ℓ-zero
   fst (subCW n) = X' (suc (suc (suc n)))
   snd (subCW n) = ∣ (subComplex (fst isCW) (suc (suc (suc n))))
                 , (isoToEquiv (realiseSubComplex (suc (suc (suc n))) (fst isCW))) ∣₁
 
-  iso2 : (n : ℕ) → GroupEquiv {!!} {!!}
-  iso2 = {!!}
+
+  -- preHurewiczHom : (n : ℕ) (t* : Σ[ t ∈ X' (suc (suc (suc n))) ] Xₙ→X∞ n t ≡ x)
+  --          → IsGroupHom (π'Gr n (X' (suc (suc (suc n))) , fst t*) .snd)
+  --                        (HurewiczMap (subCW n) (fst t*))
+  --                        (Hᶜʷ (subCW n) n .snd)
+  -- preHurewiczHom n  = {!!}
+
+
+
+  assumptionTy : {!(n : ℕ) (t* : Σ[ t ∈ X' (suc (suc (suc n))) ] Xₙ→X∞ n t ≡ x)
+           → IsGroupHom (π'Gr n (X' (suc (suc (suc n))) , fst t*) .snd)
+                         (HurewiczMap (subCW n) (fst t*))
+                         (Hᶜʷ (subCW n) n .snd)!}
+  assumptionTy = {!!}
 
   assumption : (n : ℕ) (t* : Σ[ t ∈ X' (suc (suc (suc n))) ] Xₙ→X∞ n t ≡ x)
            → IsGroupHom (π'Gr n (X' (suc (suc (suc n))) , fst t*) .snd)
                          (HurewiczMap (subCW n) (fst t*))
                          (Hᶜʷ (subCW n) n .snd)
-  assumption n (t , q) = {!!}
+  assumption n (t , q) = makeIsGroupHom (ST.elim2 {!!}
+    λ f g → PT.rec2 {!t!}
+      (λ apf apg → {!apf!}
+                  -- ∙ cong₂ (Hᶜʷ (subCW n) n .snd .GroupStr._·_ )
+                  --   (sym (funExt⁻ (cong fst (Hˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n))
+                  --     (subComplex (fst isCW) (suc (suc (suc n)))) n {f = f' f g} apf)) (genHₙSⁿ' n))
+                  --   ∙ ? -- cong (fst (Hˢᵏᵉˡ→ n (f' f g))) (genHₙSⁿ≡ n)
+                  --   )
+                  --   (sym (funExt⁻ (cong fst (Hˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n))
+                  --     (subComplex (fst isCW) (suc (suc (suc n)))) n {f = g' f g} apg)) (genHₙSⁿ' n))
+                  --   ∙ ?)
+                 ∙ {!!}) -- cong (fst (Hˢᵏᵉˡ→ n (g' f g))) (genHₙSⁿ≡ n)))
+      ((CWmap→finCellMap (Sˢᵏᵉˡ (suc n))
+        (subComplex (fst isCW) (suc (suc (suc n)))) (f' f g)) (suc (suc (suc n))))
+      ((CWmap→finCellMap (Sˢᵏᵉˡ (suc n))
+        (subComplex (fst isCW) (suc (suc (suc n)))) (g' f g)) (suc (suc (suc n)))))
+    where
+    abstract
+      genHₙSⁿ' : (n₁ : ℕ) → Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n₁)) n₁ .fst
+      genHₙSⁿ' = genHₙSⁿ
+
+      genHₙSⁿ≡ : (n : _) → genHₙSⁿ' n ≡ genHₙSⁿ n
+      genHₙSⁿ≡ n = refl
+    module _ (f g : S₊∙ (suc n) →∙ (X' (suc (suc (suc n))) , t)) where
+      f' = (Iso.fun (realiseSubComplex (suc (suc (suc n))) (isCW .fst)) ∘ fst f ∘ invEq (isCWSphere (suc n) .snd))
+      g' = (Iso.fun (realiseSubComplex (suc (suc (suc n))) (isCW .fst)) ∘ fst g ∘ invEq (isCWSphere (suc n) .snd))
+      fg' = (Iso.fun (realiseSubComplex (suc (suc (suc n))) (isCW .fst)) ∘ ∙Π f g .fst ∘ invEq (isCWSphere (suc n) .snd))
+      module _ (apf : finCellApprox (Sˢᵏᵉˡ (suc n))
+             (subComplex (fst isCW) (suc (suc (suc n)))) f'
+             (suc (suc (suc n))))
+             (apg : finCellApprox (Sˢᵏᵉˡ (suc n))
+             (subComplex (fst isCW) (suc (suc (suc n)))) g'
+             (suc (suc (suc n)))) where
+        funTy : (k : Fin (suc (suc (suc (suc n))))) (p : _) → Type _
+        funTy k p = Sfam (suc n) (fst k)
+                 → G.subComplexFam (fst isCW) (suc (suc (suc n))) (fst k) p
+
+        apf-fun :  (k : _) (p : _) → funTy k p
+        apf-fun (suc k , q) p x with (k ≟ᵗ suc n )
+        ... | lt x₁ = {!!}
+        ... | eq x₁ = {!!} -- FinSequenceMap.fmap (fst apf) ({!!} , {!!}) x
+        ... | gt x₁ = {!!}
+
+        apfg-fun :  (k : _) (p : _) (F G : funTy k p) → funTy k p
+        apfg-fun (zero , q) p F G ()
+        apfg-fun (suc k , q) p F G with (k ≟ᵗ suc n)
+        ... | lt x = {!!}
+        apfg-fun (suc k , q) (lt x₁) F G | eq x = {!!}
+        apfg-fun (suc k , q) (eq x₁) F G | eq x = {!!}
+        apfg-fun (suc k , q) (gt x₁) F G | eq x = {!!}
+        apfg-fun (suc k , q) (lt x₁) F G | gt x = {!!}
+        apfg-fun (suc k , q) (eq x₁) F G | gt x = {!!}
+        apfg-fun (suc k , q) (gt x₁) F G | gt x = {!!}
+
+        apfg : finCellApprox (Sˢᵏᵉˡ (suc n))
+                 (subComplex (fst isCW) (suc (suc (suc n)))) fg'
+                 (suc (suc (suc n)))
+        FinSequenceMap.fmap (fst apfg) = {!!}
+        FinSequenceMap.fcomm (fst apfg) = {!!}
+        snd apfg = {!!}
+
+  trivLem : (n : ℕ)
+    → Hˢᵏᵉˡ→ {C = subComplex (fst isCW) (suc (suc (suc n)))}
+             {D = isCW .fst} n (incl ∘ Iso.inv (realiseSubComplex (suc (suc (suc n))) (fst isCW)))
+     ≡ Hᶜʷ→ {C = subCW n} {D = X , ∣ isCW ∣₁}  n (Xₙ→X∞ n)
+  trivLem n = cong (Hˢᵏᵉˡ→ {C = subComplex (fst isCW) (suc (suc (suc n)))}
+             {D = isCW .fst} n) (funExt λ s → sym (secEq (snd isCW) _))
 
   main : (n : ℕ) → Σ[ t ∈ X' (suc (suc (suc n))) ] Xₙ→X∞ n t ≡ x
     → IsGroupHom (snd (π'Gr n (X , x))) (HurewiczMap (X , ∣ isCW ∣₁) x) (Hᶜʷ (X , ∣ isCW ∣₁) n .snd)
@@ -545,23 +611,17 @@ module _ (X : Type) (x : X) (isConn : isConnected 0 X)
       (subst (λ f → IsGroupHom (π'Gr n (X' (suc (suc (suc n))) , t) .snd)
                     f
                     (Hᶜʷ (subCW n) n .snd))
-             (funExt (ST.elim {!!} λ f → {!fst (subComplexHomology (fst isCW) (suc (suc (suc n))) n <ᵗsucm)!}))
+             (funExt (ST.elim (λ _ → isProp→isSet (squash/ _ _))
+               λ f → sym (Iso.rightInv (fst (subComplexHomology (fst isCW) (suc (suc (suc n))) n <ᵗsucm)) _)
+               ∙ cong (Iso.fun (fst (subComplexHomology (fst isCW) (suc (suc (suc n))) n <ᵗsucm)))
+                 (funExt⁻ (subComplexHomologyEquiv≡ (fst isCW) (suc (suc (suc n))) n <ᵗsucm)
+                   (Hᶜʷ→ {C = Sᶜʷ (suc n)} {D = subCW n}
+                        n (fst f) .fst (genHₙSⁿ n))
+                 ∙ funExt⁻ (cong fst (trivLem n)) (fst (Hᶜʷ→ {C = Sᶜʷ (suc n)} {D = subCW n} n (fst f)) (genHₙSⁿ n))
+                 ∙ sym (funExt⁻ (cong fst (Hᶜʷ→comp {C = Sᶜʷ (suc n)} {D = subCW n} {E = X , ∣ isCW ∣₁} n (Xₙ→X∞ n) (fst f))) (genHₙSⁿ n))
+                 ∙ λ _ → Hᶜʷ→ {C = Sᶜʷ (suc n)} {D = X , ∣ isCW ∣₁} n (Xₙ→X∞ n ∘ fst f) .fst (genHₙSⁿ n))))
              (assumption n (t , q)))
-    where
-    mains : (f : S₊∙ (suc n) →∙ (X' (suc (suc (suc n))) , t))
-      →  HurewiczMap (subCW n) t ∣ f ∣₂
-        ≡ (fst (subComplexHomology (fst isCW) (suc (suc (suc n))) n <ᵗsucm) .Iso.fun
-          ∘ HurewiczMap (X , ∣ isCW ∣₁) x ∘ ST.map (_∘∙_ (Xₙ→X∞ n , q)))
-            ∣ f ∣₂
-    mains f = {!!}
-    {- with (suc (suc n) ≟ᵗ suc (suc (suc n))) | (suc n ≟ᵗ suc (suc (suc n))) | (n ≟ᵗ suc (suc (suc n)))
-    ... | a | b | c = ?
-    -}
-{-
-  | suc (suc n) ≟ᵗ suc (suc (suc n))
-  | suc n ≟ᵗ suc (suc (suc n))
-  | n ≟ᵗ suc (suc (suc n))
--}
+
 
 TTT : {n : ℕ} (X : CW ℓ-zero) (x : fst X)
   → isConnected 0 (fst X)

@@ -1,5 +1,5 @@
 {-# OPTIONS --cubical --lossy-unification #-}
-module Hurewicz.Sn where
+module Hurewicz.SnNew where
 
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Equiv
@@ -228,21 +228,6 @@ SαEqGen (suc n) zero p q =
 SαEqGen n (suc m) p q =
   compEquiv (SαMainEqGen n m p q) (isoToEquiv (invIso (Iso-PushoutConst→⋁ (Sgen.Sfam∙ n m q) fst)))
 
-invEqSαEqGen∙ : (n m : ℕ) (p : Trichotomyᵗ (suc (suc m)) (suc n)) (q : _)
-  → invEq (SαEqGen n (suc m) p q) (inl (Sgen.Sfam∙ n m q)) ≡ Sgen.Sfam∙ n (suc m) p
-invEqSαEqGen∙ (suc n) m (lt x) (lt x₁) = refl
-invEqSαEqGen∙ n m (lt x) (eq x₁) = ⊥.rec (¬-suc-n<ᵗn (subst (_<ᵗ n) x₁ x))
-invEqSαEqGen∙ (suc n) (suc m) (lt x) (gt x₁) = ⊥.rec (¬-suc-n<ᵗn (<ᵗ-trans x x₁))
-invEqSαEqGen∙ (suc n) m (eq x) (lt x₁) = refl
-invEqSαEqGen∙ n m (eq x) (eq x₁) =
-  ⊥.rec (¬m<ᵗm (subst (_<ᵗ suc (suc m)) (x₁ ∙ sym x) <ᵗsucm))
-invEqSαEqGen∙ n m (eq x) (gt x₁) = ⊥.rec (¬-suc-n<ᵗn (subst (_<ᵗ suc m) (sym x) x₁))
-invEqSαEqGen∙ (suc n) m (gt x) (lt x₁) = ⊥.rec (¬squeeze (x , x₁))
-invEqSαEqGen∙ zero m (gt x) (eq x₁) = refl
-invEqSαEqGen∙ (suc n) m (gt x) (eq x₁) = refl
-invEqSαEqGen∙ zero m (gt x) (gt x₁) = refl
-invEqSαEqGen∙ (suc n) m (gt x) (gt x₁) = refl
-
 SαEq : (n m : ℕ) → (Sfam n (suc m)) ≃ Pushout (Sα n m) fst
 SαEq n m = SαEqGen n m (suc m ≟ᵗ suc n) (m ≟ᵗ suc n)
 
@@ -349,6 +334,3 @@ module _ (n : ℕ) where
 
   genHₙSⁿ : Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) n .fst
   genHₙSⁿ = [ (λ _ → 1) , (∂VanishS n (λ _ → 1)) ]
-
-
-
