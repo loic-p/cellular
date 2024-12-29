@@ -510,6 +510,11 @@ module _ {ℓ} (X : CWskel ℓ) (n : ℕ) (x₀ : fst X 1)
     (funExt⁻ isApprox ∘ FinSeqColim→Colim k ∘ (fincl flast))
 
 
+sphereFunIso : ∀ {ℓ} {A : Pointed ℓ} (n : ℕ)
+  → Iso (S₊∙ n →∙ Ω A) (S₊∙ (suc n) →∙ A)
+sphereFunIso zero = compIso IsoBool→∙ (invIso (IsoSphereMapΩ 1))
+sphereFunIso (suc n) = ΩSuspAdjointIso
+
 ∙Π∘∙ : ∀ {ℓ ℓ'} {A : Pointed ℓ} {B : Pointed ℓ'}
   (n : ℕ) (f g : S₊∙ (suc n) →∙ A) (h : A →∙ B)
   → h ∘∙ ∙Π f g ≡ ∙Π (h ∘∙ f) (h ∘∙ g)
@@ -521,10 +526,7 @@ module _ {ℓ} (X : CWskel ℓ) (n : ℕ) (x₀ : fst X 1)
            (Iso.rightInv (sphereFunIso n) f)
            (Iso.rightInv (sphereFunIso n) g)
   where
-  sphereFunIso : ∀ {ℓ} {A : Pointed ℓ} (n : ℕ)
-    → Iso (S₊∙ n →∙ Ω A) (S₊∙ (suc n) →∙ A)
-  sphereFunIso zero = compIso IsoBool→∙ (invIso (IsoSphereMapΩ 1))
-  sphereFunIso (suc n) = ΩSuspAdjointIso
+
 
   lem : ∀ {ℓ} {A : Type ℓ} {x y : A} (p : x ≡ y) → Square p refl (refl ∙ p) refl
   lem p = lUnit p ◁ λ i j → (refl ∙ p) (i ∨ j)
@@ -965,3 +967,118 @@ subComplexHomologyᶜʷEquiv : ∀ {ℓ} (C : CWexplicit ℓ) (n : ℕ) (m : ℕ
                 (Hᶜʷ (realise (snd C .fst) , ∣ fst (snd C) , idEquiv _ ∣₁) n)
 fst (subComplexHomologyᶜʷEquiv C n m p) = Hᶜʷ→ n (incl {n = m}) .fst , subComplexHomologyEquiv (snd C .fst) n m p .fst .snd
 snd (subComplexHomologyᶜʷEquiv C n m p) = Hᶜʷ→ n (incl {n = m}) .snd
+
+--- bouquetDegreeHom
+SphereBouquet∙Π : ∀ {ℓ'} {n m : ℕ} {B : Pointed ℓ'}
+  → (f g : SphereBouquet∙ (suc n) (Fin m) →∙ B)
+  → (SphereBouquet∙ (suc n) (Fin m) →∙ B)
+fst (SphereBouquet∙Π {m = m} {B = B} f g) (inl x) = pt B
+fst (SphereBouquet∙Π {m = m} {B = B} f g) (inr (a , s)) =
+  ∙Π ((λ x → fst f (inr (a , x))) , cong (fst f) (sym (push a)) ∙ snd f)
+     ((λ x → fst g (inr (a , x))) , cong (fst g) (sym (push a)) ∙ snd g) .fst s
+fst (SphereBouquet∙Π {m = m} {B = B} f g) (push a i) =
+  ∙Π ((λ x → fst f (inr (a , x))) , cong (fst f) (sym (push a)) ∙ snd f)
+     ((λ x → fst g (inr (a , x))) , cong (fst g) (sym (push a)) ∙ snd g) .snd (~ i)
+snd (SphereBouquet∙Π {m = m} f g) = refl
+
+
+
+open import Cubical.HITs.Sn.Degree renaming (degreeConst to degree-const)
+
+-- pickPetal
+
+open import Cubical.ZCohomology.Groups.Sn
+open import Cubical.ZCohomology.Base
+open import Cubical.ZCohomology.GroupStructure
+
+
+degreeHom : {n : ℕ} (f g : S₊∙ (suc n) →∙ S₊∙ (suc n))
+  → degree (suc n) (∙Π f g .fst) ≡ degree (suc n) (fst f) + degree (suc n) (fst g)
+degreeHom {n = n} f g =
+   cong (Iso.fun (Hⁿ-Sⁿ≅ℤ n .fst)) (cong ∣_∣₂ (funExt
+     λ x → cong ∣_∣ₕ (cong₂ (λ f g → ∙Π f g .fst x)
+                     (sym (Iso.rightInv (sphereFunIso n) f))
+                     (sym (Iso.rightInv (sphereFunIso n) g)))
+         ∙∙ help n _ _ x
+         ∙∙ cong₂ (λ x y → ∣ x ∣ₕ +[ suc n ]ₖ ∣ y ∣ₕ)
+                  (funExt⁻ (cong fst (Iso.rightInv (sphereFunIso n) f)) x)
+                  (funExt⁻ (cong fst (Iso.rightInv (sphereFunIso n) g)) x)))
+  ∙ IsGroupHom.pres· (Hⁿ-Sⁿ≅ℤ n .snd) _ _
+  where
+  help : (n : ℕ) (f g : S₊∙ n →∙ Ω (S₊∙ (suc n))) (x : S₊ (suc n))
+                      → Path (coHomK (suc n))
+                  ∣ ∙Π (Iso.fun (sphereFunIso n) f) (Iso.fun (sphereFunIso n) g) .fst x ∣ₕ
+                  (∣ fst (Iso.fun (sphereFunIso n) f) x ∣
+       +[ suc n ]ₖ ∣ fst (Iso.fun (sphereFunIso n) g) x ∣)
+  help zero f g base = refl
+  help zero f g (loop i) j = lem j i
+    where
+    lem : cong ∣_∣ₕ ((fst f false ∙ refl) ∙ fst g false ∙ refl)
+        ≡ cong₂ (λ x y → ∣ x ∣ₕ +[ suc zero ]ₖ ∣ y ∣ₕ)
+                (fst f false) (fst g false)
+    lem = cong-∙ ∣_∣ₕ _ _
+      ∙ cong₂ _∙_ ((λ i j → ∣ rUnit (fst f false) (~ i) j  ∣ₕ)
+                ∙ (λ j → cong (λ x → rUnitₖ 1 ∣ x ∣ₕ (~ j)) (fst f false)))
+                ((λ i j → ∣ rUnit (fst g false) (~ i) j  ∣ₕ)
+                ∙ (λ j → cong (λ x → lUnitₖ 1 ∣ x ∣ₕ (~ j)) (fst g false)))
+      ∙ sym (cong₂Funct (λ x y → ∣ x ∣ₕ +[ suc zero ]ₖ ∣ y ∣ₕ)
+             (fst f false) (fst g false))
+  help (suc n) f g north = refl
+  help (suc n) f g south = refl
+  help (suc n) f g (merid a i) j = lem j i
+    where
+    lem : cong ∣_∣ₕ ((cong (fst (toΩ→fromSusp f)) (σS a) ∙ refl)
+                 ∙ (cong (fst (toΩ→fromSusp g)) (σS a) ∙ refl))
+        ≡ cong₂ (λ x y → ∣ x ∣ₕ +[ suc (suc n) ]ₖ ∣ y ∣ₕ)
+                (fst f a) (fst g a)
+    lem = cong-∙ ∣_∣ₕ _ _
+      ∙ cong₂ _∙_ (cong (cong ∣_∣ₕ) (funExt⁻ (cong fst (Iso.leftInv ΩSuspAdjointIso f)) a)
+                  ∙ λ j i → rUnitₖ (suc (suc n)) ∣ fst f a i ∣ₕ (~ j))
+                  (cong (cong ∣_∣ₕ) (funExt⁻ (cong fst (Iso.leftInv ΩSuspAdjointIso g)) a)
+                  ∙ (λ j i → lUnitₖ (suc (suc n)) ∣ fst g a i ∣ₕ (~ j)))
+      ∙ sym (cong₂Funct (λ x y → ∣ x ∣ₕ +[ suc (suc n) ]ₖ ∣ y ∣ₕ)
+              (fst f a) (fst g a))
+
+bouquetDegree+ : (n m k : ℕ)
+  (f g : SphereBouquet∙ (suc n) (Fin m) →∙ SphereBouquet∙ (suc n) (Fin k))
+  → bouquetDegree (SphereBouquet∙Π f g .fst)
+   ≡ addGroupHom ℤ[Fin m ] ℤ[Fin k ] (bouquetDegree (fst f)) (bouquetDegree (fst g))
+bouquetDegree+ n m k f g =
+  agreeOnℤFinGenerator→≡
+    λ s → funExt λ y → (sym (isGeneratorℤFinGenerator' _ s)
+      ∙ cong (degree (suc n)) (funExt (main n s y f g))
+       ∙ degreeHom {n = n}
+         ((λ x₁ → pickPetal y (fst f (inr (s , x₁))))
+                 , cong (pickPetal y) (cong (fst f) (sym (push s)) ∙ snd f))
+         ((λ x₁ → pickPetal y (fst g (inr (s , x₁))))
+                 , cong (pickPetal y) (cong (fst g) (sym (push s)) ∙ snd g))
+      ∙ isGeneratorℤFinGenerator' _ s
+      ∙ cong sumFinℤ (funExt λ x →
+        ·DistR+ (ℤFinGenerator s x)
+                (degree (suc n) (λ x₁ → pickPetal y (fst f (inr (x , x₁)))))
+                (degree (suc n) (λ x₁ → pickPetal y (fst g (inr (x , x₁))))))
+      ∙ sumFinℤHom _ _) -- 
+  where
+  main : (n : ℕ) (s : Fin m) (y : _)
+    (f g : SphereBouquet∙ (suc n) (Fin m) →∙ SphereBouquet∙ (suc n) (Fin k)) (x : S₊ (suc n)) →
+      pickPetal y (SphereBouquet∙Π f g .fst (inr (s , x)))
+    ≡ (∙Π ((λ x₁ → pickPetal y (fst f (inr (s , x₁)))) ,
+           (λ i → pickPetal y (((λ i₁ → fst f (push s (~ i₁))) ∙ snd f) i)))
+          ((λ x₁ → pickPetal y (fst g (inr (s , x₁)))) ,
+           (λ i → pickPetal y (((λ i₁ → fst g (push s (~ i₁))) ∙ snd g) i))) .fst x)
+  main zero s y f g base = refl
+  main zero s y f g (loop i) = refl
+  main (suc n) s y f g north = refl
+  main (suc n) s y f g south = refl
+  main (suc n) s y f g (merid a i) j = lem j i
+    where
+    lem : cong (pickPetal y) (cong (λ x → SphereBouquet∙Π f g .fst (inr (s , x))) (merid a))
+        ≡ (sym (cong (pickPetal y) ((λ i₁ → fst f (push s (~ i₁))) ∙ snd f))
+          ∙∙ cong (pickPetal y) (cong (λ x → fst f (inr (s , x))) (σS a))
+          ∙∙ cong (pickPetal y) ((λ i₁ → fst f (push s (~ i₁))) ∙ snd f))
+        ∙ (sym (cong (pickPetal y) ((λ i₁ → fst g (push s (~ i₁))) ∙ snd g))
+          ∙∙ cong (pickPetal y) (cong (λ x → fst g (inr (s , x))) (σS a))
+          ∙∙ cong (pickPetal y) ((λ i₁ → fst g (push s (~ i₁))) ∙ snd g))
+    lem = (cong-∙ (pickPetal y) _ _
+      ∙ cong₂ _∙_ (cong-∙∙ (pickPetal y) (sym ((λ i₁ → fst f (push s (~ i₁))) ∙ snd f)) _ _)
+                  (cong-∙∙ (pickPetal y) (sym ((λ i₁ → fst g (push s (~ i₁))) ∙ snd g)) _ _))

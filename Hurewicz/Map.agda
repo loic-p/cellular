@@ -436,19 +436,68 @@ module _ where
                     (λ x → funExt⁻ (cong fst (∙Π∘∙ n f' g' (incl∙ Xsk x₀))) x ∙ refl) (suc (suc (suc n)))
 
          open import Cubical.HITs.SphereBouquet.Degree
-         al = preboundary.pre∂ 
+         fbet = (betterFinCellApproxS Xsk (suc n) x₀ f'
+                        (incl∙ Xsk x₀ ∘∙ f') (λ _ → refl) (suc (suc (suc n))))
+         gbet = (betterFinCellApproxS Xsk (suc n) x₀ g'
+                        (incl∙ Xsk x₀ ∘∙ g') (λ _ → refl) (suc (suc (suc n))))
+
+         al = preboundary.pre∂
+
+         alt : (f : S₊∙ (suc n) →∙ X∙) (p : _) (q : _) → cofib (invEq (SαMainEqGen (suc n) n p q) ∘ inl) → cofibCW (suc n) Xsk
+         alt f p q (inl x) = inl x
+         alt f (lt x₁) q (inr x) = inl tt
+         alt f (eq x₁) p (inr x) = inr (f' .fst x)
+         alt f (gt x₁) q (inr x) = inl tt
+         alt f (lt x) q (push a i) = inl tt
+         alt f (eq x) (lt x₁) (push a i) = (push (CWskel∙ Xsk x₀ n) ∙ (λ i → inr (f' .snd (~ i)))) i
+         alt f (eq x) (eq x₁) (push a i) =
+           {!⊥.rec
+             (¬m<ᵗm
+              (subst (_<ᵗ_ (suc n)) ((λ i₁ → x₁ (~ i₁)) ∙ (λ i₁ → predℕ (x i₁)))
+               <ᵗsucm))!}
+         alt f (eq x) (gt x₁) (push a i) = {!!}
+         alt f (gt x) q (push a i) = inl tt
+
+         alt≡ : (x : _) → prefunctoriality.fn+1/fn (suc (suc (suc n))) (fbet .fst) (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm) x
+                        ≡ alt f' (suc (suc n) ≟ᵗ suc (suc n)) (suc n ≟ᵗ suc (suc n)) x
+         alt≡ x = {!!}
+
+         it : (x : _) → prefunctoriality.bouquetFunct (suc (suc (suc n)))
+                (multCellMap .fst) (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm) x
+            ≡ SphereBouquet∙Π
+               (prefunctoriality.bouquetFunct (suc (suc (suc n))) (fbet .fst) (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm) , refl)
+               (prefunctoriality.bouquetFunct (suc (suc (suc n))) (gbet .fst) (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm) , refl) .fst x
+         it (inl x) = refl
+         it (inr x) = ((λ _ → BouquetFuns.CTB (suc n) (CWskel-fields.card Xsk (suc n))
+                                 (CWskel-fields.α Xsk (suc n))
+                                 (CWskel-fields.e Xsk (suc n))
+                                (prefunctoriality.fn+1/fn (suc (suc (suc n)))
+                                  (multCellMap .fst) (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm)
+                                  (BouquetFuns.BTC (suc n)
+                                    (ScardGen (suc n) (suc n) (suc (suc n) ≟ᵗ suc (suc n)))
+                                    (SαGen (suc n) (suc n) (suc (suc n) ≟ᵗ suc (suc n)) (suc n ≟ᵗ suc (suc n)))
+                                    (SαEqGen (suc n) (suc n) (suc (suc n) ≟ᵗ suc (suc n)) (suc n ≟ᵗ suc (suc n)))
+                                    (inr x))))
+           ∙ {!!})
+                    ∙ {!BouquetFuns.BTC (suc n)
+                                    (ScardGen (suc n) (suc n) (suc (suc n) ≟ᵗ suc (suc n)))
+                                    (SαGen (suc n) (suc n) (suc (suc n) ≟ᵗ suc (suc n)) (suc n ≟ᵗ suc (suc n)))
+                                    (SαEqGen (suc n) (suc n) (suc (suc n) ≟ᵗ suc (suc n)) (suc n ≟ᵗ suc (suc n)))
+                                    (inr x)!}
+         it (push a i) = {!!}
+
          main : GoalTy (incl∙ Xsk x₀ ∘∙ f') (incl∙ Xsk x₀ ∘∙ g')
          main = funExt⁻ (cong fst (Hˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n)) Xsk n multCellMap)) (genHₙSⁿ n)
-              ∙ cong [_] (Σ≡Prop {!!} {!!})
+              ∙ cong [_] (Σ≡Prop {!!} ((λ i → bouquetDegree (λ x → it x i) .fst (λ _ → pos 1))
+                                     ∙ funExt⁻ (cong fst (bouquetDegree+ _ _ _
+                                        (prefunctoriality.bouquetFunct (suc (suc (suc n))) (fbet .fst) (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm) , refl)
+                                        (prefunctoriality.bouquetFunct (suc (suc (suc n))) (gbet .fst) (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm) , refl)))
+                                        λ _ → pos 1))
               ∙ cong₂ (GroupStr._·_ (snd (Hᶜʷ X' n)))
                       (funExt⁻ (cong fst (sym (Hˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n)) Xsk n
-                        {f = incl ∘ fst f' ∘ invEq (isCWSphere (suc n) .snd)}
-                        (betterFinCellApproxS Xsk (suc n) x₀ f'
-                        (incl∙ Xsk x₀ ∘∙ f') (λ _ → refl) (suc (suc (suc n))))))) (genHₙSⁿ n))
+                        {f = incl ∘ fst f' ∘ invEq (isCWSphere (suc n) .snd)} fbet))) (genHₙSⁿ n))
                       ((funExt⁻ (cong fst (sym (Hˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n)) Xsk n
-                        {f = incl ∘ fst g' ∘ invEq (isCWSphere (suc n) .snd)}
-                        (betterFinCellApproxS Xsk (suc n) x₀ g'
-                        (incl∙ Xsk x₀ ∘∙ g') (λ _ → refl) (suc (suc (suc n))))))) (genHₙSⁿ n)))
+                        {f = incl ∘ fst g' ∘ invEq (isCWSphere (suc n) .snd)} gbet))) (genHₙSⁿ n)))
 
          lem : (f : _) (fp : incl∙ Xsk x₀ ∘∙ f' ≡ f)
                (g : _) (gp : incl∙ Xsk x₀ ∘∙ g' ≡ g)
