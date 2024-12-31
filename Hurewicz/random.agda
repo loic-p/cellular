@@ -333,7 +333,7 @@ module falseDichotomies where
 
 
 open import Cubical.CW.Properties
-open import Hurewicz.Sn
+open import Hurewicz.SnNew
 
 
 -- Sn approx
@@ -1082,3 +1082,53 @@ bouquetDegree+ n m k f g =
     lem = (cong-∙ (pickPetal y) _ _
       ∙ cong₂ _∙_ (cong-∙∙ (pickPetal y) (sym ((λ i₁ → fst f (push s (~ i₁))) ∙ snd f)) _ _)
                   (cong-∙∙ (pickPetal y) (sym ((λ i₁ → fst g (push s (~ i₁))) ∙ snd g)) _ _))
+
+
+-- Sphere stuff
+module _ {ℓ} (Xsk : CWskel ℓ) (x₀ : fst Xsk 1) where
+  fn+1/fn-SGen-inr : (n m : ℕ)
+    (f : S₊∙ n →∙ (fst Xsk (suc m) , CWskel∙ Xsk x₀ m))
+   → (p : _) → Sgen.Sfam n (suc (suc m)) p → fst Xsk (suc m)
+  fn+1/fn-SGen-inr n m f (lt x) = λ _ → CWskel∙ Xsk x₀ m
+  fn+1/fn-SGen-inr n m f (eq x) = fst f
+  fn+1/fn-SGen-inr n m f (gt x) = fst f
+
+  fn+1/fn-SGenEq : (n m : ℕ)
+    (f : S₊∙ n →∙ (fst Xsk (suc (suc m)) , CWskel∙ Xsk x₀ (suc m)))
+    (g : S₊∙ n →∙ (fst Xsk (suc m) , CWskel∙ Xsk x₀ m))
+    → (q : _) (a : Sgen.Sfam n (suc (suc m)) q)
+    →  fst Xsk (suc m)
+  fn+1/fn-SGenEq n m f g (lt x) a = CWskel∙ Xsk x₀ m
+  fn+1/fn-SGenEq n m f g (eq x) a = g .fst a
+  fn+1/fn-SGenEq n m f g (gt x) a = g .fst a
+
+  -- fn+1Eq : (n m : ℕ)
+  --   (f : S₊∙ n →∙ (fst Xsk (suc (suc m)) , CWskel∙ Xsk x₀ (suc m)))
+  --   (g : S₊∙ n →∙ (fst Xsk (suc m) , CWskel∙ Xsk x₀ m))
+  --   → (p : _) (q : _) (a : _)
+  --     → CW↪ Xsk (suc m) (fn+1/fn-SGenEq n m f g p a)
+  --     ≡ fn+1/fn-SGen-inr n (suc m) ? q (invEq (SαMainEqGen n (suc m) q p) (inl a))
+  -- fn+1Eq n m f g (lt x₁) (lt x) a = refl
+  -- fn+1Eq n m f g (eq x₁) (lt x) a = {!!}
+  -- fn+1Eq n m f g (gt x₁) (lt x) a = {!!}
+  -- fn+1Eq (suc n) m f g (lt x₁) (eq x) a = sym (snd f)
+  -- fn+1Eq n m f g (eq x₁) (eq x) a = {!⊥!}
+  -- fn+1Eq n m f g (gt x₁) (eq x) a = {!⊥!}
+  -- fn+1Eq (suc n) m f g (lt x₁) (gt x) a = {!!}
+  -- fn+1Eq zero m f g (eq x₁) (gt x) a = {!!}
+  -- fn+1Eq (suc n) m f g (eq x₁) (gt x) a = {!,u,u,u,u,u,u,u,u,u,u,!}
+  -- fn+1Eq n m f g (gt x₁) (gt x) a = {!!}
+
+  -- fn+1/fn-SGen : (n m : ℕ)
+  --   (g : S₊∙ n →∙ (fst Xsk (suc m) , CWskel∙ Xsk x₀ m))
+  --   → (p : _) (q : _) → cofib (invEq (SαMainEqGen n (suc m) p q) ∘ inl) → cofibCW (suc m) Xsk
+  -- fn+1/fn-SGen n m g p q (inl x) = inl tt
+  -- fn+1/fn-SGen n m g p q (inr x) = inr {!CW\!} -- (fn+1/fn-SGen-inr n (suc m) ((CW↪ Xsk (suc m) , refl) ∘∙ g) p x)
+  -- fn+1/fn-SGen n m g p q (push a i) =
+  --   (push (fst g {!!}) ∙ {!!}) i -- (push (fn+1/fn-SGenEq n m g q a)) i
+  
+  -- fn+1/fn-SGen n zero f (lt x₁) (lt x) (push a i) = {!in!}
+  -- fn+1/fn-SGen (suc n) zero f (eq x₁) (lt x) (push a i) = {!!}
+  -- fn+1/fn-SGen n zero f (gt x₁) (lt x) (push a i) = {!n!}
+  -- fn+1/fn-SGen n zero f p (eq x) (push a i) = {!!}
+  -- fn+1/fn-SGen n (suc m) f p q (push a i) = {!!} -- fn+1/fn-SGenEq n m f p q a i

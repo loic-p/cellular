@@ -351,4 +351,3 @@ module _ (n : ℕ) where
   genHₙSⁿ = [ (λ _ → 1) , (∂VanishS n (λ _ → 1)) ]
 
 
-

@@ -121,40 +121,6 @@ Sα n m t = SαGen n m (suc m ≟ᵗ suc n) (m ≟ᵗ suc n) t
 ¬Scard' n x with (n ≟ᵗ suc n)
 ... | eq x₁ = ¬m<ᵗm (subst (n <ᵗ_) (sym x₁) <ᵗsucm) 
 
-module _  {ℓ ℓ' ℓ''} {A : Type ℓ} {B : Type ℓ'} {C : Type ℓ''} (b : B) (g : A → C) where
-  PushoutConst→⋁ : (Pushout (λ _ → b) g) → ((B , b) ⋁ (cofib g , inl tt))
-  PushoutConst→⋁ (inl x) = inl x
-  PushoutConst→⋁ (inr x) = inr (inr x)
-  PushoutConst→⋁ (push a i) = (push tt ∙ λ i → inr (push a i)) i
-
-  ⋁→PushoutConst : (B , b) ⋁ (cofib g , inl tt) → Pushout (λ _ → b) g
-  ⋁→PushoutConst (inl x) = inl x
-  ⋁→PushoutConst (inr (inl x)) = inl b
-  ⋁→PushoutConst (inr (inr x)) = inr x
-  ⋁→PushoutConst (inr (push a i)) = push a i
-  ⋁→PushoutConst (push a i) = inl b
-
-  PushoutConst→⋁→PushoutConst : (x : Pushout (λ _ → b) g)
-    → ⋁→PushoutConst (PushoutConst→⋁ x) ≡ x
-  PushoutConst→⋁→PushoutConst (inl x) = refl
-  PushoutConst→⋁→PushoutConst (inr x) = refl
-  PushoutConst→⋁→PushoutConst (push a i) j =
-    ⋁→PushoutConst (compPath-filler' (push tt) (λ i → inr (push a i)) (~ j) i)
-
-  ⋁→PushoutConst→⋁ : (x : (B , b) ⋁ (cofib g , inl tt))
-    → PushoutConst→⋁ (⋁→PushoutConst x) ≡ x
-  ⋁→PushoutConst→⋁ (inl x) = refl
-  ⋁→PushoutConst→⋁ (inr (inl x)) = push x
-  ⋁→PushoutConst→⋁ (inr (inr x)) = refl
-  ⋁→PushoutConst→⋁ (inr (push a i)) j = compPath-filler' (push tt) (λ i₁ → inr (push a i₁)) (~ j) i
-  ⋁→PushoutConst→⋁ (push a i) j = push tt (i ∧ j)
-
-  Iso-PushoutConst→⋁ : Iso (Pushout (λ _ → b) g) ((B , b) ⋁ (cofib g , inl tt))
-  Iso.fun Iso-PushoutConst→⋁ = PushoutConst→⋁
-  Iso.inv Iso-PushoutConst→⋁ = ⋁→PushoutConst
-  Iso.rightInv Iso-PushoutConst→⋁ = ⋁→PushoutConst→⋁
-  Iso.leftInv Iso-PushoutConst→⋁ = PushoutConst→⋁→PushoutConst
-
 Sfam0 : (m : ℕ) (p : _) → Sgen.Sfam zero (suc m) p ≃ Bool
 Sfam0 m (eq x) = idEquiv _
 Sfam0 m (gt x) = idEquiv _
@@ -164,69 +130,117 @@ fst (SfamContr n p) = Sgen.Sfam∙ (suc n) zero p
 snd (SfamContr n (lt x)) y = refl
 snd (SfamContr n (eq x)) y = ⊥.rec (snotz (sym (cong predℕ x)))
 
-SαMainEqGen : (n m : ℕ) (p : _) (q : _)
-  → Sgen.Sfam n (suc (suc m)) p
-     ≃ (((Sgen.Sfam n (suc m) q) , Sgen.Sfam∙ n m q)
-     ⋁ (cofib {A = Fin (ScardGen n (suc m) p) × S₊ m} fst , inl tt))
-SαMainEqGen zero m p (eq x) =
-  compEquiv (Sfam0 (suc m) p) (compEquiv (isoToEquiv
-              (invIso (PushoutAlongEquiv
-                (invEquiv (isContr→≃Unit ((inl tt)
-                , λ { (inl x) → refl}))) λ _ → true)))
-                (symPushout _ _))
-SαMainEqGen zero m p (gt x) =
-  compEquiv (Sfam0 (suc m) p) (compEquiv (isoToEquiv
-              (invIso (PushoutAlongEquiv
-                (invEquiv (isContr→≃Unit ((inl tt)
-                , λ { (inl x) → refl}))) λ _ → true)))
-                (symPushout _ _))
-SαMainEqGen (suc n) m (lt x₁) (lt x) =
-  invEquiv (isContr→≃Unit ((inl tt)
-  , (λ { (inl x) → refl ; (inr (inl x)) → push tt ; (push a i) j → push tt (i ∧ j)})))
-SαMainEqGen (suc n) m (eq x₁) (lt x) =
-  compEquiv (invEquiv (isoToEquiv (⋁-lUnitIso {ℓ' = ℓ-zero} {A = S₊∙ (suc n)})))
-      (invEquiv (pushoutEquiv _ _ _ _ (idEquiv Unit) (invEquiv (isContr→≃Unit isContrUnit*))
-        (invEquiv (compEquiv (isoToEquiv (IsoSucSphereSusp n))
-          (compEquiv (invEquiv PushoutSusp≃Susp)
-            (pushoutEquiv _ _ _ _
-              (compEquiv (pathToEquiv (cong S₊ (sym (cong (predℕ ∘ predℕ) x₁))))
-                         (compEquiv (isoToEquiv (invIso lUnit×Iso))
-                           (Σ-cong-equiv-fst (isoToEquiv Iso-Unit-Fin1))))
-              (idEquiv Unit) (isoToEquiv Iso-Unit-Fin1) (λ _ _ → tt) λ _ _ → 0 , tt))))
-        (funExt (λ _ → isPropUnit* _ _))
-        λ i x → IsoSucSphereSusp∙ n i))
-SαMainEqGen (suc n) m (gt x₁) (lt x) = ⊥.rec (¬squeeze (x₁ , x))
-SαMainEqGen (suc n) m (lt x₁) (eq x) = ⊥.rec (¬-suc-n<ᵗn (subst (_<ᵗ suc n) x x₁))
-SαMainEqGen (suc n) m (eq x₁) (eq x) = ⊥.rec (¬m<ᵗm (subst (suc n <ᵗ_) (sym x ∙ cong predℕ x₁) <ᵗsucm))
-SαMainEqGen (suc n) m (gt x₁) (eq x) =
-  compEquiv (isoToEquiv (invIso (⋁-rUnitIso {A = S₊∙ (suc n)})))
-      ((pushoutEquiv _ (λ _ → lift {ℓ-zero} {ℓ-zero} tt) _ _ (idEquiv Unit) (idEquiv _)
-        (isoToEquiv (isContr→Iso (isContrUnit*)
-          (inl tt , λ { (inl x) → refl})))
-        (λ i x → ptSn (suc n))
-        refl))
-SαMainEqGen (suc n) m (lt x₁) (gt x) = ⊥.rec (¬-suc-n<ᵗn (<ᵗ-trans x x₁))
-SαMainEqGen (suc n) m (eq x₁) (gt x) = ⊥.rec (¬-suc-n<ᵗn (subst (suc n <ᵗ_) (cong (predℕ ∘ predℕ) x₁) x))
-SαMainEqGen (suc n) m (gt x₁) (gt x) =
-  compEquiv (invEquiv (isoToEquiv (⋁-rUnitIso {ℓ' = ℓ-zero} {A = S₊∙ (suc n)})))
-   (invEquiv (pushoutEquiv _ _ _ _ (idEquiv Unit) (idEquiv (S₊ (suc n)))
-     (isContr→Equiv ((inl tt) , (λ { (inl x) → refl})) isContrUnit*)
-     refl
-     (funExt (λ _ → isPropUnit* _ _))))
+isContrSfamGen : (n m : ℕ) (s : m <ᵗ n) (q : _) → isContr (Sgen.Sfam n (suc m) q)
+fst (isContrSfamGen n m s q) = Sgen.Sfam∙ n m q
+snd (isContrSfamGen n m s (lt x)) y = refl
+snd (isContrSfamGen n m s (eq x)) y = ⊥.rec (¬m<ᵗm (subst (m <ᵗ_) (sym (cong predℕ x)) s))
+snd (isContrSfamGen n m s (gt x)) y = ⊥.rec (¬m<ᵗm (<ᵗ-trans x s))
 
-SαEqMain : (n m : ℕ) → Sfam n (suc (suc m))
-                      ≃ (((Sfam n (suc m)) , Sfam∙ n m)
-                      ⋁ (cofib {A = Fin (Scard n (suc m)) × S₊ m} fst , inl tt))
-SαEqMain n m = SαMainEqGen n m (suc (suc m) ≟ᵗ suc n) (suc m ≟ᵗ suc n)
+mainIso : (n m : ℕ) (x : n ≡ m) (q : _)
+  → Iso (Susp (S₊ m)) (Pushout {A = Fin 1 × S₊ m} (λ _ → Sgen.Sfam∙ (suc n) m q) fst) 
+Iso.fun (mainIso n m e s) north = inl (Sgen.Sfam∙ (suc n) m s)
+Iso.fun (mainIso n m e s) south = inr fzero
+Iso.fun (mainIso n m e s) (merid a i) = push (fzero , a) i
+Iso.inv (mainIso n m e s) (inl x) = north
+Iso.inv (mainIso n m e s) (inr x) = south
+Iso.inv (mainIso n m e s) (push a i) = merid (snd a) i
+Iso.rightInv (mainIso n m e s) (inl x) i = inl (isContrSfamGen (suc n) m (subst (_<ᵗ suc n) e <ᵗsucm) s .snd x i)
+Iso.rightInv (mainIso n m e s) (inr (zero , tt)) j = inr fzero
+Iso.rightInv (mainIso n m e s) (push ((zero , tt) , a) i) = help i
+  where
+  ee = subst (_<ᵗ suc n) e <ᵗsucm
+  help : Square {A = Pushout {A = Fin 1 × S₊ m} (λ _ → Sgen.Sfam∙ (suc n) m s) fst}
+          (λ i₁ → inl (isContrSfamGen (suc n) m ee s .snd
+                         (Sgen.Sfam∙ (suc n) m s) i₁))
+          refl
+          (push (fzero , a)) (push (fzero , a))
+  help = (λ i j → inl (isProp→isSet (isContr→isProp (isContrSfamGen (suc n) m ee s)) _ _
+                         (isContrSfamGen (suc n) m ee s .snd (Sgen.Sfam∙ (suc n) m s)) refl i j))
+       ◁ λ i j → push (fzero , a) i
+Iso.leftInv (mainIso n m e s) north = refl
+Iso.leftInv (mainIso n m e s) south = refl
+Iso.leftInv (mainIso n m e s) (merid a i) = refl
+
+SfamGenTopElement : (n m : ℕ) → (n <ᵗ m) → (q : _) → S₊ n ≃ Sgen.Sfam n m q
+SfamGenTopElement n (suc m) p (lt x) = ⊥.rec (¬squeeze (x , p))
+SfamGenTopElement n (suc m) p (eq x) = idEquiv _
+SfamGenTopElement n (suc m) p (gt x) = idEquiv _
+
+-- SαEqGen' : (n m : ℕ) (p : Trichotomyᵗ (suc m) (suc n)) (q : _)
+--   → (Sgen.Sfam n (suc m) p) ≃ Pushout (SαGen n m p q) fst
+-- SαEqGen' zero zero p q = compEquiv (Sfam0 0 p)
+--     (compEquiv (isoToEquiv Iso-Bool-Fin2)
+--       (compEquiv (isoToEquiv (PushoutEmptyFam (λ()) λ())) (symPushout _ _)))
+-- SαEqGen' zero (suc m) (eq x) q = {!q!}
+-- SαEqGen' zero (suc m) (gt x) q = {!!}
+-- SαEqGen' (suc n) m (lt x) q = {!q!}
+-- SαEqGen' (suc n) m (eq x) q =
+--   isoToEquiv (compIso (IsoSucSphereSusp n)
+--     (compIso (congSuspIso (substIso S₊ (cong (predℕ ∘ predℕ) (sym x))))
+--              {!!}))
+-- SαEqGen' (suc n) m (gt x) q =
+--   compEquiv (SfamGenTopElement (suc n) m x q)
+--     (isoToEquiv (PushoutEmptyFam
+--       (¬ScardGen (suc n) m (gt x) x ∘ fst) (¬ScardGen (suc n) m (gt x) x)))
+
+SuspSphere→Sphere : (n : ℕ) → Susp (S₊ n) → S₊ (suc n)
+SuspSphere→Sphere n north = ptSn (suc n)
+SuspSphere→Sphere zero south = base
+SuspSphere→Sphere (suc n) south = south
+SuspSphere→Sphere zero (merid t i) = SuspBool→S¹ (merid t i)
+SuspSphere→Sphere (suc n) (merid a i) = merid a i
+
+IsoSucSphereSusp' : (n : ℕ) → Iso (S₊ (suc n)) (Susp (S₊ n)) 
+Iso.fun (IsoSucSphereSusp' n) = Iso.fun (IsoSucSphereSusp n)
+Iso.inv (IsoSucSphereSusp' n) = SuspSphere→Sphere n
+Iso.rightInv (IsoSucSphereSusp' zero) north = refl
+Iso.rightInv (IsoSucSphereSusp' zero) south = SuspBool→S¹→SuspBool south
+Iso.rightInv (IsoSucSphereSusp' zero) (merid a i) = SuspBool→S¹→SuspBool (merid a i)
+Iso.rightInv (IsoSucSphereSusp' (suc n)) north = refl
+Iso.rightInv (IsoSucSphereSusp' (suc n)) south = refl
+Iso.rightInv (IsoSucSphereSusp' (suc n)) (merid a i) = refl
+Iso.leftInv (IsoSucSphereSusp' zero) base = S¹→SuspBool→S¹ base
+Iso.leftInv (IsoSucSphereSusp' zero) (loop i) = S¹→SuspBool→S¹ (loop i)
+Iso.leftInv (IsoSucSphereSusp' (suc n)) north = refl
+Iso.leftInv (IsoSucSphereSusp' (suc n)) south = refl
+Iso.leftInv (IsoSucSphereSusp' (suc n)) (merid a i) = refl
 
 SαEqGen : (n m : ℕ) (p : Trichotomyᵗ (suc m) (suc n)) (q : _)
   → (Sgen.Sfam n (suc m) p) ≃ Pushout (SαGen n m p q) fst
-SαEqGen zero zero p q = compEquiv (Sfam0 0 p) (compEquiv (isoToEquiv Iso-Bool-Fin2) (compEquiv (isoToEquiv (PushoutEmptyFam (λ()) λ())) (symPushout _ _)))
+SαEqGen zero zero p q =
+  compEquiv (Sfam0 0 p)
+    (compEquiv (isoToEquiv Iso-Bool-Fin2)
+      (compEquiv (isoToEquiv (PushoutEmptyFam (λ()) λ())) (symPushout _ _)))
 SαEqGen (suc n) zero p q =
   compEquiv (isContr→Equiv (SfamContr n p) (flast , (λ {(zero , tt) → refl})))
     (compEquiv (isoToEquiv (PushoutEmptyFam (λ()) λ())) (symPushout _ _))
-SαEqGen n (suc m) p q =
-  compEquiv (SαMainEqGen n m p q) (isoToEquiv (invIso (Iso-PushoutConst→⋁ (Sgen.Sfam∙ n m q) fst)))
+SαEqGen (suc n) (suc m) (lt x) q =
+  invEquiv (isContr→≃Unit ((inl (isContrSfamGen (suc n) m (<ᵗ-trans x <ᵗsucm) q .fst))
+    , λ { (inl t) i → inl (isContrSfamGen (suc n) m (<ᵗ-trans x <ᵗsucm) q .snd t i)}))
+SαEqGen zero (suc m) (eq x) q = ⊥.rec (snotz (cong predℕ x))
+SαEqGen (suc n) (suc m) (eq x) q =
+  isoToEquiv (compIso (IsoSucSphereSusp' n)
+    (compIso (congSuspIso (substIso S₊ (cong (predℕ ∘ predℕ) (sym x))))
+             (mainIso n m (cong (predℕ ∘ predℕ) (sym x)) q)))
+SαEqGen zero (suc m) (gt x) (eq x₁) = isoToEquiv (PushoutEmptyFam (λ()) λ())
+SαEqGen zero (suc m) (gt x) (gt x₁) = isoToEquiv (PushoutEmptyFam (λ()) λ())
+SαEqGen (suc n) (suc m) (gt x) q =
+  compEquiv (SfamGenTopElement (suc n) (suc m) x q) (isoToEquiv (PushoutEmptyFam (λ()) λ()))
+
+invEqSαEqGen∙ : (n m : ℕ) (p : Trichotomyᵗ (suc (suc m)) (suc n)) (q : _)
+  → invEq (SαEqGen n (suc m) p q) (inl (Sgen.Sfam∙ n m q)) ≡ Sgen.Sfam∙ n (suc m) p
+invEqSαEqGen∙ (suc n) m (lt x) (lt x₁) = refl
+invEqSαEqGen∙ n m (lt x) (eq x₁) = ⊥.rec (¬-suc-n<ᵗn (subst (_<ᵗ n) x₁ x))
+invEqSαEqGen∙ (suc n) (suc m) (lt x) (gt x₁) = ⊥.rec (¬-suc-n<ᵗn (<ᵗ-trans x x₁))
+invEqSαEqGen∙ (suc n) m (eq x) (lt x₁) = refl
+invEqSαEqGen∙ n m (eq x) (eq x₁) =
+  ⊥.rec (¬m<ᵗm (subst (_<ᵗ suc (suc m)) (x₁ ∙ sym x) <ᵗsucm))
+invEqSαEqGen∙ n m (eq x) (gt x₁) = ⊥.rec (¬-suc-n<ᵗn (subst (_<ᵗ suc m) (sym x) x₁))
+invEqSαEqGen∙ (suc n) m (gt x) (lt x₁) = ⊥.rec (¬squeeze (x , x₁))
+invEqSαEqGen∙ zero m (gt x) (eq x₁) = refl
+invEqSαEqGen∙ (suc n) m (gt x) (eq x₁) = refl
+invEqSαEqGen∙ zero m (gt x) (gt x₁) = refl
+invEqSαEqGen∙ (suc n) m (gt x) (gt x₁) = refl
 
 SαEq : (n m : ℕ) → (Sfam n (suc m)) ≃ Pushout (Sα n m) fst
 SαEq n m = SαEqGen n m (suc m ≟ᵗ suc n) (m ≟ᵗ suc n)
@@ -239,10 +253,7 @@ fst (snd (snd (snd (Sˢᵏᵉˡ n)))) = λ{()}
 snd (snd (snd (snd (Sˢᵏᵉˡ n)))) = SαEq n
 
 SfamTopElement : (n : ℕ) → S₊ n ≃ (Sfam n (suc n)) 
-SfamTopElement n with (n ≟ᵗ n)
-... | lt x = ⊥.rec (¬m<ᵗm x)
-... | eq x = idEquiv _
-... | gt x = idEquiv _
+SfamTopElement n = SfamGenTopElement n (suc n) <ᵗsucm (suc n ≟ᵗ suc n)
 
 SˢᵏᵉˡConverges : (n : ℕ) (k : ℕ)
   → isEquiv (invEq (SαEq n (k +ℕ suc n)) ∘ inl)
@@ -334,3 +345,5 @@ module _ (n : ℕ) where
 
   genHₙSⁿ : Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) n .fst
   genHₙSⁿ = [ (λ _ → 1) , (∂VanishS n (λ _ → 1)) ]
+
+
