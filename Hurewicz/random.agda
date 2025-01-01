@@ -370,6 +370,52 @@ incl∙ : ∀ {ℓ} (X : CWskel ℓ) (x₀ : fst X 1) {n : ℕ}
 fst (incl∙ X x₀ {n = n}) = incl
 snd (incl∙ X x₀ {n = n}) = CWskel∞∙Id X x₀ n
 
+CWskel∙Gen : ∀ {ℓ} (X : CWskel ℓ) → fst X 1 → (n m : ℕ) (p : _)
+  → G.subComplexFam X (suc m) (suc n) p
+CWskel∙Gen X x₀ n m (lt x) = CWskel∙ X x₀ n
+CWskel∙Gen X x₀ n m (eq x) = CWskel∙ X x₀ n
+CWskel∙Gen X x₀ n m (gt x) = CWskel∙ X x₀ m
+
+CWskel∙Gen≡CWskel∙ : ∀ {ℓ} (X : CWskel ℓ) (x : fst X 1) → (n m : ℕ)
+  → CWskel∙Gen X x n (suc m) (suc n ≟ᵗ suc (suc m))
+   ≡ CWskel∙ (subComplex X (suc (suc m))) x n
+CWskel∙Gen≡CWskel∙ X x zero m = refl
+CWskel∙Gen≡CWskel∙ X x (suc n) m =
+  lem _ _
+  ∙ cong (CW↪ (subComplex X (suc (suc m))) (suc n))
+         (CWskel∙Gen≡CWskel∙ X x n m)
+  where
+  lem : (p : _) (q : _) → CWskel∙Gen X x (suc n) (suc m) p
+      ≡ invEq (G.subComplexFam≃Pushout X (suc (suc m)) (suc n) q p)
+         (inl (CWskel∙Gen X x n (suc m) q))
+  lem (lt x) (lt x₁) = refl
+  lem (lt x) (eq x₁) = ⊥.rec (¬m<ᵗm (subst (_<ᵗ suc (suc m)) x₁ (<ᵗ-trans <ᵗsucm x)))
+  lem (lt x) (gt x₁) = ⊥.rec (¬squeeze (x , <ᵗ-trans x₁ (<ᵗ-trans <ᵗsucm <ᵗsucm)))
+  lem (eq x) (lt x₁) = refl
+  lem (eq x) (eq x₁) = ⊥.rec (¬m<ᵗm (subst (_<ᵗ suc (suc n)) (x₁ ∙ sym x) <ᵗsucm))
+  lem (eq x) (gt x₁) = ⊥.rec (¬-suc-n<ᵗn (subst (_<ᵗ suc n) (sym x) x₁))
+  lem (gt x) (lt x₁) = ⊥.rec (¬squeeze (x₁ , x))
+  lem (gt y) (eq z) = ((λ j → transp (λ i → fst X (suc (predℕ (z (~ j ∨ i))))) (~ j)
+                                 (CWskel∙ X x (predℕ (z (~ j))))))
+                     ∙ cong (λ p → subst (fst X) p (CWskel∙ X x n)) (isSetℕ _ _ _ z)
+                     ∙ sym (transportRefl _)
+  lem (gt x) (gt x₁) = refl
+
+CWskel∙GenSubComplex : ∀ {ℓ} (X : CWskel ℓ) (x₀ : fst X 1) {n m : ℕ} (t : m <ᵗ suc (suc n))
+  (p : _)
+  → CWskel∙Gen X x₀ m (suc n) p
+  ≡ subComplexMapGen.subComplex←map' X (suc (suc n)) (suc m) t p (CWskel∙ X x₀ m)
+CWskel∙GenSubComplex X x₌ t (lt x) = refl
+CWskel∙GenSubComplex X x₌ t (eq x) = refl
+CWskel∙GenSubComplex X x₌ t (gt x) = ⊥.rec (¬squeeze (x , t))
+
+CWskel∙SubComplex : ∀ {ℓ} (X : CWskel ℓ) (x₀ : fst X 1) {n m : ℕ} (t : m <ᵗ suc (suc n))
+  → CWskel∙ (subComplex X (suc (suc n))) x₀ m
+   ≡ fst (complex≃subcomplex' X (suc (suc n)) (suc m) t
+           (suc m ≟ᵗ suc (suc n))) (CWskel∙ X x₀ m)
+CWskel∙SubComplex X x₀ t  =
+  sym (CWskel∙Gen≡CWskel∙ X x₀ _ _) ∙ CWskel∙GenSubComplex X x₀ t _
+
 <ᵗ→0<ᵗ : {n m : ℕ} → n <ᵗ m → 0 <ᵗ m
 <ᵗ→0<ᵗ {n} {suc m} _ = tt
 
