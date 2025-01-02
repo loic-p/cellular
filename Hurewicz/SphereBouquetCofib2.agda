@@ -618,3 +618,4 @@ module _ {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 n) where
                         (suc n ≟ᵗ suc n) (suc n ≟ᵗ suc (suc n))) (fst f)))
   snd GroupIso-Hₙ₊₁SphereBouquetⁿ/→ℤ[]/ImSphereMap =
     makeIsGroupHom HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-hom
+

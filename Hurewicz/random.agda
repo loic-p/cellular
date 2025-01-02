@@ -80,6 +80,13 @@ open import Cubical.Homotopy.Loopspace
 
 open import Cubical.HITs.Truncation as TR
 
+
+connectedFunPresConnected : ∀ {ℓ} {A B : Type ℓ} (n : ℕ) {f : A → B}
+  → isConnected n B → isConnectedFun n f → isConnected n A
+connectedFunPresConnected n {f = f} conB conf =
+  isOfHLevelRetractFromIso 0 (connectedTruncIso n f conf) conB
+
+
 connected→πEquiv : ∀ {ℓ} {A B : Pointed ℓ} (n : ℕ) (f : A →∙ B)
   → isConnectedFun (3 +ℕ n) (fst f)
   → GroupEquiv (πGr n A) (πGr n B)
@@ -120,6 +127,38 @@ snd (fst (connected→π'Equiv {ℓ = ℓ} {A = A} {B = B} n f conf)) =
   transport (λ i → isEquiv (GroupHomπ≅π'PathP-hom n f i .fst))
             (connected→πEquiv n f conf .fst .snd)
 snd (connected→π'Equiv {ℓ = ℓ} {A = A} {B = B} n f conf) = π'∘∙Hom n f .snd
+
+open import Cubical.Algebra.Group.Abelianization.Base
+open import Cubical.Algebra.Group.Abelianization.Properties as Abi
+
+AbelianizationFun : ∀ {ℓ} {G : Group ℓ} {H : Group ℓ}
+  → GroupHom G H → AbGroupHom (AbelianizationAbGroup G) (AbelianizationAbGroup H)
+fst (AbelianizationFun {G = G} {H} ϕ) = Abi.rec _ isset (η ∘ fst ϕ) λ a b c
+  → cong η (IsGroupHom.pres· (snd ϕ) a _
+         ∙ cong₂ (GroupStr._·_ (snd H)) refl (IsGroupHom.pres· (snd ϕ) b c))
+  ∙ comm _ _ _
+  ∙ sym (cong η (IsGroupHom.pres· (snd ϕ) a _
+         ∙ cong₂ (GroupStr._·_ (snd H)) refl (IsGroupHom.pres· (snd ϕ) c b)))
+snd (AbelianizationFun {G = G} {H} ϕ) = makeIsGroupHom
+  (Abi.elimProp2 _ (λ _ _ → isset _ _)
+    λ a b → cong η (IsGroupHom.pres· (snd ϕ) a b))
+
+AbelianizationEquiv : ∀ {ℓ} {G : Group ℓ} {H : Group ℓ}
+  → GroupEquiv G H → AbGroupEquiv (AbelianizationAbGroup G) (AbelianizationAbGroup H)
+fst (AbelianizationEquiv {G = G} {H} ϕ) = isoToEquiv main
+  where
+  main : Iso _ _
+  Iso.fun main = fst (AbelianizationFun (GroupEquiv→GroupHom ϕ))
+  Iso.inv main = fst (AbelianizationFun (GroupEquiv→GroupHom (invGroupEquiv ϕ)))
+  Iso.rightInv main = Abi.elimProp _ (λ _ → isset _ _) λ g → cong η (secEq (fst ϕ) g)
+  Iso.leftInv main = Abi.elimProp _ (λ _ → isset _ _) λ g → cong η (retEq (fst ϕ) g)
+snd (AbelianizationEquiv {G = G} {H} ϕ) =
+  snd (AbelianizationFun (fst (fst ϕ) , snd ϕ))
+
+connected→Abπ'Equiv : ∀ {ℓ} {A B : Pointed ℓ} (n : ℕ) (f : A →∙ B)
+  → isConnectedFun (3 +ℕ n) (fst f)
+  → AbGroupEquiv (AbelianizationAbGroup (π'Gr n A)) (AbelianizationAbGroup (π'Gr n B))
+connected→Abπ'Equiv n f isc = AbelianizationEquiv (connected→π'Equiv n f isc)
 
 connected→πSurj : ∀ {ℓ} {A B : Pointed ℓ} (n : ℕ) (f : A →∙ B)
   → isConnectedFun (2 +ℕ n) (fst f)
