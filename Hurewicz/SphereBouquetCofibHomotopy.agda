@@ -65,14 +65,15 @@ open import Cubical.Data.Int
 open import Cubical.Algebra.Group.QuotientGroup
 
 open import Cubical.Algebra.Group.Abelianization.Base
+open import Cubical.Algebra.Group.Abelianization.Properties as Abi
 
-open import Cubical.Relation.Nullary
+open import Cubical.Relation.Nullary hiding (⟪_⟫)
 open import Cubical.Data.Unit
 open import Cubical.HITs.Wedge
 
 
 open import Cubical.HITs.SphereBouquet.Degree
-open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup
+open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup as FAB 
 
 open import Hurewicz.random
 
@@ -115,92 +116,225 @@ open import Cubical.Algebra.Group.Free
 open import Cubical.Data.List renaming ([_] to [_]L)
 
 
-data S¹Bouquet {ℓ} (A : Type ℓ) : Type ℓ where
-  base' : S¹Bouquet A
-  loops : A → base' ≡ base'
 
-S¹Bouquet→Pre : (n m : ℕ) → ΩS¹
-S¹Bouquet→Pre n m with (n ≟ᵗ m)
-... | lt x = refl
-... | eq x = loop
-... | gt x = refl
+open import Cubical.HITs.Bouquet as Bouq
+open import Cubical.HITs.Bouquet.Discrete
 
-S¹Bouquet→ : (n : ℕ) → S¹Bouquet (Fin n) → Fin n → S¹
-S¹Bouquet→ n base' s = base
-S¹Bouquet→ n (loops x i) s = S¹Bouquet→Pre (fst x) (fst s) i
 
-S¹Bouquet← : {!!}
-S¹Bouquet← = {!!}
 
 open import Cubical.HITs.FreeGroup as FG
+open import Cubical.HITs.FreeGroup.NormalForm
+open import Cubical.HITs.FreeGroupoid.Properties
+open import Cubical.Algebra.Group.Free
 
-CodeS¹Bouquet : ∀ {ℓ} (A : Type ℓ) → S¹Bouquet A → Type ℓ
-CodeS¹Bouquet A base' = FreeGroup A
-CodeS¹Bouquet A (loops x i) =
-  isoToPath (·GroupAutomorphism (freeGroupGroup A) (η x)) i
+Iso-ΩS¹Bouquet-FreeGroup : {n : ℕ} → Iso (fst (Ω (Bouquet∙ (Fin n)))) (FreeGroup (Fin n))
+Iso-ΩS¹Bouquet-FreeGroup =
+  compIso
+    (compIso (invIso (setTruncIdempotentIso (isOfHLevelPath' 2
+      (isGroupoidBouquet DiscreteFin) _ _)))
+             (equivToIso (TruncatedFamiliesEquiv base)))
+    (equivToIso (invEquiv freeGroupTruncIdempotent≃))
 
--- decodeFun : ∀ {ℓ} {A : Type ℓ}  → List (Bool × A) → base' ≡ base'
--- decodeFun [] = refl
--- decodeFun ((false , a) ∷ x₁) = sym (loops a) ∙ decodeFun x₁
--- decodeFun ((true , a) ∷ x₁) = loops a ∙ decodeFun x₁
+GroupIso-πS¹Bouquet-FreeGroup : {!{n : ℕ} → Iso (fst (Ω (Bouquet∙ (Fin n)))) (FreeGroup (Fin n))!}
+GroupIso-πS¹Bouquet-FreeGroup = {!!}
 
--- poo :  ∀ {ℓ} {A : Type ℓ}
---   (a b : List (Bool × A)) →
---       (A NormalForm.· a ⁻¹≡ε) b → decodeFun a ≡ decodeFun b
--- poo [] [] n = refl
--- poo [] ((false , r) ∷ b) NormalForm.[ ≡ε ]≡ε = {!≡ε!} ∙ {!!}
--- poo [] ((true , r) ∷ b) n = {!!}
--- poo (x ∷ a) b n = {!b!}
+module _ {ℓ} {A : Type ℓ} where
+  SphereBouquet→Bouquet : SphereBouquet 1 A → Bouquet A
+  SphereBouquet→Bouquet (inl x) = base
+  SphereBouquet→Bouquet (inr (s , base)) = base
+  SphereBouquet→Bouquet (inr (s , loop i)) = loop s i
+  SphereBouquet→Bouquet (push a i) = base
 
-decodeS¹Bouquet' : ∀ {ℓ} {A : Type ℓ} → GroupHom (freeGroupGroup A) (πGr 0 (S¹Bouquet A , base'))
-decodeS¹Bouquet' {A = A} = FG.rec {Group = πGr 0 (S¹Bouquet A , base')} (λ a → ∣ loops a ∣₂)
+  Bouquet→SphereBouquet : Bouquet A → SphereBouquet 1 A
+  Bouquet→SphereBouquet base = inl tt
+  Bouquet→SphereBouquet (loop x i) =
+    (push x ∙∙ (λ i → inr (x , loop i)) ∙∙ sym (push x)) i
 
-decodeS¹Bouquet : ∀ {ℓ} {A : Type ℓ} (x : S¹Bouquet A)
-  → CodeS¹Bouquet A x → ∥ (base' ≡ x) ∥₂
-decodeS¹Bouquet base' = decodeS¹Bouquet' .fst
-decodeS¹Bouquet {A = A} (loops x i) = {!x!}
-  where
-  M : transport (λ i → ∥ base' ≡ loops x i ∥₂)
-    ≡ Iso.fun (·GroupAutomorphismR (πGr 0 (S¹Bouquet A , base')) ∣ loops x ∣₂)
-  M = funExt (ST.elim (λ _ → isSetPathImplicit) λ s
-    → cong ∣_∣₂ λ j → transp (λ i₁ → base' ≡ loops x (i₁ ∨ j)) j (compPath-filler s (loops x) j))
+  Iso-SphereBouquet-Bouquet : Iso (SphereBouquet 1 A) (Bouquet A)
+  Iso.fun Iso-SphereBouquet-Bouquet = SphereBouquet→Bouquet
+  Iso.inv Iso-SphereBouquet-Bouquet = Bouquet→SphereBouquet
+  Iso.rightInv Iso-SphereBouquet-Bouquet base = refl
+  Iso.rightInv Iso-SphereBouquet-Bouquet (loop x i) j =
+    SphereBouquet→Bouquet
+      (doubleCompPath-filler (push x) (λ i → inr (x , loop i)) (sym (push x)) (~ j) i)
+  Iso.leftInv Iso-SphereBouquet-Bouquet (inl x) = refl
+  Iso.leftInv Iso-SphereBouquet-Bouquet (inr (s , base)) = push s
+  Iso.leftInv Iso-SphereBouquet-Bouquet (inr (s , loop i)) j =
+    doubleCompPath-filler (push s) (λ i → inr (s , loop i)) (sym (push s)) (~ j) i
+  Iso.leftInv Iso-SphereBouquet-Bouquet (push a i) j = push a (i ∧ j)
 
-  H1 : {!(·GroupAutomorphismR (πGr 0 (S¹Bouquet A , base')) ∣ loops x ∣₂)!}
-  H1 = {!!}
+  Bouquet≃∙SphereBouquet : SphereBouquet∙ 1 A ≃∙ Bouquet A , base
+  fst Bouquet≃∙SphereBouquet = isoToEquiv (Iso-SphereBouquet-Bouquet)
+  snd Bouquet≃∙SphereBouquet = refl
 
-  oh? : PathP (λ i → isoToPath (·GroupAutomorphism (freeGroupGroup A) (η x)) i
-                   → ∥ base' ≡ loops x i ∥₂)
-              (decodeS¹Bouquet' .fst) (decodeS¹Bouquet' .fst)
-  oh? = toPathP (funExt λ w
-    → cong (transport (λ i → ∥ base' ≡ loops x i ∥₂))
-        (cong (decodeS¹Bouquet' .fst) λ _ → transport (λ i → isoToPath (·GroupAutomorphism (freeGroupGroup A) (η x)) (~ i)) w)
-        ∙ {!!}
-        ∙ {!!})
-
-LoopSphereBouquet : {!!}
-LoopSphereBouquet = {!!}
-
-module spB {m k : ℕ}
-  (α : SphereBouquet∙ (suc zero) (Fin m)
-  →∙ SphereBouquet∙ (suc zero) (Fin k))
-  (α' : Fin m → Fin k → fst (Ω (S₊∙ 1))) where
-  α'' : SphereBouquet∙ (suc zero) (Fin m)
+makeSphereBouquetFun : {m k : ℕ}
+  → (Fin m → FreeGroup (Fin k))
+    →  SphereBouquet∙ (suc zero) (Fin m)
     →∙ SphereBouquet∙ (suc zero) (Fin k)
-  fst α'' (inl x) = {!!}
-  fst α'' (inr (s , base)) = {!!}
-  fst α'' (inr (s , loop i)) = {!inr (? , sumFinGen _∙_ refl (α' s) i)!}
-  fst α'' (push a i) = {!!}
-  snd α'' = {!!}
+fst (makeSphereBouquetFun F) (inl x) = inl tt
+fst (makeSphereBouquetFun F) (inr (s , base)) = inl tt
+fst (makeSphereBouquetFun F) (inr (s , loop i)) =
+  cong Bouquet→SphereBouquet (Iso.inv Iso-ΩS¹Bouquet-FreeGroup (F s)) i
+fst (makeSphereBouquetFun F) (push a i) = inl tt
+snd (makeSphereBouquetFun F) = refl
+
+makeSphereBouquetFun' : {m k : ℕ}
+  → (Fin m → FreeGroup (Fin k))
+    →  Bouquet∙ (Fin m)
+    →∙ Bouquet∙ (Fin k)
+fst (makeSphereBouquetFun' f) base = base
+fst (makeSphereBouquetFun' f) (loop x i) = Iso.inv Iso-ΩS¹Bouquet-FreeGroup (f x) i
+snd (makeSphereBouquetFun' f) = refl
+
+-- Iso (Free A)ᵃᵇ ≅ (FreeAb A)
+module _ {ℓ} {G : Group ℓ} (H : AbGroup ℓ) (ϕ : GroupHom G (AbGroup→Group H)) where
+  fromAbelianization : AbGroupHom (AbelianizationAbGroup G) H
+  fst fromAbelianization = Abi.rec G (AbGroupStr.is-set (snd H)) (fst ϕ)
+    λ x y z → IsGroupHom.pres· (snd ϕ) _ _
+            ∙ cong₂ (AbGroupStr._+_ (snd H)) refl
+                (IsGroupHom.pres· (snd ϕ) _ _
+                ∙ AbGroupStr.+Comm (snd H) _ _
+                ∙ sym (IsGroupHom.pres· (snd ϕ) _ _))
+            ∙ sym (IsGroupHom.pres· (snd ϕ) _ _)
+  snd fromAbelianization =
+    makeIsGroupHom (Abi.elimProp2 _
+      (λ _ _ → AbGroupStr.is-set (snd H) _ _)
+      λ x y → IsGroupHom.pres· (snd ϕ) x y)
+
+FAGAbGroup→AbGroupHom : ∀ {ℓ ℓ'} {A : Type ℓ} {G : AbGroup ℓ'}
+  → (A → fst G) → AbGroupHom (FAGAbGroup {A = A}) G
+fst (FAGAbGroup→AbGroupHom {G = G} f) =
+  Rec.f (AbGroupStr.is-set (snd G)) f
+    (AbGroupStr.0g (snd G)) (AbGroupStr._+_ (snd G)) (AbGroupStr.-_ (snd G))
+    (AbGroupStr.+Assoc (snd G)) (AbGroupStr.+Comm (snd G))
+    (AbGroupStr.+IdR (snd G)) (AbGroupStr.+InvR (snd G))
+snd (FAGAbGroup→AbGroupHom {G = G} f) = makeIsGroupHom λ x y → refl
+
+FAGAbGroupGroupHom≡ : ∀ {ℓ ℓ'} {A : Type ℓ} {G : AbGroup ℓ'}(f g : AbGroupHom (FAGAbGroup {A = A}) G)
+               → (∀ a → (fst f) (⟦ a ⟧) ≡ (fst g) (⟦ a ⟧)) → f ≡ g
+FAGAbGroupGroupHom≡ {G = G} f g p =
+  GroupHom≡ (funExt (ElimProp.f (AbGroupStr.is-set (snd G) _ _)
+    p (IsGroupHom.pres1 (snd f) ∙ sym (IsGroupHom.pres1 (snd g)))
+    (λ p q → IsGroupHom.pres· (snd f) _ _
+            ∙ cong₂ (AbGroupStr._+_ (snd G)) p q
+            ∙ sym (IsGroupHom.pres· (snd g) _ _))
+    λ p → IsGroupHom.presinv (snd f) _
+        ∙ cong (AbGroupStr.-_ (snd G)) p
+        ∙ sym (IsGroupHom.presinv (snd g) _)))
+
+module _ {ℓ} {A : Type ℓ} where
+  freeGroup→freeAbGroup : GroupHom (freeGroupGroup A) (AbGroup→Group (FAGAbGroup {A = A}))
+  freeGroup→freeAbGroup = FG.rec {Group = AbGroup→Group (FAGAbGroup {A = A})} ⟦_⟧
+
+  AbelienizeFreeGroup→FreeAbGroup : AbGroupHom (AbelianizationAbGroup (freeGroupGroup A)) (FAGAbGroup {A = A})
+  AbelienizeFreeGroup→FreeAbGroup = fromAbelianization FAGAbGroup freeGroup→freeAbGroup
+
+  FreeAbGroup→AbelienizeFreeGroup : AbGroupHom (FAGAbGroup {A = A}) (AbelianizationAbGroup (freeGroupGroup A))
+  FreeAbGroup→AbelienizeFreeGroup = FAGAbGroup→AbGroupHom λ a → η (η a)
+
+  GroupIso-AbelienizeFreeGroup→FreeAbGroup :
+    AbGroupIso (AbelianizationAbGroup (freeGroupGroup A)) (FAGAbGroup {A = A})
+  Iso.fun (fst GroupIso-AbelienizeFreeGroup→FreeAbGroup) = AbelienizeFreeGroup→FreeAbGroup .fst
+  Iso.inv (fst GroupIso-AbelienizeFreeGroup→FreeAbGroup) = FreeAbGroup→AbelienizeFreeGroup .fst
+  Iso.rightInv (fst GroupIso-AbelienizeFreeGroup→FreeAbGroup) x i =
+    FAGAbGroupGroupHom≡
+      (compGroupHom FreeAbGroup→AbelienizeFreeGroup AbelienizeFreeGroup→FreeAbGroup)
+      idGroupHom (λ _ → refl) i .fst x
+  Iso.leftInv (fst GroupIso-AbelienizeFreeGroup→FreeAbGroup) = Abi.elimProp _ (λ _ → isset _ _)
+    (funExt⁻ (cong fst (freeGroupHom≡
+      {f = compGroupHom  freeGroup→freeAbGroup FreeAbGroup→AbelienizeFreeGroup }
+      {g = AbelianizationGroupStructure.ηAsGroupHom (freeGroupGroup A)}
+      λ _ → refl)))
+  snd GroupIso-AbelienizeFreeGroup→FreeAbGroup = AbelienizeFreeGroup→FreeAbGroup .snd
+
+open import Cubical.Foundations.Powerset
+module spB {m k : ℕ}
+  (α' : Fin m → FreeGroup (Fin k)) where
+  α :  Bouquet∙ (Fin m)
+    →∙ Bouquet∙ (Fin k)
+  α = makeSphereBouquetFun' α'
 
   αD' : AbGroupHom (ℤ[Fin m ]) (ℤ[Fin k ])
-  fst αD' F t = {!!} -- ? · (winding (sumFinGen _∙_ refl λ k → α' k t))
+  fst αD' F t = {!!}
   snd αD' = {!!}
 
-  ℤ/Imα' : Group₀
-  ℤ/Imα' = AbGroup→Group (ℤ[Fin k ]) / {!!}
+  pickGens : GroupHom (freeGroupGroup (Fin m)) (freeGroupGroup (Fin k))
+  pickGens = FG.rec α'
 
---   ℤ/Imα : Group₀
---   ℤ/Imα = AbGroup→Group (ℤ[Fin k ]) / ((imSubgroup (bouquetDegree (fst α))) , (isNormalIm _ λ _ _ → AbGroupStr.+Comm (snd ℤ[Fin k ]) _ _))
+  pickGens' : GroupHom (freeGroupGroup (Fin m)) (AbGroup→Group (AbelianizationAbGroup (freeGroupGroup (Fin k))))
+  pickGens' = compGroupHom pickGens (AbelianizationGroupStructure.ηAsGroupHom _)
+
+  _·f_ : ∀ {ℓ} {A : Type ℓ} → FreeGroup A → FreeGroup A → FreeGroup A
+  _·f_ = FG._·_
+
+  Free/Imα' : Group₀
+  Free/Imα' = AbGroup→Group (AbelianizationAbGroup (freeGroupGroup (Fin k)))
+            / (imSubgroup pickGens' , isNormalIm _ λ _ _ → AbelianizationGroupStructure.commAb _ _ _)
+
+  -- ℤ/Imα : Group₀
+  -- ℤ/Imα = AbGroup→Group (ℤ[Fin k ]) / ((imSubgroup (bouquetDegree (fst α))) , (isNormalIm _ λ _ _ → AbGroupStr.+Comm (snd ℤ[Fin k ]) _ _))
+
+  Code' : Fin k → S¹ → Type₀
+  Code' k base = Free/Imα' .fst
+  Code' k (loop i) = ua (isoToEquiv (·GroupAutomorphismR (Free/Imα') [ η (η k) ])) i
+
+  CodePre : Bouquet (Fin k) → Type
+  CodePre base = Free/Imα' .fst
+  CodePre (loop x i) = ua (isoToEquiv (·GroupAutomorphismR (Free/Imα') [ η (η x) ])) i
+
+  CodeCofibα : cofib (fst α) → Type
+  CodeCofibα (inl x) = Free/Imα' .fst
+  CodeCofibα (inr x) = CodePre x
+  CodeCofibα (push base i) = Free/Imα' .fst
+  CodeCofibα (push (loop x j) i) = H _ refl i j
+    where
+    H : (t : _) → α' x ≡ t → refl ≡ cong (CodePre ∘ fst α) (loop x)
+    H = FG.elimProp {!(cong (fst α) (loop x))!}
+      (λ p q → transport (λ i → refl ≡ cong CodePre (Iso.inv Iso-ΩS¹Bouquet-FreeGroup (q (~ i))))
+                          ((sym uaIdEquiv
+                          ∙ cong ua (Σ≡Prop {!!} (funExt (SQ.elimProp {!!} (Abi.elimProp _ {!!} (λ g → eq/ _ _ ∣ (inv (η x)) , {!!} ∣₁))))))
+                          ∙ (λ j → isoToPath (·GroupAutomorphismR Free/Imα' [ η (q j) ]))))
+                          {!λ g1 !}
+      (λ p → transport (λ i → refl ≡ cong CodePre (Iso.inv Iso-ΩS¹Bouquet-FreeGroup (p (~ i))))
+                          refl)
+        {!!}
+
+
+  isSetCodeCofibα : (x : _) → isSet (CodeCofibα x)
+  isSetCodeCofibα = {!!}
+
+  decodeCofibα : (x : _) → CodeCofibα x → ∥ inr base ≡ x ∥₂
+  decodeCofibα (inl x) = {!!}
+  decodeCofibα (inr base) = SQ.elim {!!} {!!} {!!}
+  decodeCofibα (inr (loop x i)) = {!!}
+  decodeCofibα (push a i) = {!a!}
+
+    -- sym uaIdEquiv ∙ {!!} ∙ λ i → cong CodePre (Iso.inv Iso-ΩS¹Bouquet-FreeGroup (α' x))
+  {-
+  CodeCofibα (inl x) = Free/Imα' .fst
+  CodeCofibα (inr x) = CodePre x
+  CodeCofibα (push (inl x) i) = Free/Imα' .fst
+  CodeCofibα (push (inr (x , y)) i) = {!fst (makeSphereBouquetFun α') (inr (x , y))!}
+    where
+    oh : (y : S¹) → Free/Imα' .fst
+                   ≃ CodePre (fst (makeSphereBouquetFun α') (inr (x , y)))
+    oh base = idEquiv (Free/Imα' .fst)
+    oh (loop i) = {!!}
+      where
+      cool : PathP (λ i → Free/Imα' .fst
+                         ≃ CodePre (Bouquet→SphereBouquet
+                            (Iso.inv Iso-ΩS¹Bouquet-FreeGroup (α' x) i)))
+                    (idEquiv _) (idEquiv _)
+      cool = ΣPathPProp (λ _ → isPropIsEquiv _)
+        (funExt (SQ.elimProp
+          (λ _ → isOfHLevelPathP' 1 (GroupStr.is-set (Free/Imα' .snd)) _ _)
+          (Abi.elimProp _
+            (λ _ → isOfHLevelPathP' 1 (GroupStr.is-set (Free/Imα' .snd)) _ _)
+            (FG.elimProp {!!} {!!} {!!} {!!} {!!}))))
+
+  CodeCofibα (push (push a i₁) i) = {!!}
+  -}
+
 
 --   theIs : (t : Fin k) → ℤ/Imα .fst ≃ ℤ/Imα .fst
 --   theIs t = isoToEquiv (·GroupAutomorphism ℤ/Imα [ ℤFinGenerator t ])
