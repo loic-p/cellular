@@ -79,7 +79,140 @@ open import Cubical.Homotopy.Group.LES
 open import Cubical.Homotopy.Loopspace
 
 open import Cubical.HITs.Truncation as TR
+open import Cubical.Algebra.Group.GroupPath
+open import Cubical.Algebra.Group.Subgroup
 
+-- todo: use to replace orginal
+GroupHomπ≅π'PathP' : ∀ {ℓ ℓ'} (A : Pointed ℓ) (B : Pointed ℓ') (n m : ℕ)
+  → GroupHom (πGr n A) (πGr m B) ≡ GroupHom (π'Gr n A) (π'Gr m B)
+GroupHomπ≅π'PathP' A B n m i =
+  GroupHom (fst (GroupPath _ _) (GroupIso→GroupEquiv (π'Gr≅πGr n A)) (~ i))
+           (fst (GroupPath _ _) (GroupIso→GroupEquiv (π'Gr≅πGr m B)) (~ i))
+
+
+Hom/ : ∀ {ℓ ℓ'} {G : Group ℓ} {H : Group ℓ'}
+  {G' : NormalSubgroup G} {H' : NormalSubgroup H}
+  → (ϕ : GroupHom G H)
+  → (ϕ' : (a b : _) (r : (G ~ G' .fst) (G' .snd) a b)
+        → (H ~ H' .fst) (H' .snd) (fst ϕ a) (fst ϕ b))
+  → GroupHom (G / G') (H / H')
+fst (Hom/ ϕ ϕ') = SQ.elim (λ _ → squash/) ([_] ∘ fst ϕ) λ a b r → eq/ _ _ (ϕ' a b r)
+snd (Hom/ ϕ ϕ') = makeIsGroupHom (SQ.elimProp2 (λ _ _ → squash/ _ _)
+  λ _ _ → cong [_] (IsGroupHom.pres· (snd ϕ) _ _))
+
+Hom/Iso : ∀ {ℓ ℓ'} {G : Group ℓ} {H : Group ℓ'}
+  {G' : NormalSubgroup G} {H' : NormalSubgroup H}
+  → (ϕ : GroupIso G H)
+  → (ϕ' : (a b : _) (r : (G ~ G' .fst) (G' .snd) a b)
+        → (H ~ H' .fst) (H' .snd) (Iso.fun (fst ϕ) a) (Iso.fun (fst ϕ) b))
+     (ψ' : (a b : _) (r : (H ~ H' .fst) (H' .snd) a b)
+        → (G ~ G' .fst) (G' .snd) (Iso.inv (fst ϕ) a) (Iso.inv (fst ϕ) b))
+  → GroupIso (G / G') (H / H')
+Iso.fun (fst (Hom/Iso ϕ ϕ' ψ')) = fst (Hom/ (GroupIso→GroupHom ϕ) ϕ')
+Iso.inv (fst (Hom/Iso ϕ ϕ' ψ')) =
+  fst (Hom/ (GroupIso→GroupHom (invGroupIso ϕ)) ψ')
+Iso.rightInv (fst (Hom/Iso ϕ ϕ' ψ')) =
+  SQ.elimProp (λ _ → squash/ _ _) (cong [_] ∘ Iso.rightInv (fst ϕ))
+Iso.leftInv (fst (Hom/Iso ϕ ϕ' ψ')) =
+  SQ.elimProp (λ _ → squash/ _ _) (cong [_] ∘ Iso.leftInv (fst ϕ))
+snd (Hom/Iso ϕ ϕ' ψ') = snd (Hom/ (GroupIso→GroupHom ϕ) ϕ')
+
+Hom/ImIso : ∀ {ℓ ℓ'} {G H : Group ℓ'} (ϕ : GroupHom G H)
+                     {G' H' : Group ℓ} (ψ : GroupHom G' H')
+                     {ϕ' : isNormal (imSubgroup ϕ)} {ψ' : isNormal (imSubgroup ψ)}
+   (eG : GroupIso G G') (eH : GroupIso H H')
+   (e~ : (g : fst G)
+     → fst ψ (Iso.fun (fst eG) g) ≡
+        Iso.fun (fst eH) (ϕ .fst g))
+  → GroupIso (H / (_ , ϕ')) (H' / (_ , ψ'))
+Hom/ImIso {G = G} {H} ϕ {G'} {H'} ψ eG eH e∼ = Hom/Iso eH
+  (λ a b → PT.map (uncurry λ x p
+    → (Iso.fun (fst eG) x) , e∼ x
+    ∙ cong (Iso.fun (fst eH)) p
+    ∙ IsGroupHom.pres· (snd eH) _ _
+    ∙ cong₂ (GroupStr._·_ (snd H'))
+      refl (IsGroupHom.presinv (snd eH) _)))
+  λ a b → PT.map (uncurry λ x p
+    → (Iso.inv (fst eG) x)
+      , (sym ((cong₂ (GroupStr._·_ (snd H)) refl (sym (IsGroupHom.presinv (snd (invGroupIso eH)) b)) --
+        ∙ sym (IsGroupHom.pres· (snd (invGroupIso eH)) a (GroupStr.inv (H' .snd) b))
+        ∙ cong (Iso.inv (fst eH)) (sym p)
+        ∙ cong (Iso.inv (fst eH) ∘ fst ψ) (sym (Iso.rightInv (fst eG) x)))
+       ∙ cong (Iso.inv (fst eH)) (e∼ (Iso.inv (fst eG) x))
+       ∙ Iso.leftInv (fst eH) _)))
+
+module πLES' {ℓ ℓ' : Level} {A : Pointed ℓ} {B : Pointed ℓ'} (f : A →∙ B) where
+  module M = πLES f
+  fib : Pointed _
+  fib = (fiber (fst f) (pt B)) , (pt A , snd f)
+
+  fib→A : (n : ℕ) → GroupHom (π'Gr n fib) (π'Gr n A)
+  fib→A n = π'∘∙Hom n (fst , refl)
+
+  A→B : (n : ℕ) → GroupHom (π'Gr n A) (π'Gr n B)
+  A→B n = π'∘∙Hom n f
+
+  -- todo: improve
+  B→fib : (n : ℕ) → GroupHom (π'Gr (suc n) B) (π'Gr n fib)
+  B→fib n = transport (GroupHomπ≅π'PathP' B fib (suc n) n) (M.B→fib n)
+
+  private
+    P : (n : ℕ) → PathP (λ i → GroupHomπ≅π'PathP' B fib (suc n) n i)
+                          (M.B→fib n) (B→fib n)
+    P n = toPathP refl
+
+  Ker-A→B⊂Im-fib→A : (n : ℕ) (x : π' (suc n) A)
+    → isInKer (A→B n) x
+    → isInIm (fib→A n) x
+  Ker-A→B⊂Im-fib→A n =
+    transport (λ i → (x : _) → isInKer (π∘∙A→B-PathP n f i) x
+                              → isInIm (π∘∙fib→A-PathP n f i) x)
+              (M.Ker-A→B⊂Im-fib→A n)
+
+  Im-fib→A⊂Ker-A→B : (n : ℕ) (x : π' (suc n) A)
+    → isInIm (fib→A n) x
+    → isInKer (A→B n) x
+  Im-fib→A⊂Ker-A→B n =
+    transport (λ i → (x : _) → isInIm (π∘∙fib→A-PathP n f i) x
+                              → isInKer (π∘∙A→B-PathP n f i) x)
+              (M.Im-fib→A⊂Ker-A→B n)
+
+  Ker-fib→A⊂Im-B→fib : (n : ℕ) (x : π' (suc n) fib)
+    → isInKer (fib→A n) x
+    → isInIm (B→fib n) x
+  Ker-fib→A⊂Im-B→fib n =
+    transport (λ i → (x : _) → isInKer (π∘∙fib→A-PathP n f i) x
+                              → isInIm (P n i) x)
+              (M.Ker-fib→A⊂Im-B→fib n)
+
+  Im-B→fib⊂Ker-fib→A : (n : ℕ) (x : π' (suc n) fib)
+    → isInIm (B→fib n) x
+    → isInKer (fib→A n) x
+  Im-B→fib⊂Ker-fib→A n =
+    transport (λ i → (x : _) → isInIm (P n i) x
+                              → isInKer (π∘∙fib→A-PathP n f i) x)
+              (M.Im-B→fib⊂Ker-fib→A n)
+
+  Im-A→B⊂Ker-B→fib : (n : ℕ) (x : π' (suc (suc n)) B)
+    → isInIm (A→B (suc n)) x
+    → isInKer (B→fib n) x
+  Im-A→B⊂Ker-B→fib n =
+    transport (λ i → (x : _) → isInIm (π∘∙A→B-PathP (suc n) f i) x
+                              → isInKer (P n i) x)
+              (M.Im-A→B⊂Ker-B→fib n)
+
+  Ker-B→fib⊂Im-A→B : (n : ℕ) (x : π' (suc (suc n)) B)
+    → isInKer (B→fib n) x
+    → isInIm (A→B (suc n)) x
+  Ker-B→fib⊂Im-A→B n =
+    transport (λ i → (x : _) → isInKer (P n i) x
+                              → isInIm (π∘∙A→B-PathP (suc n) f i) x)
+              (M.Ker-B→fib⊂Im-A→B n)
+
+isConnectedCofib : ∀ {ℓ} {A B : Type ℓ} (n : ℕ) {f : A → B}
+  → isConnectedFun (suc n) f → isConnected (suc (suc n)) (cofib f)
+isConnectedCofib n {f = f} cf =
+  isConnectedPoint2 (suc n) (inl tt) (inlConnected (suc n) (λ _ → tt) f cf)
 
 connectedFunPresConnected : ∀ {ℓ} {A B : Type ℓ} (n : ℕ) {f : A → B}
   → isConnected n B → isConnectedFun n f → isConnected n A
@@ -292,7 +425,7 @@ module _ {ℓ ℓ'} {A : Type ℓ} (B : A → Pointed ℓ')
 
   cofibFst→⋁ : cofibFst → ⋁gen A λ a → Susp∙ (fst (B a))
   cofibFst→⋁ (inl x) = inl x
-  cofibFst→⋁ (inr a) = inr (a , north) 
+  cofibFst→⋁ (inr a) = inr (a , north)
   cofibFst→⋁ (push (a , b) i) = (push a ∙ λ i → inr (a , toSusp (B a) b i)) i
 
   ⋁→cofibFst : ⋁gen A (λ a → Susp∙ (fst (B a))) → cofibFst
@@ -405,7 +538,7 @@ CWskel∞∙Id X x₀ zero = refl
 CWskel∞∙Id X x₀ (suc n) = sym (push (CWskel∙ X x₀ n)) ∙ CWskel∞∙Id X x₀ n
 
 incl∙ : ∀ {ℓ} (X : CWskel ℓ) (x₀ : fst X 1) {n : ℕ}
-  → (fst X (suc n) , CWskel∙ X x₀ n) →∙ (realise X , incl x₀) 
+  → (fst X (suc n) , CWskel∙ X x₀ n) →∙ (realise X , incl x₀)
 fst (incl∙ X x₀ {n = n}) = incl
 snd (incl∙ X x₀ {n = n}) = CWskel∞∙Id X x₀ n
 
@@ -575,7 +708,7 @@ module _ {ℓ} (X : CWskel ℓ) (n : ℕ) (x₀ : fst X 1)
   betterApprox : cellMap (Sˢᵏᵉˡ n) X
   betterApprox = niceCellMapS X n x₀ (fst fap) (snd fap)
 
-  isApprox : realiseSequenceMap betterApprox ≡ fst f ∘ invEq (isCWSphere n .snd) 
+  isApprox : realiseSequenceMap betterApprox ≡ fst f ∘ invEq (isCWSphere n .snd)
   isApprox = funExt λ x → cong (realiseSequenceMap betterApprox) (sym (secEq (isCWSphere n .snd) x))
                          ∙ lem _
     where
@@ -752,7 +885,7 @@ CW↑GenComm C (suc m) (suc n) k p t =
          ≡
          subComplexMapGen.subComplex→map' C k (suc n) (suc n ≟ᵗ k)
          (CW↑Gen (subComplex C k) (suc m) (suc n) p t (subst (G.subComplexFam C k (suc m)) pp x))
-  help (suc n) m k (lt x₁) s t pp x = ⊥.rec (¬squeeze (t , x₁)) 
+  help (suc n) m k (lt x₁) s t pp x = ⊥.rec (¬squeeze (t , x₁))
   help (suc n) m k (eq x₁) s t pp x = cong (CW↪ C (suc n))
     (cong (λ p → subst (fst C) p
       (subComplexMapGen.subComplex→map' C k (suc m) s x)) (isSetℕ _ _ _ _)
@@ -778,7 +911,7 @@ CW↑GenComm C (suc m) (suc n) k p t =
          (subst (G.subComplexFam C k (suc m)) pp x))
   {-
   help pp s zero t x = {!!}
-  help (lt x₁) s (suc n) p t pp x = 
+  help (lt x₁) s (suc n) p t pp x =
   help (eq x₁) s (suc n) p t pp x = cong (CW↪ C n) {!!}
     ∙ funExt⁻ (CW↪CommSubComplex C n k)
         ((subst (λ m₁ → subComplexFam C k m₁)
@@ -790,7 +923,7 @@ CW↑GenComm C (suc m) (suc n) k p t =
         (subst (G.subComplexFam C k (suc m)) pp x)))
         -}
   {-
-  help (lt x₂) (lt x₁) pp x =  ⊥.rec (¬squeeze (t , x₂)) 
+  help (lt x₂) (lt x₁) pp x =  ⊥.rec (¬squeeze (t , x₂))
   help (eq x₂) (lt x₁) pp x = cong (CW↪ C n) {!!}
     ∙ funExt⁻ (CW↪CommSubComplex C n k) ((subst (λ m₁ → subComplexFam C k m₁) (λ i → predℕ (x₂ (~ i))) (subst (G.subComplexFam C k (suc m)) pp x)))
   help (gt x₂) (lt x₁) pp x = {!!}
@@ -911,8 +1044,8 @@ FinSequenceMap.fcomm (subComplex→ C m n) t = subComplex→comm C (fst t) m _ _
 --     mainS : (b : ℕ) (t : b <ᵗ suc (suc (suc (suc n)))) (x : _) → incl (subComplex→map C m b x) ≡ incl (fst e (incl x))
 --     mainS zero t x = {!!}
 --     mainS (suc b) t x = {!!}
-    
-  
+
+
 --     main : (p : _)  (x : _) (q : p ≡ (suc (suc (suc n)) ≟ᵗ m)) → Path (realise C) (incl {n = suc(suc (suc n))}
 --       (subComplexMapGen.subComplex→map' C m (suc (suc (suc n)))
 --        p x))
@@ -967,7 +1100,7 @@ subComplexHomologyEquiv≡ C m n p =
   snd help = →FinSeqColimHomotopy _ _ λ x → CW↑Gen≡ C (suc (suc (suc n))) (suc m) (suc m ≟ᵗ suc (suc (suc (suc n)))) p _
     ∙ cong (incl {n = suc m}) (funExt⁻ (CW↑GenComm C (suc (suc (suc n))) (suc m) m (suc m ≟ᵗ suc (suc (suc (suc n)))) p) x
       ∙ funExt⁻ (Charac↑ C m (suc m ≟ᵗ m) (m ≟ᵗ m)) (CW↑Gen (subComplex C m)
-                  (suc (suc (suc n))) (suc m) (Trichotomyᵗ-suc (m ≟ᵗ suc (suc (suc n)))) p x)  -- funExt⁻ (Charac↑ C m _ ?) 
+                  (suc (suc (suc n))) (suc m) (Trichotomyᵗ-suc (m ≟ᵗ suc (suc (suc n)))) p x)  -- funExt⁻ (Charac↑ C m _ ?)
       ∙ cong (CW↪ C m) (sym (Iso.leftInv ( (realiseSubComplex m C) ) _)
       ∙ cong (Iso.inv (realiseSubComplex m C))
         ((push _ ∙ cong (incl {n = suc m}) (cong (CW↪ (subComplex C m) m) (secEq (complex≃subcomplex' C m m <ᵗsucm (m ≟ᵗ m)) _)
@@ -1142,7 +1275,7 @@ bouquetDegree+ n m k f g =
         ·DistR+ (ℤFinGenerator s x)
                 (degree (suc n) (λ x₁ → pickPetal y (fst f (inr (x , x₁)))))
                 (degree (suc n) (λ x₁ → pickPetal y (fst g (inr (x , x₁))))))
-      ∙ sumFinℤHom _ _) -- 
+      ∙ sumFinℤHom _ _) --
   where
   main : (n : ℕ) (s : Fin m) (y : _)
     (f g : SphereBouquet∙ (suc n) (Fin m) →∙ SphereBouquet∙ (suc n) (Fin k)) (x : S₊ (suc n)) →
@@ -1211,7 +1344,7 @@ module _ {ℓ} (Xsk : CWskel ℓ) (x₀ : fst Xsk 1) where
   -- fn+1/fn-SGen n m g p q (inr x) = inr {!CW\!} -- (fn+1/fn-SGen-inr n (suc m) ((CW↪ Xsk (suc m) , refl) ∘∙ g) p x)
   -- fn+1/fn-SGen n m g p q (push a i) =
   --   (push (fst g {!!}) ∙ {!!}) i -- (push (fn+1/fn-SGenEq n m g q a)) i
-  
+
   -- fn+1/fn-SGen n zero f (lt x₁) (lt x) (push a i) = {!in!}
   -- fn+1/fn-SGen (suc n) zero f (eq x₁) (lt x) (push a i) = {!!}
   -- fn+1/fn-SGen n zero f (gt x₁) (lt x) (push a i) = {!n!}

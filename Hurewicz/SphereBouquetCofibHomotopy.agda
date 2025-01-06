@@ -21,7 +21,7 @@ open import Cubical.CW.Subcomplex
 
 
 open import Cubical.Data.Empty
-open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
+open import Cubical.Data.Nat renaming (_+_ to _+ℕ_ ; _·_ to _·ℕ_)
 open import Cubical.Data.NatMinusOne
 open import Cubical.Data.Nat.Order
 open import Cubical.Data.Bool
@@ -35,6 +35,7 @@ open import Cubical.Data.FinSequence
 
 open import Cubical.HITs.S1
 open import Cubical.HITs.Sn
+open import Cubical.HITs.Sn.Degree
 open import Cubical.HITs.Susp
 open import Cubical.HITs.Pushout
 open import Cubical.HITs.SequentialColimit
@@ -64,7 +65,7 @@ open import Cubical.Foundations.Univalence
 open import Cubical.CW.ChainComplex
 open import Cubical.HITs.SetQuotients.Base renaming (_/_ to _/s_)
 open import Cubical.HITs.SetQuotients.Properties as SQ
-open import Cubical.Data.Int
+open import Cubical.Data.Int renaming (_·_ to _·ℤ_)
 open import Cubical.Algebra.Group.QuotientGroup
 
 open import Cubical.Algebra.Group.Abelianization.Base
@@ -107,6 +108,541 @@ open import Cubical.HITs.FreeGroup as FG
 open import Cubical.HITs.FreeGroup.NormalForm
 open import Cubical.HITs.FreeGroupoid.Properties
 open import Cubical.Algebra.Group.Free
+
+-- general lemmas
+
+Fin→BreakOutFirst : ∀ {ℓ} (n : ℕ) {A : Fin (suc n) → Type ℓ}
+  → Iso ((x : Fin (suc n)) → A x)
+         (((x : _) → A (fsuc x)) × A fzero)
+fst (Iso.fun (Fin→BreakOutFirst n) f) x = f (fsuc x)
+snd (Iso.fun (Fin→BreakOutFirst n) f) = f fzero
+Iso.inv (Fin→BreakOutFirst n) (f , s) (zero , w) = s
+Iso.inv (Fin→BreakOutFirst (suc n)) (f , s) (suc t , w) = f (t , w)
+fst (Iso.rightInv (Fin→BreakOutFirst (suc n)) (f , s) i) (w , t) = f (w , t)
+snd (Iso.rightInv (Fin→BreakOutFirst n) (f , s) i) = s
+Iso.leftInv (Fin→BreakOutFirst n) f i (zero , tt) = f fzero
+Iso.leftInv (Fin→BreakOutFirst (suc n)) f i (suc s , t) = f (suc s , t)
+
+module _ {ℓ ℓ'} {A : Type ℓ} {B : Type ℓ'} where
+  fiberFstIso : {x : A} → Iso (fiber {A = A × B} fst x) B
+  Iso.fun fiberFstIso = snd ∘ fst
+  Iso.inv (fiberFstIso {x = x}) b = (x , b) , refl
+  Iso.rightInv fiberFstIso b = refl
+  Iso.leftInv (fiberFstIso {x = x}) ((a , b) , p) i =
+    (p (~ i) , b) , λ j → p (~ i ∨ j)
+
+  fiberSndIso : {x : B} → Iso (fiber {A = A × B} snd x) A
+  Iso.fun fiberSndIso = fst ∘ fst
+  Iso.inv (fiberSndIso {x = x}) a = (a , x) , refl
+  Iso.rightInv fiberSndIso b = refl
+  Iso.leftInv (fiberSndIso {x = x}) ((a , b) , p) i =
+    (a , p (~ i)) , λ j → p (~ i ∨ j)
+
+
+breakOut⋁ : ∀ {ℓ} {n : ℕ} {A : Fin (suc n) → Pointed ℓ}
+  → Iso (⋁gen (Fin (suc n)) A) (⋁gen∙ (Fin n) (A ∘ fsuc) ⋁ A fzero)
+Iso.fun breakOut⋁ (inl x) = inl (inl tt)
+Iso.fun breakOut⋁ (inr ((zero , w) , t)) = inr t
+Iso.fun (breakOut⋁ {n = suc n}) (inr ((suc f , w) , t)) = inl (inr ((f , w) , t))
+Iso.fun breakOut⋁ (push (zero , w) i) = push tt i
+Iso.fun (breakOut⋁ {n = suc n}) (push (suc x , w) i) = inl (push (x , w) i)
+Iso.inv breakOut⋁ (inl (inl x)) = inl tt
+Iso.inv breakOut⋁ (inl (inr x)) = inr ((fsuc (fst x)) , (snd x))
+Iso.inv breakOut⋁ (inl (push a i)) = push (fsuc a) i
+Iso.inv breakOut⋁ (inr x) = inr (fzero , x)
+Iso.inv breakOut⋁ (push a i) = push fzero i
+Iso.rightInv breakOut⋁ (inl (inl tt)) i = inl (inl tt)
+Iso.rightInv (breakOut⋁ {n = suc n}) (inl (inr ((zero , w) , t))) = refl
+Iso.rightInv (breakOut⋁ {n = suc n}) (inl (inr ((suc a , w) , t))) = refl
+Iso.rightInv (breakOut⋁ {n = suc n}) (inl (push (zero , w) i)) = refl
+Iso.rightInv (breakOut⋁ {n = suc n}) (inl (push (suc a , w) i)) = refl
+Iso.rightInv breakOut⋁ (inr x) i = inr x 
+Iso.rightInv breakOut⋁ (push a i) j = push a i
+Iso.leftInv breakOut⋁ (inl x) i = inl tt
+Iso.leftInv breakOut⋁ (inr ((zero , tt) , t)) i = inr ((0 , tt) , t)
+Iso.leftInv (breakOut⋁ {n = suc n}) (inr ((suc x , w) , t)) i = inr ((suc x , w) , t)
+Iso.leftInv breakOut⋁ (push (zero , w) i) j = push (0 , w) i
+Iso.leftInv (breakOut⋁ {n = suc n}) (push (suc x , w) i) = refl
+
+pickPetalSwap : {n k : ℕ} → SphereBouquet n (Fin k) → Fin k → S₊ n
+pickPetalSwap a b = pickPetal b a
+
+
+open import Cubical.Homotopy.BlakersMassey
+
+isConnected⋁↪ : ∀ {ℓ ℓ'} {A : Pointed ℓ} {B : Pointed ℓ'} {n m : ℕ}
+  → isConnected (suc (suc n)) (fst A)
+  → isConnected (suc (suc m)) (fst B)
+  → isConnectedFun (suc m +ℕ suc n) (⋁↪ {A = A} {B})
+isConnected⋁↪ {A = A} {B} {n} {m} cA cB =
+  subst (isConnectedFun (suc m +ℕ suc n)) (sym main)
+    (isConnectedComp _  _ _
+      (isEquiv→isConnected _ (isoToIsEquiv lem) _)
+      isConnected-toPullback)
+  where
+  foldL : A ⋁ B → fst A
+  foldL (inl x) = x
+  foldL (inr x) = pt A
+  foldL (push a i) = pt A
+
+
+  foldR : A ⋁ B → fst B
+  foldR (inl x) = pt B
+  foldR (inr x) = x
+  foldR (push a i) = pt B
+
+
+
+  isConnectedFoldL : (cB : isConnected (suc (suc m)) (fst B))
+    → isConnectedFun (suc (suc m)) foldL
+  isConnectedFoldL cB =
+    subst (isConnectedFun (suc (suc m)))
+      (funExt (λ { (inl x) → refl ; (inr x) → refl ; (push a i) → refl}))
+      conf
+    where
+    f' : A ⋁ B → fst A
+    f' = Iso.fun cofibInr-⋁ ∘ inr
+
+    conf : isConnectedFun (suc (suc m)) f'
+    conf = isConnectedComp (Iso.fun cofibInr-⋁) inr
+             (suc (suc m))
+               (isEquiv→isConnected _ (isoToIsEquiv cofibInr-⋁) (suc (suc m)))
+               (inrConnected (suc (suc m)) _ _
+                 (isConnected→isConnectedFun (suc (suc m)) cB))
+
+  isConnectedFoldR : (cA : isConnected (suc (suc n)) (fst A))
+    → isConnectedFun (suc (suc n)) foldR
+  isConnectedFoldR cA =
+    subst (isConnectedFun (suc (suc n)))
+      (funExt (λ { (inl x) → refl ; (inr x) → refl ; (push a i) → refl}))
+      conf
+    where
+    f' : A ⋁ B → fst B
+    f' = (Iso.fun cofibInr-⋁ ∘ inr) ∘ fst (symPushout _ _)
+
+    conf : isConnectedFun (suc (suc n)) f'
+    conf =
+      isConnectedComp (Iso.fun cofibInr-⋁ ∘ inr) (fst (symPushout _ _))
+        (suc (suc n))
+        (isConnectedComp _ inr (suc (suc n))
+          (isEquiv→isConnected _ (isoToIsEquiv cofibInr-⋁) (suc (suc n)))
+          (inrConnected (suc (suc n)) _ _
+            (isConnected→isConnectedFun (suc (suc n)) cA))) -- 
+             (isEquiv→isConnected _ (snd (symPushout _ _)) (suc (suc n)))
+
+  l1 : (a : _) → Path (Pushout foldL foldR) (inl a) (inr (pt B)) 
+  l1 x = push (inl x)
+
+  l2 : (b : _) → Path (Pushout foldL foldR) (inl (pt A))  (inr b) 
+  l2 x = push (inr x)
+
+  l1≡l2 : l1 (pt A) ≡ l2 (pt B)
+  l1≡l2 i = push (push tt i)
+
+  F : ∀ {ℓ} {A : Type ℓ} {x : A} (y : A) (l1 l2 : x ≡ y) (q : l1 ≡ l2)
+    → (z : A) (m : x ≡ z) → Square (l1 ∙ sym l2) m refl m
+  F y l1 l2 q z m = (cong₂ _∙_ q refl ∙ rCancel l2)  ◁ λ i j → m (i ∧ j)
+
+  F' : ∀ {ℓ} {A : Type ℓ} {x : A} → F x refl refl refl _ refl ≡ sym (rUnit refl)
+  F' = sym (compPath≡compPath' _ _) ∙ sym (rUnit _) ∙ sym (lUnit _)
+
+  H : ∀ {ℓ} {A : Type ℓ} {x : A} (y : A) (l1 l2 : x ≡ y) (q : l1 ≡ l2) -- k j i
+    → Cube (λ k j → compPath-filler l2 (sym l1) (~ j) k)
+           (λ k j → F _ l2 l1 (sym q) _ l2 j k)
+           (λ i j → x) q
+           (λ i j →  (l2 ∙ sym l1) j) λ i j → l2 j
+ 
+  H {x = x} = J> (J> (λ k i j →  F' {x = x} (~ k) j i))
+
+  PushoutWedge : isContr (Pushout foldL foldR)
+  fst PushoutWedge = inl (pt A)
+  snd PushoutWedge (inl x) = l2 (pt B) ∙ sym (l1 x)
+  snd PushoutWedge (inr x) = push (inr x)
+  snd PushoutWedge (push (inl x) i) =
+    compPath-filler (l2 (pt B)) (sym (l1 x)) (~ i)
+  snd PushoutWedge (push (inr x) i) =
+    F _ (l2 (pt B)) (l1 (pt A)) (sym l1≡l2) _ (push (inr x)) i
+  snd PushoutWedge (push (push a i) j) k =
+    H _ (l1 (pt A)) (l2 (pt B)) l1≡l2 i k j
+
+  open BlakersMassey□ {A = A ⋁ B} {B = fst A} {C = fst B}
+    foldL foldR (suc m) (suc n)
+      (isConnectedFoldL cB) (isConnectedFoldR cA)
+
+  lem : Iso (Σ (fst A × fst B) PushoutPath×) (fst A × fst B)
+  lem = compIso (Σ-cong-iso-snd
+    (λ _ → equivToIso (isContr→≃Unit (isOfHLevelPath 0 PushoutWedge _ _))))
+      rUnit×Iso
+
+  main : ⋁↪ ≡ Iso.fun lem ∘ toPullback
+  main = funExt λ { (inl x) → refl
+                  ; (inr x) → refl
+                  ; (push a i) → refl}
+  
+isConnectedPickPetalSwap : {n k : ℕ}
+  → isConnectedFun (suc n +ℕ suc n) (pickPetalSwap {n = suc n} {suc k}) 
+isConnectedPickPetalSwap {n = n} {k = zero} =
+  subst (isConnectedFun (suc n +ℕ suc n))
+    (funExt (λ x → funExt (m x)))
+    (isEquiv→isConnected _ (isoToIsEquiv h) _)
+  where
+  t = isContr→≃Unit (inhProp→isContr fzero isPropFin1)
+  h : Iso (SphereBouquet (suc n) (Fin 1)) (Fin 1 → S₊ (suc n))
+  h = compIso (compIso (compIso
+     ((PushoutAlongEquiv t _))
+      (compIso (Σ-cong-iso (equivToIso t) λ _ → idIso) lUnit×Iso))
+      (invIso (ΠUnitIso ( λ _ → S₊ (suc n)))))
+    (domIso (equivToIso (invEquiv t)))
+
+  m :  (x : _) (y : _) → Iso.fun h x y ≡ pickPetalSwap x y
+  m (inl x) y = refl
+  m (inr ((zero , tt) , x)) (zero , tt) = refl
+  m (push (zero , tt) i) (zero , tt) = refl
+isConnectedPickPetalSwap {n = n} {k = suc k} =
+  subst (isConnectedFun (suc n +ℕ suc n))
+    (λ i x y → g≡ (isConnectedPickPetalSwap {k = k}) x y i)
+    (isConnectedg (isConnectedPickPetalSwap {k = k}))
+  where
+  module _ {ℓ ℓ' ℓ''} {A : Type ℓ} {A' : Type ℓ'} {B : Type ℓ''}
+    (f : A → A') where 
+    l : (b : _) → Iso (fiber (map-× f (idfun B)) b) (fiber f (fst b))
+    l (a , b) =
+      compIso (Σ-cong-iso-snd (λ _ → invIso ΣPathIsoPathΣ))
+        (compIso Σ-assoc-Iso
+           (Σ-cong-iso-snd
+            (λ x → compIso (invIso Σ-assoc-Iso)
+              (compIso (Σ-cong-iso-fst Σ-swap-Iso)
+                (compIso Σ-assoc-Iso
+                  (compIso (Σ-cong-iso-snd
+                    (λ s →
+                      compIso (Σ-cong-iso-snd
+                        λ b → iso sym sym (λ _ → refl) (λ _ → refl))
+                        (equivToIso (isContr→≃Unit
+                        (isContrSingl _)))))
+                    rUnit×Iso))))))
+    ll : ∀ {n} → isConnectedFun n f → isConnectedFun n (map-× f (idfun B))
+    ll cf b = isConnectedRetractFromIso _ (l b) (cf (fst b))
+
+  module _ (ind : isConnectedFun (suc n +ℕ suc n) (pickPetalSwap {n = suc n} {suc k})) where
+    g : SphereBouquet (suc n) (Fin (suc (suc k)))
+        → Fin (suc (suc k)) → S₊ (suc n)
+    g = Iso.inv (Fin→BreakOutFirst (suc k))
+      ∘ map-× (pickPetalSwap {n = suc n} {suc k}) (idfun _)
+      ∘ ⋁↪
+      ∘ Iso.fun breakOut⋁
+
+    g≡inl : (y : _) → g (inl tt) y ≡ pickPetalSwap (inl tt) y
+    g≡inl (zero , y) = refl
+    g≡inl (suc s , y) = refl
+
+    g≡inr : (x : _) (y : _) → g (inr x) y ≡ pickPetalSwap (inr x) y
+    g≡inr ((zero , t) , q) (zero , p) = refl
+    g≡inr ((zero , t) , q) (suc x , p) = refl
+    g≡inr ((suc s , t) , q) (zero , p) = refl
+    g≡inr ((suc s , t) , q) (suc x , p) with (x ≟ᵗ s)
+    ... | lt x₁ = refl
+    ... | eq x₁ = refl
+    ... | gt x₁ = refl
+
+    g≡inlr : (x : _) (y : _)
+      → Square (λ i → g (push x i) y) (λ i → pickPetalSwap (push x i) y)
+               (g≡inl y) (g≡inr (x , ptSn (suc n)) y)
+    g≡inlr (zero , t) (zero , p) = refl
+    g≡inlr (suc s , t) (zero , p) = refl
+    g≡inlr (zero , t) (suc x , p) = refl
+    g≡inlr (suc s , t) (suc x , p) with (x ≟ᵗ s)
+    ... | lt x₁ = refl
+    ... | eq x₁ = refl
+    ... | gt x₁ = refl
+
+    g≡ : (x : _) (y : _) → g x y ≡ pickPetalSwap x y
+    g≡ (inl x) = g≡inl
+    g≡ (inr x) = g≡inr x
+    g≡ (push x i) y j = g≡inlr x y j i
+  
+    isConnectedg : isConnectedFun (suc n +ℕ suc n) g
+    isConnectedg =
+      isConnectedComp (Iso.inv (Fin→BreakOutFirst (suc k))) _ _
+        (isEquiv→isConnected _
+          (isoToIsEquiv (invIso (Fin→BreakOutFirst (suc k)))) (suc n +ℕ suc n))
+        (isConnectedComp
+          (map-× (pickPetalSwap {n = suc n} {suc k}) (idfun _)) _ (suc n +ℕ suc n)
+          (ll _ ind)
+          (isConnectedComp ⋁↪ _ _
+            (isConnected⋁↪
+                isConnectedSphereBouquet' (sphereConnected (suc n)))
+            (isEquiv→isConnected _ (isoToIsEquiv breakOut⋁) (suc n +ℕ suc n))))
+
+open import Cubical.Algebra.Group.Instances.Pi
+
+
+ΠGroupHom : ∀ {ℓ ℓ' ℓ''} {A : Type ℓ} {G : A → Group ℓ'} {H : A → Group ℓ''}
+  → ((a : _) → GroupHom (G a) (H a))
+  → GroupHom (ΠGroup G) (ΠGroup H)
+fst (ΠGroupHom fam) f a = fst (fam a) (f a)
+snd (ΠGroupHom fam) =
+  makeIsGroupHom λ f g
+    → funExt λ a → IsGroupHom.pres· (snd (fam a)) _ _
+
+ΠGroupIso : ∀ {ℓ ℓ' ℓ''} {A : Type ℓ} {G : A → Group ℓ'} {H : A → Group ℓ''}
+  → ((a : _) → GroupIso (G a) (H a))
+  → GroupIso (ΠGroup G) (ΠGroup H)
+Iso.fun (fst (ΠGroupIso fam)) = fst (ΠGroupHom λ a → GroupIso→GroupHom (fam a))
+Iso.inv (fst (ΠGroupIso fam)) =
+  fst (ΠGroupHom λ a → GroupIso→GroupHom (invGroupIso (fam a)))
+Iso.rightInv (fst (ΠGroupIso fam)) f = funExt λ x → Iso.rightInv (fst (fam x)) _
+Iso.leftInv (fst (ΠGroupIso fam)) f = funExt λ x → Iso.leftInv (fst (fam x)) _
+snd (ΠGroupIso fam) = snd (ΠGroupHom λ a → GroupIso→GroupHom (fam a))
+
+
+πₙΠSⁿ≅ℤ : (n k : ℕ)
+  → GroupIso (π'Gr n ((Fin k → S₊ (suc n)) , (λ _ → ptSn (suc n))))
+              (AbGroup→Group ℤ[Fin k ])
+πₙΠSⁿ≅ℤ n k = compGroupIso H' H2
+  where
+  is1 : (n : ℕ) → Iso (S₊∙ (suc n) →∙ ((Fin k → S₊ (suc n)) , (λ _ → ptSn (suc n))))
+            (Fin k → S₊∙ (suc n) →∙ S₊∙ (suc n))
+  fst (Iso.fun (is1 n) (f , s) x) y = f y x
+  snd (Iso.fun (is1 n) (f , s) x) = funExt⁻ s x
+  fst (Iso.inv (is1 n) f) y x = f x .fst y
+  snd (Iso.inv (is1 n) f) i x = f x .snd i
+  Iso.rightInv (is1 n) f = refl
+  Iso.leftInv (is1 n) f = refl
+
+  open import Cubical.Axiom.Choice
+  open import Cubical.Homotopy.Group.PinSn
+  open import Cubical.ZCohomology.Groups.Sn
+  
+
+  H : (n : ℕ)
+    → Iso (π'Gr n ((Fin k → S₊ (suc n)) , (λ _ → ptSn (suc n))) .fst)
+           (Fin k → π'Gr n (S₊∙ (suc n)) .fst)
+  H n = compIso (setTruncIso (is1 n))
+         (compIso
+           setTruncTrunc2Iso
+           (compIso (equivToIso (_ , InductiveFinSatAC 2 k _))
+             (codomainIso (invIso setTruncTrunc2Iso))))
+
+  H' : GroupIso (π'Gr n ((Fin k → S₊ (suc n)) , (λ _ → ptSn (suc n))))
+                (ΠGroup (λ (x : Fin k) → π'Gr n (S₊∙ (suc n))))
+  fst H' = H n
+  snd H' = makeIsGroupHom (ST.elim2
+    (λ _ _ → isOfHLevelPath 2 (isSetΠ (λ _ → squash₂)) _ _)
+    λ f g → funExt λ x → cong ∣_∣₂ (h n f g x))
+    where
+    h : (n : ℕ) 
+      → (f g : S₊∙ (suc n) →∙ ((Fin k → S₊ (suc n)) , (λ _ → ptSn (suc n))))
+      → (x : _) → Iso.fun (is1 n) (∙Π f g) x
+                 ≡ ∙Π (Iso.fun (is1 n) f x) (Iso.fun (is1 n) g x)
+    h zero f g x = ΣPathP ((funExt (λ { base → refl ; (loop i) → refl})) , refl)
+    h (suc n) f g x =
+      ΣPathP ((funExt (λ { north → refl ; south → refl ; (merid a i) → refl })) , refl)
+
+  H2 : GroupIso (ΠGroup (λ (x : Fin k) → π'Gr n (S₊∙ (suc n))))
+                (AbGroup→Group ℤ[Fin k ])
+  H2 = ΠGroupIso λ _
+    → compGroupIso (GroupEquiv→GroupIso (πₙSⁿ≅HⁿSⁿ n))
+                    (Hⁿ-Sⁿ≅ℤ n)
+
+πₙ⋁Sⁿ≅ℤ[] : (n k : ℕ)
+  → GroupIso (π'Gr (suc n) (SphereBouquet∙ (suc (suc n)) (Fin k)))
+              (AbGroup→Group ℤ[Fin k ])
+πₙ⋁Sⁿ≅ℤ[] n k =
+  compGroupIso
+    (GroupEquiv→GroupIso (connected→π'Equiv (suc n)
+      (pickPetalSwap , refl) (con k)))
+    (πₙΠSⁿ≅ℤ (suc n) k)
+  where
+  con : (k : _) → isConnectedFun (suc (suc (suc (suc n)))) (pickPetalSwap {k = k})
+  con zero b = ∣ (inl tt) , (funExt λ ()) ∣
+    , TR.elim (λ _ → isOfHLevelPath _ (isOfHLevelTrunc (suc (suc (suc (suc n))))) _ _)
+       λ {((inl tt) , q) → cong ∣_∣ₕ (ΣPathP (refl , cong funExt (funExt λ())))}
+  con (suc k) b = isConnectedSubtr (suc (suc (suc (suc n)))) n
+           (subst (λ p → isConnected p (fiber pickPetalSwap b))
+             (cong suc (sym (+-suc _ _)) ∙ sym (+-suc _ _))
+             (isConnectedPickPetalSwap b))
+
+genπₙ⋁Sⁿ : {n k : ℕ} (x : Fin k) → π'Gr (suc n) (SphereBouquet∙ (suc (suc n)) (Fin k)) .fst
+genπₙ⋁Sⁿ x = ∣ (λ s → inr (x , s)) , (sym (push x)) ∣₂
+
+πₙ⋁Sⁿ≅ℤ[]Gen : (n k : ℕ) (x : Fin k)
+  → Iso.fun (fst (πₙ⋁Sⁿ≅ℤ[] n k)) (genπₙ⋁Sⁿ x)
+  ≡ ℤFinGenerator x
+πₙ⋁Sⁿ≅ℤ[]Gen n k x = funExt pickPetalId
+  where
+  pickPetalId : (w : _)
+    → degree (suc (suc n)) (λ z → pickPetalSwap (inr (x , z)) w) ≡
+      ℤFinGenerator x w
+  pickPetalId w with (fst x ≟ᵗ fst w) | (fst w ≟ᵗ fst x)
+  ... | lt x | lt x₁ = degreeConst (suc (suc n))
+  ... | lt p | eq q = ⊥.rec (¬m<ᵗm (subst (_<ᵗ fst w) (sym q) p))
+  ... | lt x | gt x₁ = degreeConst (suc (suc n))
+  ... | eq p | lt q = ⊥.rec (⊥.rec (¬m<ᵗm (subst (fst w <ᵗ_) p q)))
+  ... | eq x | eq x₁ = degreeIdfun (suc (suc n))
+  ... | eq p | gt q = ⊥.rec (¬m<ᵗm (subst (fst x <ᵗ_) (sym p) q))
+  ... | gt x | lt x₁ = degreeConst (suc (suc n))
+  ... | gt p | eq q = ⊥.rec (¬m<ᵗm (subst (_<ᵗ fst x) q p))
+  ... | gt x | gt x₁ = degreeConst (suc (suc n))
+
+πₙ⋁SⁿHomElim : {n k k' : ℕ}
+  → (ϕ ψ : GroupHom (π'Gr (suc n) (SphereBouquet∙ (suc (suc n)) (Fin k))) (AbGroup→Group ℤ[Fin k' ]))
+  → ((x  : Fin k) → fst ϕ (genπₙ⋁Sⁿ x) ≡ fst ψ (genπₙ⋁Sⁿ x))
+  → ϕ ≡ ψ
+πₙ⋁SⁿHomElim {n = n} {k} {k'} ϕ ψ ind =
+  Σ≡Prop (λ _ → isPropIsGroupHom _ _) (funExt λ x
+    → cong (fst ϕ) (sym (Iso.leftInv (fst (πₙ⋁Sⁿ≅ℤ[] n k)) x))
+    ∙ funExt⁻ (cong fst help) (Iso.fun (fst (πₙ⋁Sⁿ≅ℤ[] n k)) x)
+    ∙ cong (fst ψ) (Iso.leftInv (fst (πₙ⋁Sⁿ≅ℤ[] n k)) x))
+  where
+  help : compGroupHom (GroupIso→GroupHom (invGroupIso (πₙ⋁Sⁿ≅ℤ[] n k))) ϕ
+       ≡ compGroupHom (GroupIso→GroupHom (invGroupIso (πₙ⋁Sⁿ≅ℤ[] n k))) ψ
+  help = agreeOnℤFinGenerator→≡
+    λ x → cong (fst ϕ) (cong (Iso.inv (fst (πₙ⋁Sⁿ≅ℤ[] n k))) (sym (πₙ⋁Sⁿ≅ℤ[]Gen n k x))
+                     ∙ Iso.leftInv (fst (πₙ⋁Sⁿ≅ℤ[] n k)) (genπₙ⋁Sⁿ x))
+        ∙ ind x
+        ∙ cong (fst ψ) (sym (Iso.leftInv (fst (πₙ⋁Sⁿ≅ℤ[] n k)) (genπₙ⋁Sⁿ x))
+                    ∙ sym (cong (Iso.inv (fst (πₙ⋁Sⁿ≅ℤ[] n k))) (sym (πₙ⋁Sⁿ≅ℤ[]Gen n k x))))
+
+open import Cubical.Homotopy.Group.LES
+open import Cubical.Algebra.Group.IsomorphismTheorems
+module πCofibBouquetMap (n k m : ℕ) (α : SphereBouquet∙ (suc (suc n)) (Fin m) →∙ SphereBouquet∙ (suc (suc n)) (Fin k)) where
+
+  inr' : SphereBouquet∙ (suc (suc n)) (Fin k) →∙ (cofib (fst α) , inl tt)
+  fst inr' = inr
+  snd inr' = (λ i → inr (α .snd (~ i))) ∙ sym (push (inl tt))
+
+
+  conα : isConnectedFun (suc (suc n)) (fst α)
+  conα b =
+    isOfHLevelRetractFromIso 0
+      (compIso (truncOfΣIso (suc (suc n)))
+        (mapCompIso (compIso (Σ-cong-iso-snd
+          (λ _ → equivToIso (isContr→≃Unit
+            (isConnectedPath (suc (suc n))
+              (isConnectedSphereBouquet' {n = suc n}) _ _)))) rUnit×Iso)))
+              (isConnectedSubtr (suc (suc n)) 1 isConnectedSphereBouquet')
+
+  coninr : isConnectedFun (suc (suc (suc n))) (fst inr')
+  coninr = inrConnected (suc (suc (suc n))) _ _
+    (isConnected→isConnectedFun (suc (suc (suc n)))
+      isConnectedSphereBouquet')
+
+  open BlakersMassey□ (λ _ → tt) (fst α) (suc (suc n)) (suc n)
+    (isConnected→isConnectedFun _ (isConnectedSphereBouquet' {n = suc n}))
+    conα
+  is1 : Iso (Σ (Unit × fst (SphereBouquet∙ (suc (suc n)) (Fin k))) PushoutPath×)
+            (fiber (fst inr') (inl tt))
+  Iso.fun is1 ((tt , s) , p) = s , (sym p)
+  Iso.inv is1 (s , p) = (tt , s) , sym p
+  Iso.rightInv is1 (s , p) = refl
+  Iso.leftInv is1 ((tt , s) , p) = refl
+
+  α∘inr : SphereBouquet∙ (suc (suc n)) (Fin m)
+      →∙ (fiber (fst inr') (inl tt) , (inl tt) , inr' .snd)
+  fst α∘inr x = (fst α x) , sym (push x)
+  snd α∘inr = ΣPathP ((snd α)
+            , (compPath-filler' (λ i → inr (α .snd (~ i))) (sym (push (inl tt)))))
+
+  open πLES' inr'
+  
+  con' : isConnectedFun (suc (suc n +ℕ suc n)) (α∘inr .fst)
+  con' = isConnectedComp _ _ _ (isEquiv→isConnected _ (isoToIsEquiv is1) _) isConnected-toPullback
+
+  con'' : isSurjective (π'∘∙Hom (suc n) α∘inr)
+  con'' =
+    connected→π'Surj (suc n) _
+      λ b → isConnectedSubtr' n (suc (suc (suc n)))
+        (subst (λ n → isConnected (suc (suc n)) (fiber (fst α∘inr) b)) (+-suc n n) (con' b))
+
+  surjectiveα : isSurjective (π'∘∙Hom (suc n) inr')
+  surjectiveα = connected→π'Surj (suc n) _ coninr
+
+  Iso1 : GroupIso (π'Gr (suc n) (cofib (fst α) , inl tt))
+                  (π'Gr (suc n) (SphereBouquet∙ (suc (suc n)) (Fin k))
+                  / kerNormalSubgroup (π'∘∙Hom (suc n) inr'))
+  Iso1 = compGroupIso (invGroupIso (surjImIso (π'∘∙Hom (suc n) inr') surjectiveα))
+                      (isoThm1 _)
+
+  Imα⊂Kerinr : (x : _) → isInIm (π'∘∙Hom (suc n) α) x → isInKer (π'∘∙Hom (suc n) inr') x
+  Imα⊂Kerinr x p = Im-fib→A⊂Ker-A→B (suc n) x
+    (PT.rec squash₁ (uncurry (ST.elim (λ _ → isSetΠ λ _ → isProp→isSet squash₁)
+      (λ a → J (λ x _ → isInIm (fib→A (suc n)) x)
+        ∣ (π'∘∙Hom (suc n) α∘inr .fst ∣ a ∣₂)
+        , (cong ∣_∣₂ (ΣPathP (refl , (sym (rUnit _)
+        ∙ cong-∙ fst (ΣPathP ((cong (fst α) (snd a))
+                    , λ i j → push (snd a i) (~ j))) _)))) ∣₁))) p)
+
+  Kerinr⊂Imα : (x : _) → isInKer (π'∘∙Hom (suc n) inr') x → isInIm (π'∘∙Hom (suc n) α) x
+  Kerinr⊂Imα x p =
+    PT.rec squash₁
+      (uncurry ( λ f → J (λ x _ → isInIm (π'∘∙Hom (suc n) α) x)
+          (PT.rec squash₁ (uncurry
+            (ST.elim (λ _ → isSetΠ λ _ → isProp→isSet squash₁)
+              (λ g s → ∣ ∣ g ∣₂ , cong ∣_∣₂
+                (ΣPathP (refl
+                  , sym (cong-∙ fst (ΣPathP ((cong (fst α) (snd g))
+                    , (λ i j → push (snd g i) (~ j)))) _) ∙ rUnit _))
+                ∙ cong (fib→A (suc n) .fst) s ∣₁))) (con'' f))))
+      (Ker-A→B⊂Im-fib→A (suc n) x p)
+
+  Iso2 : GroupIso (π'Gr (suc n) (SphereBouquet∙ (suc (suc n)) (Fin k))
+                  / kerNormalSubgroup (π'∘∙Hom (suc n) inr'))
+                  (π'Gr (suc n) (SphereBouquet∙ (suc (suc n)) (Fin k))
+                  / imNormalSubgroup (π'∘∙Hom (suc n) α) (π'-comm n))
+  Iso2 = Hom/Iso idGroupIso (λ a b → Kerinr⊂Imα _) λ a b → Imα⊂Kerinr _
+
+  open import Cubical.ZCohomology.Groups.Sn
+  open import Cubical.Homotopy.Group.PinSn
+
+  Iso3 : GroupIso ((π'Gr (suc n) (SphereBouquet∙ (suc (suc n)) (Fin k))
+                  / imNormalSubgroup (π'∘∙Hom (suc n) α) (π'-comm n)))
+                  (AbGroup→Group ℤ[Fin k ] / (imSubgroup (bouquetDegree (fst α))
+                                             , isNormalIm _ λ f g i x → +Comm (f x) (g x) i ))
+  Iso3 = (Hom/ImIso _ _ ( (πₙ⋁Sⁿ≅ℤ[] n m)) ( (πₙ⋁Sⁿ≅ℤ[] n k))
+          (funExt⁻ (cong fst (πₙ⋁SⁿHomElim H1 H2
+            λ s → funExt (λ x → sumFinℤId m (λ r → sym (degreeComp' (suc (suc n)) _ _))
+                                ∙ sumFin-choose  _+_ 0 (λ _ → refl) +Comm _ _ s
+                                  (cong (degree (suc (suc n)))
+                                    (funExt (λ w → cong (pickPetal x ∘ fst α ∘ inr) (ΣPathP (refl , l1 s w)))))
+                                  (λ w p → cong (degree (suc (suc n)))
+                                      (funExt (λ r → cong (pickPetal x ∘ fst α) (p1 s x w r p)
+                                                   ∙ (cong (pickPetal x) (snd α))))
+                                    ∙ degreeConst (suc (suc n)))
+                                ∙ cong (degree (suc (suc n))) refl)))))
+      where
+      l1 : (s : Fin m) (w : S₊ (suc (suc n))) → pickPetal s (inr (s , w)) ≡ w
+      l1 s w with (fst s ≟ᵗ fst s)
+      ... | lt x = ⊥.rec (¬m<ᵗm x)
+      ... | eq x = refl
+      ... | gt x = ⊥.rec (¬m<ᵗm x)
+      H1 = compGroupHom (GroupIso→GroupHom (( (πₙ⋁Sⁿ≅ℤ[] n m)))) (bouquetDegree (fst α))
+      H2 = compGroupHom  (π'∘∙Hom (suc n) α) ((GroupIso→GroupHom (πₙ⋁Sⁿ≅ℤ[] n k)))
+
+      p1 : (s : Fin m) (x : Fin k) (w : Fin m) (r : Susp (S₊ (suc n))) (p : ¬ w ≡ s)
+        → Path (SphereBouquet (suc (suc n)) (Fin m))
+               (inr (w , pickPetalSwap (inr (s , r)) w)) (inl tt)
+      p1 s x w r p with (fst w ≟ᵗ fst s)
+      ... | lt x₁ = sym (push w)
+      ... | eq x₁ = ⊥.rec (p (Σ≡Prop (λ _ → isProp<ᵗ) x₁))
+      ... | gt x₁ = sym (push w)
+
+
+-- Free/≅π₁ᵃᵇCofibBouquetMap
+
+π'CofibBouquetMap≅ℤ[]/BouquetDegree : {n m k : ℕ}
+  (α : SphereBouquet∙ (suc (suc n)) (Fin m)
+   →∙ SphereBouquet∙ (suc (suc n)) (Fin k))
+  → GroupIso (π'Gr (suc n) (cofib (fst α) , inl tt))
+              (AbGroup→Group ℤ[Fin k ]
+              / (imSubgroup (bouquetDegree (fst α)) , isNormalIm _ λ f g i x → +Comm (f x) (g x) i))
+π'CofibBouquetMap≅ℤ[]/BouquetDegree {n = n} {m} {k} α =
+  compGroupIso (compGroupIso (πCofibBouquetMap.Iso1 n k m α)
+                             (πCofibBouquetMap.Iso2 n k m α))
+                             (πCofibBouquetMap.Iso3 n k m α)
+
+{-
+π₁
+
 
 
 elimPropBouquet : ∀ {ℓ ℓ'} {A : Type ℓ} {B : Bouquet A → Type ℓ'}
@@ -675,5 +1211,7 @@ module spB {m k : ℕ}
   Free/≅π₁ᵃᵇCofibBouquetMap' =
     compGroupIso Free/≅π₁ᵃᵇCofibBouquetMap
       (invGroupIso (Abelianizeπ₁≅π₁ᵃᵇ (_ , inr base)))
+
+
+-}
   
-module _ {m k : ℕ} (α' : Bouquet∙ (Fin m) →∙ Bouquet∙ (Fin k)) where
