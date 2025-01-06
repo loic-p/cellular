@@ -640,10 +640,6 @@ module πCofibBouquetMap (n k m : ℕ) (α : SphereBouquet∙ (suc (suc n)) (Fin
                              (πCofibBouquetMap.Iso2 n k m α))
                              (πCofibBouquetMap.Iso3 n k m α)
 
-{-
-π₁
-
-
 
 elimPropBouquet : ∀ {ℓ ℓ'} {A : Type ℓ} {B : Bouquet A → Type ℓ'}
   (pr : (x : _) → isProp (B x))
@@ -824,11 +820,20 @@ module spB {m k : ℕ}
     →∙ Bouquet∙ (Fin k)
   α = Iso.inv CharacBouquet→∙Bouquet α'
 
+  sphereBouqetMapIso : Iso (Bouquet∙ (Fin m) →∙ Bouquet∙ (Fin k))
+    (SphereBouquet∙ (suc zero) (Fin m) →∙ SphereBouquet∙ (suc zero) (Fin k))
+  sphereBouqetMapIso =
+    compIso (pre∘∙equiv (invEquiv∙ Bouquet≃∙SphereBouquet))
+            (post∘∙equiv (invEquiv∙ Bouquet≃∙SphereBouquet))
+
+  αSphereBouquet : SphereBouquet∙ (suc zero) (Fin m) →∙ SphereBouquet∙ (suc zero) (Fin k)
+  αSphereBouquet = Iso.fun sphereBouqetMapIso α
+
   pickGens : GroupHom (freeGroupGroup (Fin m)) (freeGroupGroup (Fin k))
   pickGens = FG.rec α'
 
-  pickGens' : GroupHom (freeGroupGroup (Fin m)) (AbGroup→Group (AbelianizationAbGroup (freeGroupGroup (Fin k))))
-  pickGens' = compGroupHom pickGens (AbelianizationGroupStructure.ηAsGroupHom _)
+  pickGens' : AbGroupHom (AbelianizationAbGroup (freeGroupGroup (Fin m))) ((AbelianizationAbGroup (freeGroupGroup (Fin k))))
+  pickGens' = AbelianizationFun pickGens
 
   _·f_ : ∀ {ℓ} {A : Type ℓ} → FreeGroup A → FreeGroup A → FreeGroup A
   _·f_ = FG._·_
@@ -887,7 +892,7 @@ module spB {m k : ℕ}
             (funExt (SQ.elimProp (λ _ → squash/ _ _)
               (Abi.elimProp _ (λ _ → squash/ _ _)
                 λ g → sym (substCodePre (α' x) g
-                    ∙ eq/ _ _ ∣ (η x)
+                    ∙ eq/ _ _ ∣ (η (η x))
                              , (sym (ridAb (η (α' x)))
                              ∙ commAb (η (α' x)) 1Ab)
                              ∙ cong₂ _·Ab_ (sym (rinvAb (η g))) refl
@@ -939,35 +944,37 @@ module spB {m k : ℕ}
                                   (π₁ᵃᵇAbGroup (cofib (fst α) , inr base))
   decodeCofibαinrHom = compGroupHom (AbelianizationFun L) Abelianizeπ₁→π₁ᵃᵇ
 
-  decodeCofibαinr≡ : (x : FreeGroup (Fin m)) → (a : FreeGroup (Fin k))
+  decodeCofibαinr≡ : (x : Abelianization (freeGroupGroup (Fin m))) → (a : FreeGroup (Fin k))
     → ·πᵃᵇ (decodeCofibαinr (pickGens' .fst x)) (decodeCofibαinr (η a)) ≡ decodeCofibαinr (η a)
-  decodeCofibαinr≡ = FG.elimProp (λ _ → isPropΠ λ _ → squash₂ _ _)
+  decodeCofibαinr≡ = Abi.elimProp _ (λ _ → isPropΠ λ _ → squash₂ _ _)
+    (FG.elimProp (λ _ → isPropΠ λ _ → squash₂ _ _)
     (λ c a → (λ i → ·πᵃᵇ ∣ paths (Lα c i) ∣₂ (decodeCofibαinr (η a)))
                  ∙ cong ∣_∣₂ (cong paths (sym (lUnit _))))
     (λ g1 g2 p q a
-      → cong₂ ·πᵃᵇ (cong decodeCofibαinr (IsGroupHom.pres· (snd pickGens') g1 g2)
+      → cong₂ ·πᵃᵇ (cong decodeCofibαinr (IsGroupHom.pres· (snd pickGens') (η g1) (η g2))
                  ∙ IsGroupHom.pres· (snd (compGroupHom (AbelianizationFun L) (Abelianizeπ₁→π₁ᵃᵇ)))
-                                    (fst pickGens' g1) (fst pickGens' g2))
+                                    (fst pickGens' (η g1)) (fst pickGens' (η g2)))
                (λ _ → (decodeCofibαinr (η a)))
-                    ∙ sym (·πᵃᵇassoc (decodeCofibαinr (pickGens' .fst g1))
-                                    (decodeCofibαinr (pickGens' .fst g2)) (decodeCofibαinr (η a)))
-                    ∙ cong (·πᵃᵇ (decodeCofibαinr (pickGens' .fst g1))) (q a)
+                    ∙ sym (·πᵃᵇassoc (decodeCofibαinr (pickGens' .fst (η g1)))
+                                    (decodeCofibαinr (pickGens' .fst (η g2))) (decodeCofibαinr (η a)))
+                    ∙ cong (·πᵃᵇ (decodeCofibαinr (pickGens' .fst (η g1)))) (q a)
                     ∙ p a)
       (λ a → ·πᵃᵇlUnit (decodeCofibαinr (η a)))
       λ g p a → cong₂ ·πᵃᵇ
                   (sym (sym (IsGroupHom.presinv (snd (compGroupHom (AbelianizationFun L)
-                          (Abelianizeπ₁→π₁ᵃᵇ))) (pickGens' .fst g))
-                    ∙ cong decodeCofibαinr (IsGroupHom.presinv (snd pickGens') g)))
+                          (Abelianizeπ₁→π₁ᵃᵇ))) (pickGens' .fst (η g)))
+                    ∙ cong decodeCofibαinr (IsGroupHom.presinv (snd pickGens') (η g))))
                   (sym (sym (IsGroupHom.presinv (snd (compGroupHom (AbelianizationFun L)
                           (Abelianizeπ₁→π₁ᵃᵇ))) (η (inv a)))
                 ∙ cong (decodeCofibαinr ∘ η) (GroupTheory.invInv (freeGroupGroup (Fin k)) a)))
-                ∙ sym (-πᵃᵇinvDistr (decodeCofibαinr (pickGens' .fst g)) (decodeCofibαinr (η (inv a))))
+                ∙ sym (-πᵃᵇinvDistr (decodeCofibαinr (pickGens' .fst (η g))) (decodeCofibαinr (η (inv a))))
                 ∙ cong -πᵃᵇ (p (inv a))
                 ∙ sym (IsGroupHom.presinv (snd (compGroupHom (AbelianizationFun L)
                           (Abelianizeπ₁→π₁ᵃᵇ))) (η (inv a)))
-                ∙ cong (decodeCofibαinr ∘ η) (GroupTheory.invInv (freeGroupGroup (Fin k)) a)
+                ∙ cong (decodeCofibαinr ∘ η) (GroupTheory.invInv (freeGroupGroup (Fin k)) a))
 
-  h : (x : FreeGroup (Fin m)) (a b : FreeGroup (Fin k)) (q : ·πᵃᵇ (decodeCofibαinr (pickGens' .fst x)) (decodeCofibαinr (η b)) ≡ decodeCofibαinr (η a))
+  h : (x : Abelianization (freeGroupGroup (Fin m))) (a b : FreeGroup (Fin k))
+      (q : ·πᵃᵇ (decodeCofibαinr (pickGens' .fst x)) (decodeCofibαinr (η b)) ≡ decodeCofibαinr (η a))
      → Path (∥ Pathᵃᵇ (cofib (fst α)) (inr base) (inr base) ∥₂)
              (decodeCofibαinr (η a)) (decodeCofibαinr (η b))
   h x a b q = sym q ∙ decodeCofibαinr≡ x b
@@ -1212,6 +1219,50 @@ module spB {m k : ℕ}
     compGroupIso Free/≅π₁ᵃᵇCofibBouquetMap
       (invGroupIso (Abelianizeπ₁≅π₁ᵃᵇ (_ , inr base)))
 
+  cofibIso' : Iso (cofib (fst α)) (cofib (fst αSphereBouquet))
+  cofibIso' = pushoutIso _ _ _ _
+    (invEquiv (Bouquet≃∙SphereBouquet .fst)) (idEquiv _)
+    (invEquiv (Bouquet≃∙SphereBouquet .fst))
+    (λ i x → tt)
+    (funExt λ x → cong (invEq (isoToEquiv Iso-SphereBouquet-Bouquet))
+      (cong (fst α) (sym (Iso.rightInv Iso-SphereBouquet-Bouquet x))))
 
--}
-  
+  helpIso : GroupIso Free/Imα'
+             (AbGroup→Group
+               (AbelianizationAbGroup (π'Gr 0 (cofib (fst αSphereBouquet) , inl tt))))
+  helpIso =
+    compGroupIso Free/≅π₁ᵃᵇCofibBouquetMap'
+      (GroupEquiv→GroupIso (AbelianizationEquiv
+        (compGroupEquiv (GroupIso→GroupEquiv (invGroupIso (π'Gr≅πGr 0 (cofib (fst α) , inr base))))
+          (GroupIso→GroupEquiv (π'GrIso 0 (isoToEquiv (cofibIso') , sym (push (inl tt))))))))
+
+  Free/Imα≅ℤ[]/ImBouquetDegree : GroupIso Free/Imα'
+    (AbGroup→Group ℤ[Fin k ] / (imSubgroup (bouquetDegree (fst αSphereBouquet))
+                               , isNormalIm _ λ f g i x → +Comm (f x) (g x) i))
+  Free/Imα≅ℤ[]/ImBouquetDegree = Hom/ImIso _ _ (Is m) (Is k)
+    (Abi.elimProp _ (λ _ → isSetΠ (λ _ → isSetℤ) _ _)
+      λ g i → help main i .fst g)
+     where
+     Is : (m : _) → _
+     Is m = compGroupIso GroupIso-AbelienizeFreeGroup→FreeAbGroup
+                            (invGroupIso (ℤFin≅FreeAbGroup m))
+     H : (m : _) → _ 
+     H m = GroupIso→GroupHom (Is m)
+
+     help = freeGroupHom≡
+       {f = compGroupHom (compGroupHom (AbelianizationGroupStructure.ηAsGroupHom _) (H m))
+             (bouquetDegree (fst αSphereBouquet))}
+       {g = compGroupHom (compGroupHom (AbelianizationGroupStructure.ηAsGroupHom _) pickGens') (H k)}
+
+     main : (a : _) → _
+     main a = funExt λ s
+       → {!sumF!} -- sumFinℤId m {!!}
+        ∙ {!s!}
+       where
+       help' : (s : Fin k) (w : _)
+         → degree (suc zero) (λ x → pickPetal s (fst αSphereBouquet (inr (w , x))))
+           ≡ {!!} -- fst (H k) (η (α' a)) s
+       help' s w = {!!} ∙ {!(cong (Iso.inv (fst (ℤFin≅FreeAbGroup m))) ?)!} -- cong (degree (suc zero)) {!fst αSphereBouquet (inr (w , ?))!}
+         where
+         charac : fst (H m) {!!} {!!} ≡ {!!}
+         charac = {!!} -- (cong (Iso.inv (fst (ℤFin≅FreeAbGroup k))) λ _ → fst freeGroup→freeAbGroup (α' a)) ∙ {!Free→ℤFin!}
