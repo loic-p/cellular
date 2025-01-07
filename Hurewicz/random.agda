@@ -220,6 +220,47 @@ connectedFunPresConnected n {f = f} conB conf =
   isOfHLevelRetractFromIso 0 (connectedTruncIso n f conf) conB
 
 
+normalFormCofibFun : ∀ {n m k : ℕ}
+  (α : SphereBouquet∙ (suc n) (Fin m) →∙ SphereBouquet∙ (suc n) (Fin k))
+  (f : S₊∙ (suc n) →∙ (cofib (fst α) , inl tt))
+  → ∃[ f' ∈ S₊∙ (suc n) →∙ SphereBouquet∙ (suc n) (Fin k) ]
+      (((inr , (λ i → inr (α .snd (~ i))) ∙ sym (push (inl tt))) ∘∙ f') ≡ f)
+normalFormCofibFun {n = n} {m} {k} α f =
+  PT.rec squash₁
+    (λ g → TR.rec (isProp→isOfHLevelSuc n squash₁)
+      (λ gid → ∣ ((λ x → g x .fst) , (cong fst gid))
+               , ΣPathP ((λ i x → g x .snd i)
+               , (lem _ _ _ _ _ _ _ _ _ _ (cong snd gid))) ∣₁)
+      (isConnectedPath (suc n)
+        (help (fst f (ptSn (suc n)))) (g (ptSn (suc n)))
+          ((inl tt) , (((λ i → inr (α .snd (~ i))) ∙ sym (push (inl tt))) ∙ sym (snd f))) .fst))
+    makefun
+  where
+  lem : ∀ {ℓ} {A : Type ℓ} (x y : A) (inrgid : x ≡ y) (z : _) (inrα : y ≡ z) (w : _) (pushtt : z ≡ w)
+    (t : _) (snf : w ≡ t) (s : x ≡ t)
+    → Square s ((inrα ∙ pushtt) ∙ snf) inrgid refl
+    → Square (inrgid ∙ inrα ∙ pushtt) (sym snf) s refl
+  lem x = J> (J> (J> (J> λ s sq → (sym (lUnit _) ∙ sym (rUnit _))
+    ◁ λ i j → (sq ∙ sym (rUnit _) ∙ sym (rUnit _)) j i)))
+  cool : (x : S₊ (suc n)) → Type
+  cool x =
+    Σ[ x' ∈ SphereBouquet (suc n) (Fin k) ]
+      Σ[ y ∈ ((ptSn (suc n) ≡ x) → inl tt ≡ x') ]
+        Σ[ feq ∈ inr x' ≡ fst f x ]
+          ((p : ptSn (suc n) ≡ x)
+            → Square ((λ i → inr (snd α (~ i))) ∙ sym (push (inl tt))) (snd f)
+                      ((λ i → inr (y p i)) ∙∙ feq ∙∙ cong (fst f) (sym p)) refl)
+
+  inr' : SphereBouquet (suc n) (Fin k) → cofib (fst α)
+  inr' = inr
+
+  help : isConnectedFun (suc (suc n)) inr'
+  help = inrConnected _ _ _ (isConnected→isConnectedFun _ isConnectedSphereBouquet')
+
+  makefun : ∥ ((x : _) → Σ[ x' ∈ SphereBouquet (suc n) (Fin k) ] inr x' ≡ fst f x) ∥₁
+  makefun = sphereToTrunc _ λ x → help (fst f x) .fst
+
+
 connected→πEquiv : ∀ {ℓ} {A B : Pointed ℓ} (n : ℕ) (f : A →∙ B)
   → isConnectedFun (3 +ℕ n) (fst f)
   → GroupEquiv (πGr n A) (πGr n B)
