@@ -69,7 +69,7 @@ open import Cubical.Data.Int renaming (_·_ to _·ℤ_)
 open import Cubical.Algebra.Group.QuotientGroup
 
 open import Cubical.Algebra.Group.Abelianization.Base
-open import Cubical.Algebra.Group.Abelianization.Properties as Abi
+open import Hurewicz.Abelianization as Abi
 
 open import Cubical.Relation.Nullary hiding (⟪_⟫)
 open import Cubical.Data.Unit
@@ -108,6 +108,7 @@ open import Cubical.HITs.FreeGroup as FG
 open import Cubical.HITs.FreeGroup.NormalForm
 open import Cubical.HITs.FreeGroupoid.Properties
 open import Cubical.Algebra.Group.Free
+open import Cubical.Algebra.Group.IsomorphismTheorems
 
 -- general lemmas
 
@@ -820,20 +821,115 @@ sphereBouqetMapIso =
  compIso (pre∘∙equiv (invEquiv∙ Bouquet≃∙SphereBouquet))
          (post∘∙equiv (invEquiv∙ Bouquet≃∙SphereBouquet))
 
+module presB {m k : ℕ}
+  (f : Fin m → FreeGroup (Fin k)) where
+    pickGens : GroupHom (freeGroupGroup (Fin m)) (freeGroupGroup (Fin k))
+    pickGens = FG.rec f
+
+    pickGens' : AbGroupHom (AbelianizationAbGroup (freeGroupGroup (Fin m))) ((AbelianizationAbGroup (freeGroupGroup (Fin k))))
+    pickGens' = AbelianizationFun pickGens
+
+    toF = Iso.fun sphereBouqetMapIso (Iso.inv CharacBouquet→∙Bouquet f) .fst
+
+  
+    AbFreeGroup≅𝕫[] : (m : _) → _
+    AbFreeGroup≅𝕫[] m = compGroupIso GroupIso-AbelienizeFreeGroup→FreeAbGroup
+                            (invGroupIso (ℤFin≅FreeAbGroup m))
+    AbFreeGroup→𝕫[] : (m : _) → _ 
+    AbFreeGroup→𝕫[] m = GroupIso→GroupHom (AbFreeGroup≅𝕫[] m)
+
+    bouquetDegree-AbFreeGroup→𝕫[] : (x : _)
+      → fst (bouquetDegree toF) (AbFreeGroup→𝕫[] m .fst x)
+       ≡ AbFreeGroup→𝕫[] k .fst (pickGens' .fst x)
+    bouquetDegree-AbFreeGroup→𝕫[] = Abi.elimProp _ (λ _ → isSetΠ (λ _ → isSetℤ) _ _)
+      (funExt⁻ (cong fst (help main)))
+      where
+      help = freeGroupHom≡
+        {f = compGroupHom (compGroupHom (AbelianizationGroupStructure.ηAsGroupHom _) (AbFreeGroup→𝕫[] m))
+              (bouquetDegree toF)}
+        {g = compGroupHom (compGroupHom (AbelianizationGroupStructure.ηAsGroupHom _) pickGens') (AbFreeGroup→𝕫[] k)}
+
+      main : (a : _) → bouquetDegree toF .fst (AbFreeGroup→𝕫[] m .fst (η (η a)))
+                      ≡ AbFreeGroup→𝕫[] k .fst (fst pickGens' (η (η a)))
+      main a = funExt λ s
+        → sumFin-choose _ _ (λ _ → refl) +Comm _ _ a
+            (characdiag s)
+             λ x p → cong₂ _·ℤ_ (charac¬  x p) refl
+        where
+        charac¬ : (x' : Fin m) → ¬ x' ≡ a
+          → fst (AbFreeGroup→𝕫[] m) (η (η a)) x' ≡ pos 0
+        charac¬ x' p with (fst a ≟ᵗ fst x')
+        ... | lt x = refl
+        ... | eq x = ⊥.rec (p (Σ≡Prop (λ _ → isProp<ᵗ) (sym x)))
+        ... | gt x = refl
+
+        lem : ℤFinGenerator a a ≡ 1
+        lem with (fst a ≟ᵗ fst a)
+        ... | lt x = ⊥.rec (¬m<ᵗm x)
+        ... | eq x = refl
+        ... | gt x = ⊥.rec (¬m<ᵗm x)
+
+        l2 : (x : FreeGroup (Fin k)) (y : S¹)
+          → fst (SphereBouquet∙ 1 (Fin k))
+        l2 b base = inl tt
+        l2 b (loop i) = Bouquet→SphereBouquet (Iso.inv Iso-ΩS¹Bouquet-FreeGroup b i)
+
+        lema : (x : _) → toF (inr (a , x))
+                        ≡ l2 (f a) x
+        lema base = refl
+        lema (loop i) = refl -- refl
+
+        characdiagMain : (w : _) 
+          → (λ s → degree (suc zero) (λ x → pickPetal s (l2 w x))) ≡ fst (AbFreeGroup→𝕫[] k) (η w)
+        characdiagMain =
+          funExt⁻ (cong fst (freeGroupHom≡ {Group = AbGroup→Group ℤ[Fin k ]}
+            {f = _ , makeIsGroupHom λ f g
+              → funExt λ t → cong (degree 1)
+                (funExt (λ { base → refl
+                           ; (loop i) j → K t f g j i}))
+                ∙ (degreeHom {n = 0}
+                  ((λ x → pickPetal t (l2 f x)) , refl)
+                  ((λ x → pickPetal t (l2 g x)) , refl))}
+            {g = _ , compGroupHom (AbelianizationGroupStructure.ηAsGroupHom _) (AbFreeGroup→𝕫[] k) .snd}
+            λ s → funExt λ w → final s w ∙ ℤFinGeneratorComm w s))
+          where
+          final : (s w : Fin k) → degree 1 (λ x → pickPetal w (l2 (η s) x))
+                             ≡ ℤFinGenerator w s
+          final s w with (fst w ≟ᵗ fst s)
+          ... | lt x = refl
+          ... | eq x = refl
+          ... | gt x = refl
+
+          K : (t : _) (f g : FreeGroup (Fin k))
+            → cong (pickPetal t ∘ l2 (f FG.· g)) loop
+            ≡ (cong (pickPetal t ∘ l2 f) loop ∙ refl)
+             ∙ cong (pickPetal t ∘ l2 g) loop ∙ refl
+          K t f g =
+             cong (cong (pickPetal t ∘ Bouquet→SphereBouquet))
+                (InvIso-ΩS¹Bouquet-FreeGroupPresStr f g)
+            ∙ cong-∙ (pickPetal t ∘ Bouquet→SphereBouquet)
+                (Iso.inv Iso-ΩS¹Bouquet-FreeGroup f)
+                (Iso.inv Iso-ΩS¹Bouquet-FreeGroup g)
+            ∙ cong₂ _∙_ (rUnit _) (rUnit _)
+
+        characdiag : (s : _) →
+             ℤFinGenerator a a 
+          ·ℤ degree 1 (λ x → pickPetal s (toF (inr (a , x))))
+          ≡ fst (AbFreeGroup→𝕫[] k) (fst pickGens' (η (η a))) s
+        characdiag s = cong₂ _·ℤ_ lem refl
+                     ∙ cong (degree (suc zero)) (funExt λ x → cong (pickPetal s) (lema x))
+                     ∙ funExt⁻ (characdiagMain (f a))  s
+
 module spB {m k : ℕ}
   (α' : Fin m → FreeGroup (Fin k)) where
   α :  Bouquet∙ (Fin m)
     →∙ Bouquet∙ (Fin k)
   α = Iso.inv CharacBouquet→∙Bouquet α'
 
+  open presB α'
+
   αSphereBouquet : SphereBouquet∙ (suc zero) (Fin m) →∙ SphereBouquet∙ (suc zero) (Fin k)
   αSphereBouquet = Iso.fun sphereBouqetMapIso α
-
-  pickGens : GroupHom (freeGroupGroup (Fin m)) (freeGroupGroup (Fin k))
-  pickGens = FG.rec α'
-
-  pickGens' : AbGroupHom (AbelianizationAbGroup (freeGroupGroup (Fin m))) ((AbelianizationAbGroup (freeGroupGroup (Fin k))))
-  pickGens' = AbelianizationFun pickGens
 
   _·f_ : ∀ {ℓ} {A : Type ℓ} → FreeGroup A → FreeGroup A → FreeGroup A
   _·f_ = FG._·_
@@ -1239,93 +1335,36 @@ module spB {m k : ℕ}
   Free/Imα≅ℤ[]/ImBouquetDegree : GroupIso Free/Imα'
     (AbGroup→Group ℤ[Fin k ] / (imSubgroup (bouquetDegree (fst αSphereBouquet))
                                , isNormalIm _ λ f g i x → +Comm (f x) (g x) i))
-  Free/Imα≅ℤ[]/ImBouquetDegree = Hom/ImIso _ _ (Is m) (Is k)
-    (Abi.elimProp _ (λ _ → isSetΠ (λ _ → isSetℤ) _ _)
-      λ g i → help main i .fst g)
-     where
-     Is : (m : _) → _
-     Is m = compGroupIso GroupIso-AbelienizeFreeGroup→FreeAbGroup
-                            (invGroupIso (ℤFin≅FreeAbGroup m))
-     H : (m : _) → _ 
-     H m = GroupIso→GroupHom (Is m)
+  Free/Imα≅ℤ[]/ImBouquetDegree = Hom/ImIso _ _ (AbFreeGroup≅𝕫[] m) (AbFreeGroup≅𝕫[] k)
+    bouquetDegree-AbFreeGroup→𝕫[]
 
-     help = freeGroupHom≡
-       {f = compGroupHom (compGroupHom (AbelianizationGroupStructure.ηAsGroupHom _) (H m))
-             (bouquetDegree (fst αSphereBouquet))}
-       {g = compGroupHom (compGroupHom (AbelianizationGroupStructure.ηAsGroupHom _) pickGens') (H k)}
+  helpIso-Lock : lockUnit {ℓ-zero}
+    → GroupIso (AbGroup→Group
+                (AbelianizationAbGroup (π'Gr 0 (cofib (fst αSphereBouquet) , inl tt))))
+               Free/Imα'
+  helpIso-Lock unlock = invGroupIso helpIso
 
-     main : (a : _) → _
-     main a = funExt λ s
-       → sumFin-choose _ _ (λ _ → refl) +Comm _ _ a
-           (characdiag s)
-            λ x p → cong₂ _·ℤ_ (charac¬  x p) refl
-       where
-       charac¬ : (x' : Fin m) → ¬ x' ≡ a
-         → fst (H m) (η (η a)) x' ≡ pos 0
-       charac¬ x' p with (fst a ≟ᵗ fst x')
-       ... | lt x = refl
-       ... | eq x = ⊥.rec (p (Σ≡Prop (λ _ → isProp<ᵗ) (sym x)))
-       ... | gt x = refl
+  Free/Imα≅ℤ[]/ImBouquetDegree-Lock : lockUnit {ℓ-zero}
+    → GroupIso Free/Imα'
+        ((AbGroup→Group ℤ[Fin k ] / (imSubgroup (bouquetDegree (fst αSphereBouquet))
+                               , isNormalIm _ λ f g i x → +Comm (f x) (g x) i)))
+  Free/Imα≅ℤ[]/ImBouquetDegree-Lock unlock = Free/Imα≅ℤ[]/ImBouquetDegree
 
-       lem : ℤFinGenerator a a ≡ 1
-       lem with (fst a ≟ᵗ fst a)
-       ... | lt x = ⊥.rec (¬m<ᵗm x)
-       ... | eq x = refl
-       ... | gt x = ⊥.rec (¬m<ᵗm x)
+  π'BoquetFunCofib≅Free/Imα>1-Lock : lockUnit {ℓ-zero}
+    → GroupIso (AbGroup→Group (AbelianizationAbGroup (π'Gr 0 (cofib (fst αSphereBouquet) , inl tt))))
+             (AbGroup→Group ℤ[Fin k ] / (imSubgroup (bouquetDegree (fst αSphereBouquet))
+                               , isNormalIm _ λ f g i x → +Comm (f x) (g x) i))
+  π'BoquetFunCofib≅Free/Imα>1-Lock t = compGroupIso (helpIso-Lock t) (Free/Imα≅ℤ[]/ImBouquetDegree-Lock t)
 
-       l2 : (x : FreeGroup (Fin k)) (y : S¹)
-         → fst (SphereBouquet∙ 1 (Fin k))
-       l2 b base = inl tt
-       l2 b (loop i) = Bouquet→SphereBouquet (Iso.inv Iso-ΩS¹Bouquet-FreeGroup b i)
+  π'BoquetFunCofib≅Free/Imα>1-LockComp : (lock : lockUnit {ℓ-zero})
+    → (x : _) → Iso.fun (π'BoquetFunCofib≅Free/Imα>1-Lock lock .fst) x
+                ≡ Iso.fun (fst (Free/Imα≅ℤ[]/ImBouquetDegree-Lock lock))
+                   (Iso.fun (helpIso-Lock lock .fst) x)
+  π'BoquetFunCofib≅Free/Imα>1-LockComp = λ lock x → refl
 
-       lema : (x : _) → fst αSphereBouquet (inr (a , x))
-                       ≡ l2 (α' a) x
-       lema base = refl
-       lema (loop i) = refl
-
-       characdiagMain : (w : _) 
-         → (λ s → degree (suc zero) (λ x → pickPetal s (l2 w x))) ≡ fst (H k) (η w)
-       characdiagMain =
-         funExt⁻ (cong fst (freeGroupHom≡ {Group = AbGroup→Group ℤ[Fin k ]}
-           {f = _ , makeIsGroupHom λ f g
-             → funExt λ t → cong (degree 1)
-               (funExt (λ { base → refl
-                          ; (loop i) j → K t f g j i}))
-               ∙ (degreeHom {n = 0}
-                 ((λ x → pickPetal t (l2 f x)) , refl)
-                 ((λ x → pickPetal t (l2 g x)) , refl))}
-           {g = _ , compGroupHom (AbelianizationGroupStructure.ηAsGroupHom _) (H k) .snd}
-           λ s → funExt λ w → final s w ∙ ℤFinGeneratorComm w s))
-         where
-         final : (s w : Fin k) → degree 1 (λ x → pickPetal w (l2 (η s) x))
-                            ≡ ℤFinGenerator w s
-         final s w with (fst w ≟ᵗ fst s)
-         ... | lt x = refl
-         ... | eq x = refl
-         ... | gt x = refl
-
-         K : (t : _) (f g : FreeGroup (Fin k))
-           → cong (pickPetal t ∘ l2 (f FG.· g)) loop
-           ≡ (cong (pickPetal t ∘ l2 f) loop ∙ refl)
-            ∙ cong (pickPetal t ∘ l2 g) loop ∙ refl
-         K t f g =
-            cong (cong (pickPetal t ∘ Bouquet→SphereBouquet))
-               (InvIso-ΩS¹Bouquet-FreeGroupPresStr f g)
-           ∙ cong-∙ (pickPetal t ∘ Bouquet→SphereBouquet)
-               (Iso.inv Iso-ΩS¹Bouquet-FreeGroup f)
-               (Iso.inv Iso-ΩS¹Bouquet-FreeGroup g)
-           ∙ cong₂ _∙_ (rUnit _) (rUnit _)
-
-       characdiag : (s : _) →
-            ℤFinGenerator a a 
-         ·ℤ degree 1 (λ x → pickPetal s (fst αSphereBouquet (inr (a , x))))
-         ≡ fst (H k) (fst pickGens' (η (η a))) s
-       characdiag s = cong₂ _·ℤ_ lem refl
-                    ∙ cong (degree (suc zero)) (funExt λ x → cong (pickPetal s) (lema x))
-                    ∙ funExt⁻ (characdiagMain (α' a))  s
 
   π'BoquetFunCofib≅Free/Imα>1 :
     GroupIso (AbGroup→Group (AbelianizationAbGroup (π'Gr 0 (cofib (fst αSphereBouquet) , inl tt))))
              (AbGroup→Group ℤ[Fin k ] / (imSubgroup (bouquetDegree (fst αSphereBouquet))
                                , isNormalIm _ λ f g i x → +Comm (f x) (g x) i))
-  π'BoquetFunCofib≅Free/Imα>1 = compGroupIso (invGroupIso helpIso) Free/Imα≅ℤ[]/ImBouquetDegree
+  π'BoquetFunCofib≅Free/Imα>1 = π'BoquetFunCofib≅Free/Imα>1-Lock unlock

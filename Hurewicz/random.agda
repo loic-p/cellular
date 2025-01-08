@@ -82,6 +82,31 @@ open import Cubical.HITs.Truncation as TR
 open import Cubical.Algebra.Group.GroupPath
 open import Cubical.Algebra.Group.Subgroup
 
+open import Cubical.Algebra.Group.Abelianization.Base
+open import Hurewicz.Abelianization as Abi
+
+
+AbelianizationIdempotent : ∀ {ℓ} (G : AbGroup ℓ)
+  → AbGroupIso G (AbelianizationAbGroup (AbGroup→Group G))
+Iso.fun (fst (AbelianizationIdempotent G)) = η
+Iso.inv (fst (AbelianizationIdempotent G)) = Abi.rec _ (AbGroupStr.is-set (snd G))
+  (idfun _)
+  λ a b c → cong (AbGroupStr._+_ (snd G) a) (AbGroupStr.+Comm (snd G) _ _)
+Iso.rightInv (fst (AbelianizationIdempotent G)) =
+  Abi.elimProp _ (λ _ → isset _ _) (λ _ → refl)
+Iso.leftInv (fst (AbelianizationIdempotent G)) x = refl
+snd (AbelianizationIdempotent G) = snd (AbelianizationGroupStructure.ηAsGroupHom _)
+
+bouquetFin1 : ∀ {ℓ} {B : Fin 1 → Pointed ℓ} → Iso (⋁gen (Fin 1) B) (B fzero .fst)
+Iso.fun (bouquetFin1 {B = B}) (inl x) = B fzero .snd
+Iso.fun bouquetFin1 (inr ((zero , tt) , p)) = p
+Iso.fun (bouquetFin1 {B = B}) (push (zero , tt) i) = B fzero .snd
+Iso.inv bouquetFin1 x = inr (fzero , x)
+Iso.rightInv bouquetFin1 x = refl
+Iso.leftInv bouquetFin1 (inl x) = sym (push fzero)
+Iso.leftInv bouquetFin1 (inr ((zero , tt) , p)) = refl
+Iso.leftInv bouquetFin1 (push (zero , tt) i) j = push fzero (~ j ∨ i)
+
 -- todo: use to replace orginal
 GroupHomπ≅π'PathP' : ∀ {ℓ ℓ'} (A : Pointed ℓ) (B : Pointed ℓ') (n m : ℕ)
   → GroupHom (πGr n A) (πGr m B) ≡ GroupHom (π'Gr n A) (π'Gr m B)
@@ -302,8 +327,6 @@ snd (fst (connected→π'Equiv {ℓ = ℓ} {A = A} {B = B} n f conf)) =
             (connected→πEquiv n f conf .fst .snd)
 snd (connected→π'Equiv {ℓ = ℓ} {A = A} {B = B} n f conf) = π'∘∙Hom n f .snd
 
-open import Cubical.Algebra.Group.Abelianization.Base
-open import Cubical.Algebra.Group.Abelianization.Properties as Abi
 
 AbelianizationFun : ∀ {ℓ} {G : Group ℓ} {H : Group ℓ}
   → GroupHom G H → AbGroupHom (AbelianizationAbGroup G) (AbelianizationAbGroup H)
