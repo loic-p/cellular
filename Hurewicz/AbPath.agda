@@ -65,7 +65,7 @@ open import Cubical.Data.Int
 open import Cubical.Algebra.Group.QuotientGroup
 
 open import Cubical.Algebra.Group.Abelianization.Base
-open import Hurewicz.Abelianization as Abi
+open import Cubical.Algebra.Group.Abelianization.Properties as Abi
 
 open import Cubical.Relation.Nullary hiding (⟪_⟫)
 open import Cubical.Data.Unit

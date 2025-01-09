@@ -451,10 +451,10 @@ module _ {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 n) where
            (r : Σ[ t ∈ (Fin (SphereBouquet/Card* c1 c2 (suc (suc n)) (suc (suc n) ≟ᵗ suc n) (suc (suc n) ≟ᵗ suc (suc n))) → ℤ) ]
                   ∂ SphereBouquet/ˢᵏᵉˡ (suc n) .fst t ≡ λ q → a q - b q) where
 
-    main : Path (ℤ[]/ImSphereMap .fst)
+    pathlemma : Path (ℤ[]/ImSphereMap .fst)
              [ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (suc n ≟ᵗ suc n) (suc n ≟ᵗ suc (suc n)) a ]
             [ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (suc n ≟ᵗ suc n) (suc n ≟ᵗ suc (suc n)) b ]
-    main  with (n ≟ᵗ n) | (n ≟ᵗ suc n) | (suc n ≟ᵗ n)
+    pathlemma  with (n ≟ᵗ n) | (n ≟ᵗ suc n) | (suc n ≟ᵗ n)
     ... | lt x | st | ah = ⊥.rec (¬m<ᵗm x)
     ... | eq x | lt x₁ | lt x₂ = ⊥.rec (¬-suc-n<ᵗn x₂)
     ... | eq x | lt x₁ | eq x₂ = ⊥.rec (falseDichotomies.eq-eq (x , sym x₂))
@@ -528,7 +528,7 @@ module _ {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 n) where
   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap =
     SQ.rec squash/
       (λ f → [ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (suc n ≟ᵗ suc n) (suc n ≟ᵗ suc (suc n)) (fst f) ])
-      λ {(a , ak) (b , bk) → PT.elim (λ _ → squash/ _ _) λ {(t , s) → main a b ak bk (t , cong fst s)}}
+      λ {(a , ak) (b , bk) → PT.elim (λ _ → squash/ _ _) λ {(t , s) → pathlemma a b ak bk (t , cong fst s)}}
 
   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-hom : (x y : Hˢᵏᵉˡ SphereBouquet/ˢᵏᵉˡ n .fst)
     → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap (GroupStr._·_ (Hˢᵏᵉˡ SphereBouquet/ˢᵏᵉˡ n .snd) x y)
@@ -640,46 +640,49 @@ module _ {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 n) where
   open import Cubical.Data.Int renaming (_·_ to _*_)
   
 opaque
-  private
-    H : {c1 c2 : ℕ} (n : ℕ) → SphereBouquet/Card* c1 c2 (suc n) (suc n ≟ᵗ suc (suc n)) (suc n ≟ᵗ suc (suc (suc n))) ≡ 0
-    H n with (n ≟ᵗ suc n) | (n ≟ᵗ suc (suc n))
-    ... | lt x | q = refl
-    ... | eq x | q = {!𝕠r!}
-    ... | gt x | q = {!!}
-
   inKerAll : {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 n) (k : Fin c2) (t : _)
     → bouquetDegree (preboundary.pre∂ (SphereBouquet/ˢᵏᵉˡ α) n) .fst t ≡ (λ _ → 0)
   inKerAll {c1 = c1} {c2 = c2} {n = n} α k =
-    funExt⁻ (cong fst (agreeOnℤFinGenerator→≡ {ϕ = bouquetDegree (preboundary.pre∂ (SphereBouquet/ˢᵏᵉˡ α) n)} {trivGroupHom}
-      {!!}))
+    funExt⁻ (cong fst (agreeOnℤFinGenerator→≡
+      {ϕ = bouquetDegree (preboundary.pre∂ (SphereBouquet/ˢᵏᵉˡ α) n)} {trivGroupHom}
+      (BT n α)))
       where
-      Contr' : (n : ℕ)( α : SphereBouquetMap c1 c2 n)  →  isContr (SphereBouquet (suc n)
-               (Fin (preboundary.An (SphereBouquet/ˢᵏᵉˡ α) n)))
-      Contr' n α with (n ≟ᵗ suc n) | (n ≟ᵗ suc (suc n))
-      Contr' zero α | lt x | lt x₁ = {!!} , {!!}
-      Contr' (suc n) α | lt x | lt x₁ = (inl tt) , (λ { (inl x) → refl})
-      ... | lt x | eq x₁ = {!!}
-      ... | lt x | gt x₁ = {!!}
-      ... | eq x | w = {!!}
-      ... | gt x | w = {!!}
-      Hsa : preboundary.pre∂ (SphereBouquet/ˢᵏᵉˡ α) n ≡ λ _ → inl tt
-      Hsa = {!preboundary.pre∂ (SphereBouquet/ˢᵏᵉˡ α) n!}
+      BT : (n : ℕ) (α : SphereBouquetMap c1 c2 n)
+        (x : Fin (preboundary.An+1 (SphereBouquet/ˢᵏᵉˡ α) n)) →
+            fst (bouquetDegree (preboundary.pre∂ (SphereBouquet/ˢᵏᵉˡ α) n))
+            (ℤFinGenerator x)
+          ≡ λ _ → pos zero
+      BT n α with (n ≟ᵗ n) | (n ≟ᵗ suc n)
+      ... | lt x | q = ⊥.rec (¬m<ᵗm x)
+      BT zero α | eq x | lt x₁ =
+        λ q → funExt λ { (zero , snd₁)
+          → sumFinℤId _ (λ r → ·Comm (ℤFinGenerator q r) (pos zero)) ∙ sumFinℤ0 _}
+      BT (suc n) α | eq x | lt x₁ = λ q → funExt λ x → ⊥.rec (snd x)
+      ... | eq x | eq x₁ = ⊥.rec (¬m<ᵗm (subst (_<ᵗ suc n) x₁ <ᵗsucm))
+      ... | eq x | gt x₁ = ⊥.rec (¬-suc-n<ᵗn x₁)
+      ... | gt x | q = ⊥.rec (¬m<ᵗm x)
 
   inKerGenerator : {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 n) (k : Fin c2)
     → bouquetDegree (preboundary.pre∂ (SphereBouquet/ˢᵏᵉˡ α) n) .fst
         (ℤFinGenerator (fin→SphereBouquet/Cell α
           (suc n ≟ᵗ suc n) (suc n ≟ᵗ suc (suc n)) k))
      ≡ λ _ → 0
-  inKerGenerator {n = n} α k with (suc n ≟ᵗ suc n)
-  ... | lt x = refl
-  ... | eq x = {!!}
-  ... | gt x = ⊥.rec {!!}
-  {- k = funExt λ w → sumFinℤId _ (λ x → {!!} ∙ {!!}) ∙ sumFinℤ0 _
-    where
-    C : (w : _) → {!!}
-    C = {!!}
--}
+  inKerGenerator {n = n} α k = inKerAll α k _
+
+
 genHˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ : {c1 c2 n : ℕ} (α : SphereBouquetMap c1 c2 n) (k : Fin c2) → Hˢᵏᵉˡ (SphereBouquet/ˢᵏᵉˡ α) n .fst
 genHˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ α k =
   [ ℤFinGenerator (fin→SphereBouquet/Cell α _ _ k)
   , inKerGenerator α k ]
+
+
+isGen-genHˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ : {c1 c2 n : ℕ} (α : SphereBouquetMap c1 c2 n) (k : Fin c2)
+  → Iso.fun (fst (GroupIso-Hₙ₊₁SphereBouquetⁿ/→ℤ[]/ImSphereMap α))
+             (genHˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ α k)
+   ≡ [ ℤFinGenerator k ]
+isGen-genHˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ {n = n} α k with (suc n ≟ᵗ suc (suc n)) | (n ≟ᵗ n)
+... | lt x | lt x₁ = ⊥.rec (¬m<ᵗm x₁)
+... | lt x | eq x₁ = refl
+... | lt x | gt x₁ = ⊥.rec (¬m<ᵗm x₁)
+... | eq x | q = ⊥.rec (¬m<ᵗm (subst (suc n <ᵗ_) (sym x) <ᵗsucm))
+... | gt x | q = ⊥.rec (¬-suc-n<ᵗn x)

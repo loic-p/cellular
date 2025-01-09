@@ -83,7 +83,8 @@ open import Cubical.Algebra.Group.GroupPath
 open import Cubical.Algebra.Group.Subgroup
 
 open import Cubical.Algebra.Group.Abelianization.Base
-open import Hurewicz.Abelianization as Abi
+open import Cubical.Algebra.Group.Abelianization.Properties as Abi
+-- open import Hurewicz.Abelianization as Abi
 
 
 AbelianizationIdempotent : ∀ {ℓ} (G : AbGroup ℓ)

@@ -69,7 +69,7 @@ open import Cubical.Data.Int renaming (_·_ to _·ℤ_)
 open import Cubical.Algebra.Group.QuotientGroup
 
 open import Cubical.Algebra.Group.Abelianization.Base
-open import Hurewicz.Abelianization as Abi
+open import Cubical.Algebra.Group.Abelianization.Properties as Abi
 
 open import Cubical.Relation.Nullary hiding (⟪_⟫)
 open import Cubical.Data.Unit
@@ -112,8 +112,17 @@ open import Cubical.Algebra.Group.Free
 
 open import Hurewicz.SphereBouquetCofibHomotopy
 
+open import Cubical.Algebra.Group.GroupPath
+
 
 -- -- Homs are equal if they agree on generators
+
+
+-- (AbGroup→Group ℤ[Fin c2 ])
+--                   / (imSubgroup (bouquetDegree α)
+--                   , isNormalIm (bouquetDegree α)
+--                     λ _ _ → AbGroupStr.+Comm (snd ℤ[Fin c2 ]) _ _)
+
 
 agreeOnℤFinGenerator→≡' : ∀ {ℓ} {n : ℕ} (G : Group ℓ)
   → {ϕ ψ : GroupHom (AbGroup→Group (ℤ[Fin n ])) G}
@@ -132,6 +141,7 @@ agreeOnℤFinGenerator→≡' G {ϕ} {ψ} w =
            ∙∙ cong (GroupStr.inv (G .snd) ) p
            ∙∙ sym (IsGroupHom.presinv (snd ψ) f)))
 
+
 ℤ[]/-GroupHom≡ : ∀ {ℓ} {n : ℕ} (G : Group ℓ)
   {Q : NormalSubgroup (AbGroup→Group ℤ[Fin n ])}
   → (ϕ ψ : GroupHom (AbGroup→Group (ℤ[Fin n ]) / Q ) G)
@@ -143,6 +153,35 @@ agreeOnℤFinGenerator→≡' G {ϕ} {ψ} w =
       {ϕ = compGroupHom ([_] , makeIsGroupHom λ f g → refl) ϕ}
       {ψ = compGroupHom ([_] , makeIsGroupHom λ f g → refl) ψ}
       s)) x))
+
+
+makeℤ[]/Equiv : ∀ {ℓ ℓ'} {G : Group ℓ} {H : Group ℓ'} {n : ℕ}
+  {T : NormalSubgroup (AbGroup→Group ℤ[Fin n ])}
+  (ϕ : GroupEquiv (AbGroup→Group ℤ[Fin n ] / T) G)
+  (ψ : GroupEquiv (AbGroup→Group ℤ[Fin n ] / T) H)
+  (m : GroupHom G H)
+  → ((k : _) → fst m (fst (fst ϕ) [ ℤFinGenerator k ])
+               ≡ fst (fst ψ) [ ℤFinGenerator k ])
+  → isEquiv (fst m)
+makeℤ[]/Equiv {n = n} {T = T} ϕ ψ m ind =
+  subst isEquiv (cong fst altt) (compEquiv (invEquiv (fst ϕ)) (fst ψ) .snd)
+  where
+  alt : GroupHom (AbGroup→Group ℤ[Fin n ] / T) (AbGroup→Group ℤ[Fin n ] / T)
+  alt = compGroupHom (GroupEquiv→GroupHom ϕ)
+          (compGroupHom m (GroupEquiv→GroupHom (invGroupEquiv ψ)))
+
+  lem : alt ≡ idGroupHom
+  lem = ℤ[]/-GroupHom≡ _ _ _
+    λ w → cong (invEq (fst ψ)) (ind w)
+         ∙ retEq (fst ψ) [ ℤFinGenerator w ]
+
+  altt : compGroupHom (GroupEquiv→GroupHom (invGroupEquiv ϕ)) (GroupEquiv→GroupHom ψ) ≡ m
+  altt = Σ≡Prop (λ _ → isPropIsGroupHom _ _)
+    (funExt λ x → 
+      (sym (funExt⁻ (cong fst (cong (compGroupHom (GroupEquiv→GroupHom (invGroupEquiv ϕ)))
+                (cong (λ X → compGroupHom X (GroupEquiv→GroupHom ψ)) lem))) x))
+                ∙ secEq (fst ψ) _
+                ∙ cong (fst m) (secEq (fst ϕ) x))
 
 module _ {n m k : ℕ} (α : SphereBouquet∙ (suc n) (Fin m)
                        →∙ SphereBouquet∙ (suc n) (Fin k)) where
@@ -366,6 +405,32 @@ module _ {n m k : ℕ}
   --   lem : (w : Fin k) → _
   --   lem w = sym (Iso.rightInv (fst eEq) (πSphereBouquet/Generator α w))
   --        ∙  cong (Iso.fun (fst eEq)) (eHomGen w)
+
+open import Hurewicz.SphereBouquetCofib2
+Badoo! : {n m k : ℕ} (α : SphereBouquet∙ (suc n) (Fin m)
+                       →∙ SphereBouquet∙ (suc n) (Fin k))
+  (ϕ : GroupHom (AbGroup→Group (AbelianizationAbGroup
+                  (π'Gr n (cofib (fst α) , inl tt))))
+                (Hˢᵏᵉˡ (SphereBouquet/ˢᵏᵉˡ (fst α)) n))
+  → ((k : _) → fst ϕ (πᵃᵇSphereBouquet/Generator α k)
+               ≡ genHˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ (fst α) k)
+  → isEquiv (fst ϕ)
+Badoo! α ϕ hyp =
+  makeℤ[]/Equiv
+    (GroupIso→GroupEquiv
+      (invGroupIso (π'ᵃᵇCofibBouquetMap≅ℤ[]/BouquetDegree α)))
+    (GroupIso→GroupEquiv
+      (invGroupIso (GroupIso-Hₙ₊₁SphereBouquetⁿ/→ℤ[]/ImSphereMap (fst α)))) ϕ
+      λ k → cong (fst ϕ)
+          (sym (cong (Iso.inv (fst (π'ᵃᵇCofibBouquetMap≅ℤ[]/BouquetDegree α)))
+            (π'ᵃᵇCofibBouquetMap≅ℤ[]/BouquetDegreePresGens α k))
+          ∙ Iso.leftInv (fst (π'ᵃᵇCofibBouquetMap≅ℤ[]/BouquetDegree α)) _)
+        ∙ hyp k
+        ∙ sym (Iso.leftInv (fst (GroupIso-Hₙ₊₁SphereBouquetⁿ/→ℤ[]/ImSphereMap (fst α)))
+          (genHˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ (fst α) k))
+        ∙ cong (ℤ[]/ImSphereMap→HₙSphereBouquetⁿ/ (fst α))
+          (isGen-genHˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ (fst α) k)
+
 
 
 -- πSphereBouquet/-GroupHom≡ : {n m k : ℕ} (G : Group ℓ-zero)
