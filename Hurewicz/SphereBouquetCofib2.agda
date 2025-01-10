@@ -630,7 +630,7 @@ module _ {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 n) where
 
   open import Cubical.Algebra.ChainComplex
 
-  fin→SphereBouquet/Cell : (p : _) (q : _)
+  fin→SphereBouquet/Cell : {n : ℕ} (p : _) (q : _)
     → Fin c2 →  Fin (SphereBouquet/Card* c1 c2 {n = n} (suc n) p q)
   fin→SphereBouquet/Cell (lt x₁) q x = ⊥.rec (¬m<ᵗm x₁)
   fin→SphereBouquet/Cell (eq x₁) q x = x
