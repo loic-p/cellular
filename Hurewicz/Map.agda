@@ -1,104 +1,98 @@
 {-# OPTIONS --cubical --lossy-unification #-}
 module Hurewicz.Map where
 
+open import Hurewicz.SubcomplexNew
+open import Hurewicz.random
+
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Equiv
 open import Cubical.Foundations.GroupoidLaws as GL
-open import Cubical.Foundations.Equiv.Properties
 open import Cubical.Foundations.Function
 open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Pointed
-
+open import Cubical.Foundations.HLevels
+open import Cubical.Foundations.Univalence
+open import Cubical.Foundations.Path
 
 open import Cubical.CW.Base
 open import Cubical.CW.Map
 open import Cubical.CW.Connected
 open import Cubical.CW.Homology
-open import Hurewicz.SubcomplexNew
-open import Hurewicz.random
+open import Cubical.CW.Approximation
+open import Cubical.CW.ChainComplex
 
-open import Cubical.Data.Empty
+open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
-open import Cubical.Data.NatMinusOne
-open import Cubical.Data.Nat.Order
 open import Cubical.Data.Bool
-open import Cubical.Data.Sum
 open import Cubical.Data.Fin.Inductive
 open import Cubical.Data.Nat.Order.Inductive
 open import Cubical.Data.Sigma
-open import Cubical.Data.Sequence
 open import Cubical.Data.FinSequence
-
+open import Cubical.Data.Int
+open import Cubical.Data.Unit
 
 open import Cubical.HITs.S1
 open import Cubical.HITs.Sn
+open import Cubical.HITs.Sn.Degree
+open import Cubical.HITs.SphereBouquet.Degree
 open import Cubical.HITs.Susp
 open import Cubical.HITs.Pushout
 open import Cubical.HITs.SequentialColimit
 open import Cubical.HITs.SphereBouquet
 open import Cubical.HITs.PropositionalTruncation as PT
 open import Cubical.HITs.SetTruncation as ST
-
+open import Cubical.HITs.Truncation as TR
+open import Cubical.HITs.SetQuotients as SQ renaming (_/_ to _/s_)
+open import Cubical.HITs.Wedge
 
 open import Cubical.Homotopy.Group.Base
--- open import Cubical.Homotopy.Group.Properties
+open import Cubical.Homotopy.Connected
 
 open import Cubical.Algebra.Group
 open import Cubical.Algebra.Group.Morphisms
 open import Cubical.Algebra.Group.MorphismProperties
-
-open import Cubical.Foundations.HLevels
-
-open import Cubical.Algebra.AbGroup
-
-open import Cubical.CW.Approximation
-
-open import Cubical.Data.Empty as ⊥
-
-open import Cubical.Foundations.Transport
-open import Cubical.Foundations.Univalence
-
-open import Cubical.CW.ChainComplex
-open import Cubical.HITs.SetQuotients.Base renaming (_/_ to _/s_)
-open import Cubical.HITs.SetQuotients.Properties as SQ
-open import Cubical.Data.Int
-open import Cubical.Algebra.Group.QuotientGroup
-
 open import Cubical.Algebra.Group.Abelianization.Base
-open import Cubical.Algebra.Group.Abelianization.Properties as Abi --rec
+open import Cubical.Algebra.Group.Abelianization.Properties as Abi
+open import Cubical.Algebra.AbGroup
+open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup
 
 open import Cubical.Relation.Nullary
-open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup
-module _ {k : ℕ} (w : Fin k) (x : _) where
-  ℤFinGenerator* : lockUnit {ℓ-zero} → ℤ
-  ℤFinGenerator* unlock = ℤFinGenerator w x
 
-  mainockℤ : (l : _) → ¬ (fst w ≡ fst x) → ℤFinGenerator* l ≡ pos 0
-  mainockℤ unlock nope with (fst w ≟ᵗ fst x)
-  ... | (lt ineq) = refl
-  ... | (eq p) = ⊥.rec (nope p)
-  ... | (gt ineq) = refl
+open import Hurewicz.SnNew
+open import Hurewicz.SphereBouquetCofib2
+open import Hurewicz.SphereBouquetCofibHomotopy
+open import Hurewicz.SphereBouquetCofibHomotopyP2
+open import Cubical.HITs.Bouquet
+open import Cubical.HITs.FreeGroup.Base
 
-  mainockℤ' : (l : _) → (fst w ≡ fst x) → ℤFinGenerator* l ≡ pos 1
-  mainockℤ' unlock aye with (fst w ≟ᵗ fst x)
-  ... | (lt ineq) = ⊥.rec (¬m<ᵗm (subst (_<ᵗ fst x) aye ineq))
-  ... | (eq p) = refl
-  ... | (gt ineq) = ⊥.rec (¬m<ᵗm (subst (fst x <ᵗ_) aye ineq))
+open import Hurewicz.SphereBouquetCofib2
+open import Hurewicz.SphereBouquetCofibHomotopy
+open import Hurewicz.SphereBouquetCofibHomotopyP2
+open import Cubical.HITs.Bouquet
+open import Cubical.HITs.FreeGroup.Base
 
 
-diff<ᵗ : {n m : ℕ} → n <ᵗ m → Σ[ k ∈ ℕ ] k +ℕ n ≡ m
-diff<ᵗ {n = n} p = suc (<ᵗ→< p .fst) , sym (+-suc _ n) ∙ <ᵗ→< p .snd
+open import Cubical.Homotopy.Connected
+open import Cubical.HITs.Truncation as TR
+open import Cubical.CW.Properties
 
-diff<ᵗ' : {n m : ℕ} → n <ᵗ suc m → Σ[ k ∈ ℕ ] k +ℕ n ≡ m
-diff<ᵗ' {n = n} p = <ᵗ→< p .fst , cong predℕ (sym (+-suc (fst (<ᵗ→< p)) n) ∙ <ᵗ→< p .snd)
 
-CW↑ : ∀ {ℓ} (C : CWskel ℓ) (n m : ℕ) → n <ᵗ m → fst C n → fst C m
-CW↑ C n m x = subst (fst C) (snd (diff<ᵗ x))
-             ∘ CW↪Iterate C n (diff<ᵗ x .fst)
+private
+  module _ {k : ℕ} (w : Fin k) (x : _) where
+    ℤFinGenerator* : lockUnit {ℓ-zero} → ℤ
+    ℤFinGenerator* unlock = ℤFinGenerator w x
 
-CW↑< : ∀ {ℓ} (C : CWskel ℓ) (n m : ℕ) → n <ᵗ suc m → fst C n → fst C m
-CW↑< C n m x = subst (fst C) (snd (diff<ᵗ' x))
-             ∘ CW↪Iterate C n (diff<ᵗ' x .fst)
+    mainockℤ : (l : _) → ¬ (fst w ≡ fst x) → ℤFinGenerator* l ≡ pos 0
+    mainockℤ unlock nope with (fst w ≟ᵗ fst x)
+    ... | (lt ineq) = refl
+    ... | (eq p) = ⊥.rec (nope p)
+    ... | (gt ineq) = refl
+
+    mainockℤ' : (l : _) → (fst w ≡ fst x) → ℤFinGenerator* l ≡ pos 1
+    mainockℤ' unlock aye with (fst w ≟ᵗ fst x)
+    ... | (lt ineq) = ⊥.rec (¬m<ᵗm (subst (_<ᵗ fst x) aye ineq))
+    ... | (eq p) = refl
+    ... | (gt ineq) = ⊥.rec (¬m<ᵗm (subst (fst x <ᵗ_) aye ineq))
 
 -- todo : fix univ levels
 groupHom→AbelianisationGroupHom : ∀ {ℓ} {A : Group ℓ} {B : Group ℓ}
@@ -133,12 +127,8 @@ isPropIsInducedAbelianisationGroupEquiv : ∀ {ℓ} {A : Group ℓ} {B : Group �
 isPropIsInducedAbelianisationGroupEquiv =
   isPropΣ (isPropIsGroupHom _ _) λ _ → isPropIsEquiv _
 
-open import Hurewicz.SnNew
-open import Hurewicz.SphereBouquetCofib2
-open import Hurewicz.SphereBouquetCofibHomotopy
-open import Hurewicz.SphereBouquetCofibHomotopyP2
-open import Cubical.HITs.Bouquet
-open import Cubical.HITs.FreeGroup.Base
+
+
 
 -- todo: update universe level after fixing it in abelianisaion file
 module _ where
@@ -156,10 +146,6 @@ module _ where
   HurewiczMap X x = ST.rec (GroupStr.is-set (snd (Hᶜʷ X _))) (HurewiczMapUntrunc X x)
 
 
-  open import Cubical.Homotopy.Connected
-  open import Cubical.HITs.Truncation as TR
-  open import Cubical.CW.Properties
-  
   
   HurewiczMapHom :  {n : ℕ} (X : CW ℓ-zero) (x : fst X) (f g : π' (suc n) (fst X , x))
     → isConnected 2 (fst X)
@@ -217,8 +203,6 @@ module _ where
          multCellMap =  betterFinCellApproxS Xsk (suc n) x₀ (∙Π f' g') (∙Π (incl∙ Xsk x₀ ∘∙ f') (incl∙ Xsk x₀ ∘∙ g'))
                             (λ x → funExt⁻ (cong fst (∙Π∘∙ n f' g' (incl∙ Xsk x₀))) x ∙ refl) (suc (suc (suc n)))
 
-         open import Cubical.HITs.SphereBouquet.Degree
-
          G : (n : ℕ) → _
          G n = BouquetFuns.CTB (suc n) (CWskel-fields.card Xsk (suc n))
                                  (CWskel-fields.α Xsk (suc n))
@@ -273,7 +257,7 @@ module _ where
            ... | lt x = ⊥.rec (¬m<ᵗm x)
            ... | eq x = flipSquare (help (cong suc (cong suc x)) (sym (isSetℕ _ _ _ _)))
              where
-             open import Cubical.Foundations.Path
+             
              cool : makeFinSequenceMapGen∙ Xsk _ x₀ (fst f') (snd f') (suc n) (eq refl)
                   ≡ transportRefl _ ∙ snd f'
              cool = cong₂ _∙_ (λ j i → subst (fst Xsk) (isSet→isGroupoid isSetℕ _ _ _ _ (isSetℕ (suc (suc n)) _ refl refl) refl j i)
@@ -501,21 +485,15 @@ module _ where
   fst (HurewiczHom {n = n} X x conX) = HurewiczMap X x
   snd (HurewiczHom {n = n} X x conX) = makeIsGroupHom λ f g → HurewiczMapHom X x f g conX
 
-HurewiczMapFunct : {n : ℕ} (X Y : CW ℓ-zero) (x : fst X) (y : fst Y)
+HurewiczMapNat : {n : ℕ} (X Y : CW ℓ-zero) (x : fst X) (y : fst Y)
                     (g : (fst X , x) →∙ (fst Y , y))
     → Hᶜʷ→ {C = X} {D = Y} n (fst g) .fst ∘ HurewiczMap X x
     ≡ HurewiczMap Y y ∘ π'∘∙Hom n g .fst
-HurewiczMapFunct {n = n} X Y x y g =
+HurewiczMapNat {n = n} X Y x y g =
   funExt (ST.elim (λ _ → isOfHLevelPath 2 (GroupStr.is-set (Hᶜʷ Y n .snd)) _ _)
     λ f → funExt⁻ (sym (cong fst (Hᶜʷ→comp
              {C = Sᶜʷ (suc n)} {D = X} {E = Y} n (fst g) (fst f))))
              (genHₙSⁿ n))
-
-open import Cubical.Homotopy.Connected
-open import Cubical.CW.Properties
-open import Hurewicz.random
-open import Cubical.HITs.Truncation as TR
-
 
 Hˢᵏᵉˡ-comm : ∀ {ℓ} {n : ℕ} {X : CWskel ℓ} (x y : Hˢᵏᵉˡ X n .fst)
   → GroupStr._·_ (Hˢᵏᵉˡ X n .snd) x y ≡ GroupStr._·_ (Hˢᵏᵉˡ X n .snd) y x
@@ -612,9 +590,6 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC =
 
   RR = (Trichotomyᵗ-suc (n ≟ᵗ n))
   QQ = (Trichotomyᵗ-suc (n ≟ᵗ suc n))
-  open import Cubical.HITs.Sn.Degree
-  open import Cubical.HITs.SphereBouquet.Degree
-  open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup
   
   ff : (w : Fin k) → _
   ff w = (fst (isCWSphereBouquet/ (fst α) .snd)
@@ -655,7 +630,6 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC =
        (push (F m k α w (fst n') Q a)
       ∙ λ i → inr (FH m k α w (fst n') P Q a i)) i
 
-    open import Cubical.Relation.Nullary
     module _ (n : ℕ) (w : Fin k) (x : _) (p : Path (S₊ (suc n)) (ptSn (suc n)) (ptSn (suc n))) where
       teGen : ¬ (fst w ≡ fst x) 
         → (cong (pickPetal x) (push w) ∙∙
@@ -753,7 +727,6 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC =
                      refl
      ∙ comm∙∙S¹ _ _
 
-    open import Cubical.Relation.Nullary
     mainock : ¬ (fst w ≡ fst x) → (r : _) → MF r ≡ base
     mainock nope base = refl
     mainock nope (loop i) j = (lem ∙ teGen _ α zero w x (σS false) nope) j i
@@ -962,7 +935,7 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC =
   BaOH≡ w n' (push a i) = refl
 
 
-open import Cubical.HITs.SphereBouquet.Degree
+
 
 
 
@@ -1094,11 +1067,7 @@ PreHurewiczLemma n X conX ind' x =
                            (λ z → secEq (snd (snd X)) (incl (F₃ .fst (fst g z))) (~ i))
                            .fst (genHₙSⁿ n)
 
-open import Hurewicz.SphereBouquetCofib2
-open import Hurewicz.SphereBouquetCofibHomotopy
-open import Hurewicz.SphereBouquetCofibHomotopyP2
-open import Cubical.HITs.Bouquet
-open import Cubical.HITs.FreeGroup.Base
+
 
 HurewiczTheorem : (n : ℕ) (X : CW ℓ-zero) (conX : isConnected (suc (suc n)) (fst X)) (x : _)
   → isEquiv (HurewiczHomAb X x (isConnectedSubtr' n 2 conX) n .fst)
@@ -1132,10 +1101,6 @@ HurewiczTheorem n = uncurry λ X → PT.elim (λ _ → isPropΠ2  λ _ _ → isP
         (¬Fin0 ∘ subst Fin (snd (fst cwX) .snd .snd m l))))
         (invEquiv (snd (snd (snd (fst (snd (fst cwX))))) (suc m)))))
       (e1 n m (<ᵗ-trans l <ᵗsucm) X cwX)
-
-  open import Cubical.Data.Unit
-  open import Cubical.HITs.Wedge.Base
-
   
   e2 : (n : ℕ) (X : Type) (cwX : isConnectedCW n X)
     → fst (fst cwX) (suc (suc n))
@@ -1164,7 +1129,6 @@ HurewiczTheorem n = uncurry λ X → PT.elim (λ _ → isPropΠ2  λ _ _ → isP
     EX
     where
     open import Cubical.Axiom.Choice
-    open import Cubical.HITs.Wedge.Properties
     CON : isConnected 2 (fst (fst cwX) (suc (suc n)))
     CON = subst (isConnected 2) (ua (invEquiv (e2 n X cwX)))
             (isConnectedSubtr' n 2 isConnectedSphereBouquet')
