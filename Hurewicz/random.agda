@@ -1252,17 +1252,17 @@ fst (subComplexHomologyᶜʷEquiv C n m p) = Hᶜʷ→ n (incl {n = m}) .fst , s
 snd (subComplexHomologyᶜʷEquiv C n m p) = Hᶜʷ→ n (incl {n = m}) .snd
 
 --- bouquetDegreeHom
-SphereBouquet∙Π : ∀ {ℓ'} {n m : ℕ} {B : Pointed ℓ'}
-  → (f g : SphereBouquet∙ (suc n) (Fin m) →∙ B)
-  → (SphereBouquet∙ (suc n) (Fin m) →∙ B)
-fst (SphereBouquet∙Π {m = m} {B = B} f g) (inl x) = pt B
-fst (SphereBouquet∙Π {m = m} {B = B} f g) (inr (a , s)) =
+SphereBouquet∙Π : ∀ {ℓ ℓ'} {n : ℕ} {A : Type ℓ} {B : Pointed ℓ'}
+  → (f g : SphereBouquet∙ (suc n) A →∙ B)
+  → (SphereBouquet∙ (suc n) A →∙ B)
+fst (SphereBouquet∙Π {B = B} f g) (inl x) = pt B
+fst (SphereBouquet∙Π {B = B} f g) (inr (a , s)) =
   ∙Π ((λ x → fst f (inr (a , x))) , cong (fst f) (sym (push a)) ∙ snd f)
      ((λ x → fst g (inr (a , x))) , cong (fst g) (sym (push a)) ∙ snd g) .fst s
-fst (SphereBouquet∙Π {m = m} {B = B} f g) (push a i) =
+fst (SphereBouquet∙Π {B = B} f g) (push a i) =
   ∙Π ((λ x → fst f (inr (a , x))) , cong (fst f) (sym (push a)) ∙ snd f)
      ((λ x → fst g (inr (a , x))) , cong (fst g) (sym (push a)) ∙ snd g) .snd (~ i)
-snd (SphereBouquet∙Π {m = m} f g) = refl
+snd (SphereBouquet∙Π f g) = refl
 
 
 

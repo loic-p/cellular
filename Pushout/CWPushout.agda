@@ -42,6 +42,39 @@ open import Cubical.Algebra.Group.Morphisms
 open import Cubical.Foundations.Pointed
 open import Cubical.HITs.Wedge
 
+-- module _ {ℓ ℓ' : Level} where
+--   Pushout→Bouquet' : {Cₙ Cₙ₊₁ Cₙ₊₂ : Type ℓ} (n mₙ mₙ₊₁ : ℕ)
+--     (αₙ₊₁ : Fin mₙ₊₁ × S₊ n → Cₙ₊₁)
+--     (αₙ : Fin mₙ × S⁻ n → Cₙ)
+--     (e : Cₙ₊₁ ≃ Pushout αₙ fst)
+--     (e2 : Cₙ₊₂ ≃ Pushout αₙ₊₁ fst)
+--     → (a : Fin mₙ₊₁ × S₊ n) → SphereBouquet n (Fin mₙ)
+--   Pushout→Bouquet' zero mₙ mₙ₊₁ αₙ₊₁ αₙ e e2 a = {!!}
+--   Pushout→Bouquet' (suc zero) mₙ mₙ₊₁ αₙ₊₁ αₙ e e2 (l , base) = inl tt
+--   Pushout→Bouquet' (suc zero) mₙ mₙ₊₁ αₙ₊₁ αₙ e e2 (l , loop i) = ({!!} ∙∙ {!λ i → ?!} ∙∙ {!!}) i
+--   Pushout→Bouquet' (suc (suc n)) mₙ mₙ₊₁ αₙ₊₁ αₙ e e2 a = {!!}
+--   -- inr {!!}
+
+--   Pushout→BouquetEq : {Cₙ Cₙ₊₁ Cₙ₊₂ : Type ℓ} (n mₙ mₙ₊₁ : ℕ)
+--     (αₙ₊₁ : Fin mₙ₊₁ × S₊ n → Cₙ₊₁)
+--     (αₙ : Fin mₙ × S⁻ n → Cₙ)
+--     (e : Cₙ₊₁ ≃ Pushout αₙ fst)
+--     (e2 : Cₙ₊₂ ≃ Pushout αₙ₊₁ fst)
+--     (t : _) (s : _)
+--     → Pushout→Bouquet {Cₙ = Cₙ} {Cₙ₊₁} n mₙ αₙ e (fst e (αₙ₊₁ (t , s)))
+--     ≡ {!Pushout→Bouquet!}
+--   Pushout→BouquetEq n mₙ αₙ e = {!!}
+{-
+-- Maps back and forth
+module BouquetFuns {Cₙ Cₙ₊₁ : Type ℓ} (n mₙ : ℕ)
+    (αₙ : Fin mₙ × S⁻ n → Cₙ)
+    (e : Cₙ₊₁ ≃ Pushout αₙ fst) where
+  CTB : cofib (invEq e ∘ inl) → SphereBouquet n (Fin mₙ)
+  CTB (inl x) = inl tt
+  CTB (inr x) = Pushout→Bouquet n mₙ αₙ e (fst e x)
+  CTB (push a i) = Pushout→Bouquet n mₙ αₙ e (secEq e (inl a) (~ i))
+-}
+
 
 module _ {ℓ ℓ'} {A : Pointed ℓ} {B : Pointed ℓ'} where
   foldL : A ⋁ B → fst A
@@ -290,6 +323,23 @@ module _ {ℓ ℓ' ℓ'' : Level} {B : CWskel ℓ} {C : CWskel ℓ'} {D : CWskel
   pushoutA (suc n) =
     Pushout {A = fst B n} {B = fst C (suc n)} {C = fst D (suc n)}
        (CW↪ C n ∘ ∣ f ∣ n) (CW↪ D n ∘ ∣ g ∣ n)
+
+  pushoutA' : ℕ → Type (ℓ-max (ℓ-max ℓ ℓ') ℓ'') 
+  pushoutA' zero = Lift {ℓ} {ℓ-max ℓ' ℓ''} (B .fst zero)
+  pushoutA' (suc n) =
+    Pushout {A = fst B n} {B = fst C (suc n)} {C = fst D (suc n)}
+       (∣ f ∣ (suc n) ∘ CW↪ B n) (∣ g ∣ (suc n) ∘ CW↪ B n)
+
+  pushoutMapₛ' : (n : ℕ) → (((A C (suc n)) ⊎ (A D (suc n))) ⊎ (A B n)) × (Susp (S⁻ n)) → pushoutA' (suc n)
+  pushoutMapₛ' n (inl (inl c) , x) =  inl (α C (suc n) (c , (Iso.inv (IsoSphereSusp n) x)))
+  pushoutMapₛ' n (inl (inr d) , x) = inr (α D (suc n) (d , (Iso.inv (IsoSphereSusp n) x)))
+  pushoutMapₛ' n (inr b , north) = inl (∣ f ∣ (suc n) (invEq (e B n) (inr b)))
+  pushoutMapₛ' n (inr b , south) = inr (∣ g ∣ (suc n) (invEq (e B n) (inr b)))
+  pushoutMapₛ' n (inr b , merid x i) =
+    ((λ i → inl (∣ f ∣ (suc n) (invEq (e B n) (push (b , x) (~ i)))))
+    ∙∙ push (α B n (b , x))
+    ∙∙ λ i → inr (∣ g ∣ (suc n) (invEq (e B n) (push (b , x) i)))) i
+
 
   pushoutMidCells : ℕ → ℕ
   pushoutMidCells zero = 0
@@ -646,6 +696,47 @@ module _ {ℓ ℓ' ℓ'' : Level} {B : CWskel ℓ} {C : CWskel ℓ'} {D : CWskel
     compIso (isCWPushoutIsoPre n)
       (Iso-Pushoutα-PushoutPushoutMapₛ n)
 
+  M1L : (n : ℕ) → Pushout (α C (suc n)) fst → Pushout (pushoutMapₛ' n) fst
+  M1L n (inl x) = inl (inl x)
+  M1L n (inr x) = inr ((inl (inl x)))
+  M1L n (push a i) =
+    ((λ i → inl (inl (α C (suc n) (fst a , Iso.leftInv (IsoSphereSusp n) (snd a) (~ i)))))
+    ∙ push (((inl (inl (fst a)))) , Iso.fun (IsoSphereSusp n) (snd a))) i
+
+  M1R : (n : ℕ) → Pushout (α D (suc n)) fst → Pushout (pushoutMapₛ' n) fst
+  M1R n (inl x) = inl (inr x)
+  M1R n (inr x) = inr ((inl (inr x)))
+  M1R n (push a i) =
+    ((λ i → inl (inr (α D (suc n) (fst a , Iso.leftInv (IsoSphereSusp n) (snd a) (~ i)))))
+    ∙ push (((inl (inr (fst a)))) , Iso.fun (IsoSphereSusp n) (snd a))) i
+
+  M1LR : (n : ℕ) (b : Pushout (α B n) fst)
+    → Path (Pushout (pushoutMapₛ' n) fst)
+            (inl (inl (∣ f ∣ (suc n) (invEq (e B n) b)))) (inl (inr (∣ g ∣ (suc n) (invEq (e B n) b))))
+  M1LR n (inl x) i = inl (push x i)
+  M1LR n (inr x) = push ((inr x) , north) ∙∙ refl ∙∙ sym (push ((inr x) , south))
+  M1LR n (push (t , s) i) j =
+    hcomp (λ k → λ {(i = i0) → inl (doubleCompPath-filler (λ i → inl (∣ f ∣ (suc n) (invEq (e B n) (push (t , s) (~ i)))))
+                                                           (push (α B n (t , s)))
+                                                           (λ i → inr (∣ g ∣ (suc n) (invEq (e B n) (push (t , s) i)))) (~ k) j)
+                   ; (i = i1) → doubleCompPath-filler (push ((inr t) , north)) refl (sym (push ((inr t) , south))) k j
+                   ; (j = i0) → invSides-filler (push (inr t , north))
+                                                 (λ i → inl (inl (∣ f ∣ (suc n) (invEq (e B n) (push (t , s) (~ i)))))) k i
+                   ; (j = i1) → invSides-filler (push (inr t , south))
+                                                 (λ i → inl (inr (∣ g ∣ (suc n) (invEq (e B n) (push (t , s) (~ i)))))) k i})
+          ((push (inr t , merid s j)) i)
+
+
+  M1 : (n : ℕ) → (pushoutA (suc (suc n))) → (Pushout (pushoutMapₛ' n) fst)
+  M1 n (inl x) = M1L n (fst (e C (suc n)) x)
+  M1 n (inr x) = M1R n (fst (e D (suc n)) x)
+  M1 n (push a i) =
+      ((λ i → M1L n (secEq (e C (suc n)) (inl (∣ f ∣ (suc n) a)) i))
+    ∙∙ (λ i →((λ i → inl (inl (∣ f ∣ (suc n) (retEq (e B n) a (~ i)))))
+    ∙∙ M1LR n (fst (e B n) a)
+    ∙∙ λ i → inl (inr (∣ g ∣ (suc n) (retEq (e B n) a i)))) i)
+    ∙∙ λ i → M1R n (secEq (e D (suc n)) (inl (∣ g ∣ (suc n) a)) (~ i))) i
+
   open import Cubical.CW.Properties
   isCWPushoutIso₀ : Iso (pushoutA (suc zero)) (Pushout pushoutMap₀ fst)
   isCWPushoutIso₀ =
@@ -785,6 +876,63 @@ module _ {ℓ ℓ' ℓ'' : Level} {B : CWskel ℓ} {C : CWskel ℓ'} {D : CWskel
       ≡ inl tt
   bouquetSusp→∙ zero = refl
   bouquetSusp→∙ (suc n) = refl
+
+  Test : (n : ℕ) (x : Fin (preboundary.An+1 PushoutCWskel (suc n)))
+    → fst (S₊∙ (suc (suc n))) → Susp (fst PushoutCWskel (suc (suc n)))
+  Test n x z = δ-pre (CW↪ PushoutCWskel (suc (suc n)))
+    (preBTC (suc (suc n)) (preboundary.An+1 PushoutCWskel (suc n))
+        (preboundary.αn+1 PushoutCWskel (suc n))
+        (snd PushoutCWskel .snd .snd .snd (suc (suc n))) x .fst z)
+
+  mainFun : (n : ℕ) (x : Fin (card C (suc (suc n))))
+    → SplitBouquet (suc n) (card C (suc (suc n)))
+      (card D (suc (suc n))) (card B (suc n)) -- S₊ (suc (suc n))
+    → SphereBouquet (suc (suc n)) (Fin (preboundary.An PushoutCWskel (suc n)))
+  mainFun n x = (preboundary.pre∂ PushoutCWskel (suc n) ∘
+          Iso.inv (SphereBouquetCellIso (suc n) (suc (suc n))))
+
+  pushoutMapₛ-inr∙ : (n : ℕ) (x : _) → pushoutMapₛ (suc n) (x , north) ≡ inl {!∣ f ∣ (suc (suc n)) (invEq !}
+  pushoutMapₛ-inr∙ = {!!}
+
+  mainFun' :  (n : ℕ) (x : Fin (card C (suc (suc n))))
+    → S₊ (suc (suc n)) → SphereBouquet (suc (suc n)) (Fin (preboundary.An PushoutCWskel (suc n)))
+  mainFun' n x y = {!!} -- inr (invEq (finSplit3≃ {!!} {!!} {!!}) {!inl (inl x)!} , y)
+
+  Test* : (n : ℕ) (x : Fin (preboundary.An+1 PushoutCWskel (suc n))) (a : _)
+    → cong (suspFun (preboundary.isoCofBouquet PushoutCWskel (suc n)))
+        (cong (suspFun (to suc n cofibCW PushoutCWskel)) (cong (Test n x) (merid a)))
+     ≡ {!!}
+  Test* n x a =
+    cong (cong (suspFun (preboundary.isoCofBouquet PushoutCWskel (suc n))))
+     (cong (cong (suspFun (to suc n cofibCW PushoutCWskel)))
+    (cong-∙∙ (δ-pre (CW↪ PushoutCWskel (suc (suc n)))) _ _ _
+              ∙ (λ i → merid (preboundary.αn+1 PushoutCWskel (suc n) (x , a))
+                           ∙∙ ( λ j → merid (preboundary.αn+1 PushoutCWskel (suc n) (x , ptSn (suc n))) (~ j ∨ ~ i))
+                           ∙∙ λ j → merid (preboundary.αn+1 PushoutCWskel (suc n) (x , ptSn (suc n))) (~ j ∧ ~ i))
+              ∙ sym (compPath≡compPath' _ _)
+              ∙ cong₂ _∙_ refl (cong (sym ∘ merid) (cong (pushoutMapₛ (suc n)) (ΣPathP (refl
+                , sym (cong (Iso.fun (IsoSucSphereSusp n)) (IsoSucSphereSusp∙ n))
+                  ∙ Iso.rightInv ((IsoSucSphereSusp n)) north)) ∙ refl)))
+              ∙ cong-∙ (suspFun (to suc n cofibCW PushoutCWskel))
+                  (merid (preboundary.αn+1 PushoutCWskel (suc n) (x , a)))
+                  (sym (merid (pushoutMapₛ (suc n) (Iso.fun (⊎Iso (invIso Iso-Fin⊎Fin-Fin+) idIso)
+                                                (Iso.inv Iso-Fin⊎Fin-Fin+ x) , north))))
+             ∙ refl)
+    ∙ cong-∙ (suspFun (preboundary.isoCofBouquet PushoutCWskel (suc n)))
+             (merid (inr (preboundary.αn+1 PushoutCWskel (suc n) (x , a))))
+             (sym (merid (inr (pushoutMapₛ (suc n)
+                                (Iso.fun (⊎Iso (invIso Iso-Fin⊎Fin-Fin+) idIso)
+                                 (Iso.inv Iso-Fin⊎Fin-Fin+ x)
+                                 , north)))))
+    ∙ cong₂ _∙_ (cong merid {! -- Pushout→Bouquet (suc n) (pushoutCells (suc n)) (pushoutα> n) (snd PushoutCWskel .snd .snd .snd (suc n)) (Iso.fun (isCWPushoutIso n) (preboundary.αn+1 PushoutCWskel (suc n) (x , a)))!}) -- λ _ → Pushout→Bouquet (suc n) ? ? ? ?)
+                {!(Iso.fun (isCWPushoutIso n) (preboundary.αn+1 PushoutCWskel (suc n) (x , a)))!}
+    ∙ {!!} 
+
+  altT : (n : ℕ) (x : Fin (preboundary.An+1 PushoutCWskel (suc n)))
+    → fst (S₊∙ (suc (suc n))) → Susp (fst PushoutCWskel (suc (suc n)))
+  altT n x north = {!!}
+  altT n x south = {!!}
+  altT n x (merid a i) = {!!}
   
 
   charac∂ : (n : ℕ) → projC ∘ preboundary.pre∂ PushoutCWskel n ∘ Iso.inv (SphereBouquetCellIso n _)
@@ -794,7 +942,8 @@ module _ {ℓ ℓ' ℓ'' : Level} {B : CWskel ℓ} {C : CWskel ℓ'} {D : CWskel
   charac∂ zero = {!!}
   charac∂ (suc n) =
     funExt λ { (inl (inl (inl x))) → refl
-             ; (inl (inl (inr (x , y)))) → {! (projC ∘
+             ; (inl (inl (inr (x , y))))
+               → {! (projC ∘
        preboundary.pre∂ PushoutCWskel (suc n) ∘
        Iso.inv (SphereBouquetCellIso (suc n) (suc (suc n))))
       (inl (inl (inr (x , y))))!} -- refl
@@ -809,7 +958,7 @@ module _ {ℓ ℓ' ℓ'' : Level} {B : CWskel ℓ} {C : CWskel ℓ'} {D : CWskel
                        (λ j i → inr ({!!} , merid a i))
                     ∙ {!!}) j i
                     -}
-             ; (inl (inl (push a i))) → {!!}
+             ; (inl (inl (push a i))) → {!preboundary.isoCofBouquet PushoutCWskel (suc n) (inr ?)!}
               ; (inl (inr x)) → {!x!}
               ; (inl (push a i)) → {!!}
               ; (inr (inl x)) → refl
