@@ -44,6 +44,119 @@ open import Cubical.HITs.Wedge
 
 open import Hurewicz.random
 open import Cubical.HITs.SphereBouquet.Degree
+open import Cubical.Foundations.Pointed.Homogeneous
+open import Cubical.Foundations.Path
+
+
+open import Cubical.Homotopy.Group.Base
+
+private
+  pathlem : ∀ {ℓ} {A : Type ℓ} {x : A}  (Fx : x ≡ x) (Fpt : refl ≡ Fx) (p q : Fx ≡ Fx)
+     → Square (rUnit Fx ∙ cong (Fx ∙_) Fpt)
+               (rUnit Fx ∙ cong (Fx ∙_) Fpt)
+               (p ∙ q) (cong₂ _∙_ p q)
+  pathlem = J> λ p q → sym (rUnit _)
+    ◁ flipSquare (((λ i → (λ j → rUnit (p j) i) ∙ λ j → lUnit (q j) i)
+    ▷ sym (cong₂Funct _∙_ p q)))
+    ▷ rUnit _
+
+Bouquet→ΩBouquetSuspPresStr : ∀ {ℓ} {A : Type ℓ} (n : ℕ)
+  → (f g : S₊∙ (suc n) →∙ ⋁gen∙ A (λ _ → S₊∙ (suc n))) (s : _)
+  → Bouquet→ΩBouquetSusp A (λ _ → S₊∙ (suc n)) (∙Π f g .fst s)
+  ≡ Bouquet→ΩBouquetSusp A (λ _ → S₊∙ (suc n)) (fst f s)
+  ∙ Bouquet→ΩBouquetSusp A (λ _ → S₊∙ (suc n)) (fst g s)
+Bouquet→ΩBouquetSuspPresStr {A = A} zero f g base =
+    rUnit refl
+  ∙ refl
+  ∙ cong₂ _∙_ (sym (cong (Bouquet→ΩBouquetSusp A (λ _ → S₊∙ 1)) (snd f)))
+              (sym (cong (Bouquet→ΩBouquetSusp A (λ _ → S₊∙ 1)) (snd g)))
+Bouquet→ΩBouquetSuspPresStr {A = A} zero f g (loop i) j =
+  m _ _ (sym (snd f)) _ (sym (snd g)) (Bouquet→ΩBouquetSusp A (λ _ → S₊∙ 1))
+    refl (cong (fst f) loop) (cong (fst g) loop) j i 
+  where
+  m : ∀ {ℓ} {A B : Type ℓ} (x : A) (fpt : A) (fp : x ≡ fpt) (gpt : A) (gp : x ≡ gpt)
+    {b : B} (F : A → b ≡ b) (Fpt : F x ≡ refl) (fl : fpt ≡ fpt) (gl : gpt ≡ gpt)
+    → Square (cong F ((fp ∙∙ fl ∙∙ sym fp) ∙ (gp ∙∙ gl ∙∙ sym gp)))
+              (cong₂ _∙_ (cong F fl) (cong F gl))
+              (rUnit (F x) ∙ cong (F x ∙_) (sym Fpt) ∙ cong₂ _∙_ (cong F fp) (cong F gp))
+              (rUnit (F x) ∙ cong (F x ∙_) (sym Fpt) ∙ cong₂ _∙_ (cong F fp) (cong F gp))
+  m x = J> (J> λ F Fpt fl gl
+    → (cong (cong F) (λ j i → (rUnit fl (~ j) ∙ rUnit gl (~ j)) i)
+    ∙ cong-∙ F fl gl)
+    ◁ flipSquare (cong₂ _∙_ refl (sym (rUnit _))
+                ◁ pathlem (F x) (sym Fpt) (cong F fl) (cong F gl)
+                ▷ cong₂ _∙_ refl (rUnit _)))
+Bouquet→ΩBouquetSuspPresStr {A = A} (suc n) f g north =
+   rUnit refl
+  ∙ refl
+  ∙ cong₂ _∙_ (sym (cong (Bouquet→ΩBouquetSusp A (λ _ → S₊∙ (suc (suc n)))) (snd f)))
+              (sym (cong (Bouquet→ΩBouquetSusp A (λ _ → S₊∙ (suc (suc n)))) (snd g)))
+Bouquet→ΩBouquetSuspPresStr {A = A} (suc n) f g south =
+  rUnit refl
+  ∙ refl
+  ∙ cong₂ _∙_ (sym (cong (Bouquet→ΩBouquetSusp A (λ _ → S₊∙ (suc (suc n))))
+                   (cong (fst f) (sym (merid (ptSn (suc n)))) ∙ snd f)))
+              (sym (cong (Bouquet→ΩBouquetSusp A (λ _ → S₊∙ (suc (suc n))))
+                   (cong (fst g) (sym (merid (ptSn (suc n)))) ∙ snd g)))
+Bouquet→ΩBouquetSuspPresStr {A = A} (suc n) f g (merid a i) j =
+  m _ _ (sym (snd f)) _ (sym (snd g)) (Bouquet→ΩBouquetSusp A (λ _ → S₊∙ (suc (suc n)))) refl
+    _ (cong (fst f)  (merid (ptSn (suc n)))) (cong (fst f) (merid a))
+    _ (cong (fst g) (merid (ptSn (suc n)))) (cong (fst g) (merid a))
+    _ (sym (cong-∙ (fst f) (merid a) (sym (merid (ptSn (suc n))))))
+    _ (sym (cong-∙ (fst g) (merid a) (sym (merid (ptSn (suc n)))))) j i
+
+  
+  where
+  m : ∀ {ℓ} {A B : Type ℓ} (n : A) (fn : A) (fp : n ≡ fn) (gn : A) (gp : n ≡ gn)
+    {b : B} (F : A → b ≡ b) (Fn : F n ≡ refl) (fs : A) (flpt : fn ≡ fs) (fl : fn ≡ fs)  (gs : A) (glpt : gn ≡ gs) (gl : gn ≡ gs)
+    (w : _) → fl ∙ sym flpt ≡ w → (u : _) → gl ∙ sym glpt ≡ u
+    → Square (cong F ((fp ∙∙ w ∙∙ sym fp) ∙ (gp ∙∙ u ∙∙ sym gp)))
+              (cong₂ _∙_ (cong F fl) (cong F gl)) -- (cong₂ _∙_ (cong F fl) (cong F gl))
+              (rUnit (F n) ∙ cong (F n ∙_) (sym Fn) ∙ cong₂ _∙_ (cong F fp) (cong F gp))
+              (rUnit (F n) ∙ cong (F n ∙_) (sym Fn)
+                ∙ cong₂ _∙_ (cong F (sym (sym flpt ∙ sym fp)))
+                            (cong F (sym (sym glpt ∙ sym gp))))
+  m n = J> (J> λ F Fpt → J> λ fp → J> λ gp
+    → J> (J> ((cong (cong F) (cong₂ _∙_ (sym (rUnit _) ∙ sym (rUnit fp))
+                                         (sym (rUnit _) ∙ sym (rUnit gp)))
+                           ∙  cong-∙ F fp gp)
+            ◁ flipSquare (cong₂ _∙_ refl (sym (rUnit _))
+              ◁ flipSquare (flipSquare (pathlem _ (sym Fpt) _ _))
+            ▷ cong₂ _∙_ refl
+               (rUnit _
+               ∙ cong₂ _∙_ refl λ  j i → F (rUnit {x = n} refl j i)
+                                       ∙ F (rUnit {x = n} refl j i))))))
+
+⋁→Homogeneous≡ : ∀ {ℓ ℓ' ℓ''} {A : Type ℓ} {B : A → Pointed ℓ'} {C : Type ℓ''}
+  (f g : ⋁gen A B → C) → ((x : C) → isHomogeneous (C , x))
+  → f (inl tt) ≡ g (inl tt)
+  → ((x : _) → f (inr x) ≡ g (inr x))
+  → (x : _) → f x ≡ g x
+⋁→Homogeneous≡ {A = A} {B = B}{C = C} f g hom p q = funExt⁻ (cong fst main)
+  where
+  ptC = f (inl tt)
+
+  f' g' : ⋁gen∙ A B →∙ (C , ptC)
+  f' = f , refl
+  g' = g , sym p
+
+  ⋁→Iso : ∀ {ℓ} (C : Pointed ℓ) → Iso (⋁gen∙ A B →∙ C) ((x : A) → B x →∙ C)
+  fst (Iso.fun (⋁→Iso C) f x) y = fst f (inr (x , y))
+  snd (Iso.fun (⋁→Iso C) f x) = cong (fst f) (sym (push x)) ∙ snd f
+  fst (Iso.inv (⋁→Iso C) f) (inl x) = pt C
+  fst (Iso.inv (⋁→Iso C) f) (inr (x , y)) = f x .fst y 
+  fst (Iso.inv (⋁→Iso C) f) (push a i) = f a .snd (~ i)
+  snd (Iso.inv (⋁→Iso C) f) = refl
+  Iso.rightInv (⋁→Iso C) f = funExt λ x → ΣPathP (refl , sym (rUnit _))
+  Iso.leftInv (⋁→Iso C) f =
+    ΣPathP ((funExt (λ { (inl x) → sym (snd f) ; (inr x) → refl
+      ; (push a i) j → compPath-filler (cong (fst f) (sym (push a))) (snd f) (~ j) (~ i)}))
+      , λ i j → snd f (~ i ∨ j))
+
+  main : f' ≡ g'
+  main = sym (Iso.leftInv (⋁→Iso (C , ptC)) f')
+       ∙∙ cong (Iso.inv (⋁→Iso (C , ptC))) (funExt (λ x → →∙Homogeneous≡ (hom _) (funExt (λ y → q (x , y)))))
+       ∙∙ Iso.leftInv (⋁→Iso (C , ptC)) g'
 
 -- module _ {ℓ ℓ' : Level} where
 --   Pushout→Bouquet' : {Cₙ Cₙ₊₁ Cₙ₊₂ : Type ℓ} (n mₙ mₙ₊₁ : ℕ)
@@ -582,6 +695,122 @@ module _ (n : ℕ) {a b c : ℕ} where
     SplitBouquet→sumSphereBouquet (compPath-filler' (push tt) (λ i → inr (push x i)) (~ j) i)
 
 
+open import Cubical.Data.Nat.Order.Inductive
+Pushout→Bouquet-pre∂ : ∀ {ℓ} (B : CWskel ℓ) (n : ℕ)
+  → Fin (CWskel-fields.card B (suc n)) × S₊ n
+  → SphereBouquet n (Fin (CWskel-fields.card B n))
+Pushout→Bouquet-pre∂ B n x =
+  (Pushout→Bouquet n (CWskel-fields.card B n)
+        (CWskel-fields.α B n) (CWskel-fields.e B n)
+          (fst (CWskel-fields.e B n) (CWskel-fields.α B (suc n) x)))
+
+-- module _ where
+--   open FinSequenceMap renaming (fmap to ∣_∣)
+--   open CWskel-fields
+--   preFunctImproved : ∀ {ℓ ℓ'} {C : CWskel ℓ} {D : CWskel ℓ'}
+--     (m : ℕ) (f : finCellMap m C D) (n' : Fin m)
+--     → SphereBouquet (fst n')
+--         (Fin (CWskel-fields.card C (fst n')))
+--     → SphereBouquet (fst n')
+--         (Fin (CWskel-fields.card D (fst n')))
+--   preFunctImproved m f n' (inl x) = inl tt
+--   preFunctImproved {C = C} {D} (suc n) f (zero , p) (inr (x , w)) =
+--     inr ((fst (CW₁-discrete D) (∣ f ∣ fone (invEq (e C 0) (inr x)))) , w)
+--   preFunctImproved n f (suc zero , p) (inr (x , base)) = inl tt
+--   preFunctImproved {C = C} {D = D} (suc (suc n)) f (suc zero , p) (inr (x , loop i)) =
+--      (cong G (push (∣ f ∣ (1 , p) (α C 1 (x , false)))
+--            ∙ (λ i → inr (fcomm f (1 , p) (α C 1 (x , false)) i)))
+--     ∙∙ cong (G ∘ inr ∘ ∣ f ∣ (fsuc (1 , tt)) ∘ invEq (e C 1)) (push (x , false))
+--       ∙ cong (G ∘ inr ∘ ∣ f ∣ (fsuc (1 , tt)) ∘ invEq (e C 1)) (sym (push (x , true)))
+--     ∙∙ sym (cong G (push (∣ f ∣ (1 , p) (α C 1 (x , true)))
+--            ∙ (λ i → inr (fcomm f (1 , p) (α C 1 (x , true)) i))))) i
+--     where
+--     G = BouquetFuns.CTB 1 (D .snd .fst 1) (D .snd .snd .fst 1)
+--           (D .snd .snd .snd .snd 1)
+--   preFunctImproved n f (suc (suc s) , p) (inr (x , north)) = inl tt
+--   preFunctImproved n f (suc (suc s) , p) (inr (x , south)) = inl tt
+--   preFunctImproved {C = C} {D = D} (suc n') f (suc (suc n) , p) (inr (x , merid a i)) =
+--     (cong G ((push (∣ f ∣ (suc (suc n) , <ᵗ-trans-suc p) (α C (suc (suc n)) (x , a)))
+--             ∙ λ i → inr (fcomm f (suc (suc n) , p) (α C (suc (suc n)) (x , a)) i)))
+--     ∙ cong G (λ j → inr (∣ f ∣ (fsuc (suc (suc n) , p))
+--                       (invEq (e C (suc (suc n))) (push (x , a) j))))
+--     ∙ {!!}) i
+--     where
+--     G = BouquetFuns.CTB (suc (suc n)) (D .snd .fst (suc (suc n))) (D .snd .snd .fst (suc (suc n)))
+--           (D .snd .snd .snd .snd (suc (suc n)))
+--   preFunctImproved {C = C} {D = D} (suc m) f (zero , p) (push a i) =
+--     push (fst (CW₁-discrete D) (∣ f ∣ fone (invEq (e C 0) (inr a)))) i
+--   preFunctImproved m f (suc zero , p) (push a i) = inl tt
+--   preFunctImproved m f (suc (suc s) , p) (push a i) = inl tt
+
+pre∂Improved : ∀ {ℓ} (B : CWskel ℓ) (n : ℕ)
+      → SphereBouquet (suc n) (Fin (preboundary.An+1 (strictCWskel B) n))
+      → SphereBouquet (suc n) (Fin (preboundary.An (strictCWskel B) n))
+pre∂Improved B n (inl x) = inl tt
+pre∂Improved B zero (inr (x , base)) = inl tt
+pre∂Improved B zero (inr (x , loop i)) =
+  (cong (Iso.fun sphereBouquetSuspIso₀)
+    (Bouquet→ΩBouquetSusp (Fin (CWskel-fields.card B zero)) (λ _ → S₊∙ zero)
+      (Pushout→Bouquet-pre∂ B zero (x , false)))
+  ∙ sym (cong (Iso.fun sphereBouquetSuspIso₀)
+    (Bouquet→ΩBouquetSusp (Fin (CWskel-fields.card B zero)) (λ _ → S₊∙ zero)
+      (Pushout→Bouquet-pre∂ B zero (x , true))))) i
+pre∂Improved B (suc n) (inr (x , north)) = inl tt
+pre∂Improved B (suc n) (inr (x , south)) = inl tt
+pre∂Improved B (suc n) (inr (x , merid a i)) =
+    Bouquet→ΩBouquetSusp (Fin (CWskel-fields.card B (suc n))) (λ _ → S₊∙ (suc n))
+      (Pushout→Bouquet-pre∂ B (suc n) (x , a)) i
+pre∂Improved B zero (push a i) = inl tt
+pre∂Improved B (suc n) (push a i) = inl tt
+
+pre∂Improved≡ : ∀ {ℓ} (B : CWskel ℓ) (n : ℕ)
+  (x : SphereBouquet (suc n) (Fin (preboundary.An+1 B n)))
+  → preboundary.pre∂ B n x ≡ pre∂Improved B n x
+pre∂Improved≡ B zero (inl x) = refl
+pre∂Improved≡ B (suc n) (inl x) = refl
+pre∂Improved≡ B zero (inr (x , base)) = refl
+pre∂Improved≡ B zero (inr (x , loop i)) j =
+  hcomp (λ k →
+    λ {(i = i0) → Iso.fun sphereBouquetSuspIso₀ (w (push (preboundary.αn+1 B 0 (x , false)) (~ k ∧ ~ j)))
+     ; (i = i1) → Iso.fun sphereBouquetSuspIso₀ (w (push (preboundary.αn+1 B 0 (x , true)) (~ k)))
+     ; (j = i0) → Iso.fun sphereBouquetSuspIso₀
+                   (w (doubleCompPath-filler
+                     (push (preboundary.αn+1 B 0 (x , false)))
+                     (λ i → inr (invEq (CWskel-fields.e B (suc zero))
+                       ((push (x , false) ∙ sym (push (x , true))) i)))
+                     (sym (push (preboundary.αn+1 B 0 (x , true)))) k i))})
+        (Iso.fun sphereBouquetSuspIso₀ (w (push (preboundary.αn+1 B 0 (x , false)) (~ j ∨ i))))
+  where
+  w = (SuspBouquet→Bouquet (Fin (preboundary.An B 0)) (λ _ → S₊∙ zero))
+       ∘ (suspFun (preboundary.isoCofBouquet B 0))
+       ∘  (suspFun (to 0 cofibCW B))
+       ∘ (δ-pre (CW↪ B 1))
+
+pre∂Improved≡ B (suc n) (inr (x , north)) = refl
+pre∂Improved≡ B (suc n) (inr (x , south)) =
+   (Bouquet→ΩBouquetSusp (Fin (CWskel-fields.card B (suc n)))
+      (λ _ → S₊∙ (suc n)) (Pushout→Bouquet-pre∂ B (suc n) (x , ptSn (suc n))))
+pre∂Improved≡ B (suc n) (inr (x , merid a i)) j = h j i
+  where
+  open preboundary B (suc n)
+  h : Square (λ i → preboundary.pre∂ B (suc n) (inr (x , merid a i)))
+             (Bouquet→ΩBouquetSusp (Fin (CWskel-fields.card B (suc n)))
+                (λ _ → S₊∙ (suc n)) (Pushout→Bouquet-pre∂ B (suc n) (x , a)))
+             refl ((Bouquet→ΩBouquetSusp (Fin (CWskel-fields.card B (suc n)))
+      (λ _ → S₊∙ (suc n)) (Pushout→Bouquet-pre∂ B (suc n) (x , ptSn (suc n)))))
+  h = cong-∙∙ (SuspBouquet→Bouquet (Fin An) (λ _ → S₊∙ (suc n))
+            ∘ suspFun isoCofBouquet
+            ∘ suspFun (to suc n cofibCW B)
+            ∘ δ-pre (CW↪ B (suc (suc n))))
+            (push (αn+1 (x , a))) _ (sym (push (αn+1 (x , ptSn (suc n)))))
+    ∙ doubleCompPath≡compPath _ _ _ -- 
+    ∙ cong₂ _∙_ refl ((sym (lUnit _))) -- cong₂ _∙_ refl (sym (lUnit _)) ∙ refl
+    ◁ symP (compPath-filler (Bouquet→ΩBouquetSusp (Fin (CWskel-fields.card B (suc n)))
+                         (λ _ → S₊∙ (suc n)) (Pushout→Bouquet-pre∂ B (suc n) (x , a)))
+                        (sym (Bouquet→ΩBouquetSusp (Fin (CWskel-fields.card B (suc n)))
+                         (λ _ → S₊∙ (suc n)) (Pushout→Bouquet-pre∂ B (suc n) (x , ptSn (suc n))))))
+pre∂Improved≡ B zero (push a i) = refl
+pre∂Improved≡ B (suc n) (push a i) = refl
 
 module _ (isEquivPushoutA→PushoutPushoutMapStrict : ∀ {ℓ ℓ' ℓ''} {B : CWskel ℓ} {C : CWskel ℓ'} {D : CWskel ℓ''} (f : cellMap (strictCWskel B) (strictCWskel C)) (g : cellMap (strictCWskel B) (strictCWskel D))
             → (n : ℕ) → isEquiv (PushoutA→PushoutPushoutMapStrict f g n)) where
@@ -704,30 +933,382 @@ module _ (isEquivPushoutA→PushoutPushoutMapStrict : ∀ {ℓ ℓ' ℓ''} {B : 
     open import Hurewicz.random
     open import Cubical.HITs.SphereBouquet.Degree
 
-    charac∂ : (n : ℕ) (t : Fin n)
-      → Iso.fun (SphereBouquetCellIso (suc n) _)
+    
+
+    ∂L ∂R : (n : ℕ) → SplitBouquet (suc n) (card C (suc (suc n)))
+                       (card D (suc (suc n))) (card (strictCWskel B') (suc n))
+         → SplitBouquet (suc n) (card C (suc n)) (card D (suc n))
+             (card (strictCWskel B') n)
+    ∂L n = Iso.fun (SphereBouquetCellIso (suc n) _)
                         ∘ preboundary.pre∂ cofibCWskel (suc n)
                         ∘ Iso.inv (SphereBouquetCellIso (suc n) _)
-                        ≡ ((((λ x → inl (inr x))
-                          , {!λ i → inl ?!})
+    ∂R n = ((((λ x → inl (inr x))
+                          , (λ i → inl (push tt (~ i))) ∙ push tt)
                            ∘∙ (preboundary.pre∂ D (suc n) , sphereBouquetSuspIso∙))
                            ∘∙ foldR∙)
                        ∨→ SphereBouquet∙Π
-                            {!!}
-                            {!preboundary.pre∂ C n , sphereBouquetSuspIso∙) ∘∙ foldL∙!}
-                       {-
-                             (((λ x → inl (inr x)) , (λ i → inl (push tt (~ i))) ∙ push tt)
-                              ∘∙ ({!!} ∘∙ ((bouquetSusp→ (prefunctoriality.bouquetFunct (suc n) (cellMap→finCellMap (suc n) f) flast) , {!!}) ∘∙ {!!}))) -- bouquetSusp→ (prefunctoriality.bouquetFunct n (cellMap→finCellMap n f) {!!}) , refl))
-                             ((((inr , refl) ∘∙ (bouquetSusp→ (preboundary.pre∂ B n) , refl))))
-                             -}
-                        {-
-                        ((((λ x → inl (inl x)) , refl)
-                        ∘∙ ((preboundary.pre∂ C n , sphereBouquetSuspIso∙) ∘∙ foldL∙))
-                        ∨→ ((((λ x → inl (inl x)) , refl))
-                          ∘∙ (bouquetSusp→ (prefunctoriality.bouquetFunct (suc n)
-                            (cellMap→finCellMap (suc n) f) flast) , bouquetSusp→∙ n)))
-                            -}
-    charac∂ n = {!preboundary.pre∂ cofibCWskel (suc n)!}
+                            (((λ x → inl (inr x)) , (λ i → inl (push tt (~ i))) ∙ push tt)
+                              ∘∙ (bouquetSusp→ (prefunctoriality.bouquetFunct _ (cellMap→finCellMap (suc (suc n)) f) flast) , refl))
+                            (((inr , refl) ∘∙ (bouquetSusp→ (preboundary.pre∂ B n) , refl)))
+
+    ∂L' ∂R' : (n : ℕ) → SplitBouquet (suc n) (card C (suc (suc n)))
+                       (card D (suc (suc n))) (card (strictCWskel B') (suc n))
+         → SphereBouquet (suc (suc n)) (Fin (card cofibCWskel (suc n)))
+    ∂L' n =  preboundary.pre∂ cofibCWskel (suc n)
+                        ∘ Iso.inv (SphereBouquetCellIso (suc n) _)
+    ∂R' n x = Iso.inv (SphereBouquetCellIso (suc n) _) (∂R n x)
+
+
+
+    L1 :  (n : ℕ) (x : _) (a : _)
+      → cong (F1 (suc n))
+              (merid (preboundary.isoCofBouquet cofibCWskel (suc n)
+                (inr (pushoutMapₛ terminalCW f (suc n) ((finSplit3 _ _ _ (invEq (finSplit3≃ _ _ _) x))
+            , (Iso.fun (IsoSphereSusp (suc n)) a))))))
+      ≡ Bouquet→ΩBouquetSusp (Fin (card D (suc n) + card B n)) (λ _ → S₊∙ (suc n))
+              ((preboundary.isoCofBouquet cofibCWskel (suc n)
+                (inr (pushoutMapₛ terminalCW f (suc n) (x
+            , (Iso.fun (IsoSphereSusp (suc n)) a))))))
+    L1 n x a i = cong (F1 (suc n))
+              (merid (preboundary.isoCofBouquet cofibCWskel (suc n)
+                (inr (pushoutMapₛ terminalCW f (suc n)
+               (secEq (finSplit3≃ _ _ _) x i
+            , (Iso.fun (IsoSphereSusp (suc n)) a))))))
+
+    congSphereBouquetCellIsoLemma : (n : ℕ) (x : _) → preboundary.isoCofBouquet cofibCWskel (suc n) (inr (inr x))
+                   ≡ Iso.inv (SphereBouquetCellIso n (suc n)) (inl (inr
+                       (Pushout→Bouquet (suc n)
+                         (preboundary.An (strictCWskel D') (suc n))
+                         (preboundary.αn (strictCWskel D') (suc n))
+                         (idEquiv (fst (strictCWskel D') (suc (suc n)))) x)))
+    congSphereBouquetCellIsoLemma n (inl x) = refl
+    congSphereBouquetCellIsoLemma n (inr x) = refl
+    congSphereBouquetCellIsoLemma n (push a i) j = help j i
+      where
+      T = Pushout→Bouquet (suc n)
+                      (preboundary.An (PushoutCWSkel terminalCW f) (suc n))
+                      (preboundary.αn (PushoutCWSkel terminalCW f) (suc n))
+                      (compEquiv
+                       (PushoutA→PushoutPushoutMap terminalCW f n ,
+                        isEquivPushoutA→PushoutPushoutMap (strictCWskel B') UnitCWskel
+                        (strictCWskel D') terminalCW f n)
+                       (isoToEquiv (Iso-Pushoutα-PushoutPushoutMapₛ terminalCW f n)))
+      help : cong (λ x → preboundary.isoCofBouquet cofibCWskel (suc n) (inr (inr x))) (push a)
+           ≡ cong (λ x → Iso.inv (SphereBouquetCellIso n (suc n)) (inl (inr x)))
+                  (push (a .fst) ∙ (λ i₁ → inr (a .fst , σSn n (a .snd) i₁)))
+      help = (cong-∙ (T ∘ Iso-Pushoutα-PushoutPushoutMapₛ terminalCW f n .Iso.fun)
+                     _ _)
+           ∙ (cong₂ _∙_ (λ _ _ → inl tt)
+                        (cong-∙ T _ _
+                        ∙ (sym (lUnit _)
+                       ∙ cong₂ _∙_ refl
+                          λ i → cong (λ x₁ → Iso.inv (SphereBouquetCellIso n (suc n)) (inl (inr x₁)))
+                            (λ i₁ → inr (a .fst , σSn n (Iso.leftInv (IsoSphereSusp n) (snd a) i) i₁)))
+                        ∙ sym (cong-∙ (λ x → Iso.inv (SphereBouquetCellIso n (suc n)) (inl (inr x))) _ _))
+           ∙ sym (lUnit (cong
+              (λ x₁ → Iso.inv (SphereBouquetCellIso n (suc n)) (inl (inr x₁)))
+              (push (a .fst) ∙ (λ i₁ → inr (a .fst , σSn n (a .snd) i₁))))))
+
+
+    congSphereBouquetCellIsoLemma2 : (n : ℕ) (x : _)
+      → Bouquet→ΩBouquetSusp (Fin (card D (suc n) +ℕ card B n))
+              (λ _ → S₊∙ (suc n)) (Iso.inv (SphereBouquetCellIso n (suc n)) (inl (inr x)))
+      ≡ cong (λ x → Iso.inv (SphereBouquetCellIso (suc n) (suc n)) (inl (inr x)))
+             (Bouquet→ΩBouquetSusp (Fin (preboundary.An D (suc n)))
+              (λ _ → S₊∙ (suc n)) x)
+    congSphereBouquetCellIsoLemma2 n = ⋁→Homogeneous≡ _ _ (λ _ → isHomogeneousPath _ _)
+              refl
+              λ {(x , y)
+              → sym (cong-∙∙ (λ x₂ → Iso.inv (SphereBouquetCellIso (suc n) (suc n)) (inl (inr x₂))) _ _ _)}
+
+    congSphereBouquetCellIsoLemma3 : (n : ℕ) (x : _)
+      → Bouquet→ΩBouquetSusp (Fin (card D (suc n) +ℕ card B n))
+              (λ _ → S₊∙ (suc n))
+              (Iso.inv (SphereBouquetCellIso n (suc n)) (inr x))
+      ≡ cong (λ x → Iso.inv (SphereBouquetCellIso (suc n) (suc n)) (inr x))
+             (Bouquet→ΩBouquetSusp (Fin (preboundary.An B n)) (λ _ → S₊∙ (suc n)) x)
+    congSphereBouquetCellIsoLemma3 n = ⋁→Homogeneous≡ _ _ (λ _ → isHomogeneousPath _ _)
+              refl
+              λ {(x , y)
+              → sym (cong-∙∙ (λ x₂ → Iso.inv (SphereBouquetCellIso (suc n) (suc n)) (inr x₂)) _ _ _)}
+
+    ∂L'≡∂R'-inr : (n : _) (x : _) (a : _)
+      → cong (∂L' n) (λ i → inr (inr (x , (merid a i))))
+      ≡ cong (∂R' n) (λ i → inr (inr (x , (merid a i))))
+    ∂L'≡∂R'-inr n x a =
+         cong-∙∙ (F1 (suc n) ∘ F2 (suc n) ∘ F3 (suc n) ∘ F4 (suc n)) _ _ _
+      ∙∙ cong₃ _∙∙_∙∙_ (L1 n (inr x) a) (λ _ _ → inl tt)
+                       (cong sym (L1 n (inr x) (ptSn (suc n)) ∙ L1-vanish n x))
+      ∙∙ (sym (compPath≡compPath' _ _)
+       ∙ sym (rUnit _))
+      ∙∙ cong ((Bouquet→ΩBouquetSusp (Fin (card D (suc n) +ℕ card B n))) (λ _ → S₊∙ (suc n)))
+              (f1f2lem n x a)
+      ∙ Bouquet→ΩBouquetSuspPresStr n (f1 n x) (f2 n x) a
+      ∙∙ cong₂ _∙_ ((refl
+                   ∙ congSphereBouquetCellIsoLemma2 n _)
+                   ∙ rUnit _
+                  ∙ cong₃ _∙∙_∙∙_ (sym (cong sym p₁≡)) refl (sym p₁≡)
+                  ∙ sym (cong-∙∙ (Iso.inv (SphereBouquetCellIso (suc n) _)) _ _ _))
+                   (congSphereBouquetCellIsoLemma3 n _)
+      ∙∙ sym (cong-∙ (Iso.inv (SphereBouquetCellIso (suc n) _)) _ _)
+      ∙∙ cong (cong (Iso.inv (SphereBouquetCellIso (suc n) _))) (sym r')
+      where
+      f1 f2 : (n : ℕ) (x : _) → S₊∙ (suc n) →∙ ⋁gen∙ (Fin (card D (suc n) +ℕ card B n)) (λ _ → S₊∙ (suc n))
+      fst (f1 n x) a = Iso.inv (SphereBouquetCellIso n (suc n))
+        (inl (inr (prefunctoriality.bouquetFunct (suc (suc n))
+                   (cellMap→finCellMap (suc (suc n)) f) flast (inr (x , a)))))
+      snd (f1 zero x) = refl
+      snd (f1 (suc n) x) = refl
+      fst (f2 n x) a = Iso.inv (SphereBouquetCellIso n (suc n)) (inr (preboundary.pre∂ B n (inr (x , a))))
+      snd (f2 zero x) = refl
+      snd (f2 (suc n) x) = refl
+
+      EQ : (n : ℕ) → _ ≃ _
+      EQ n = (compEquiv
+                         (PushoutA→PushoutPushoutMap terminalCW f n ,
+                          isEquivPushoutA→PushoutPushoutMap (strictCWskel B') UnitCWskel
+                          (strictCWskel D') terminalCW f n)
+                         (isoToEquiv (Iso-Pushoutα-PushoutPushoutMapₛ terminalCW f n)))
+
+      PB : (n : ℕ) → _
+      PB n = Pushout→Bouquet (suc n)
+                          (preboundary.An (PushoutCWSkel terminalCW f) (suc n)) 
+                          (preboundary.αn (PushoutCWSkel terminalCW f) (suc n)) (EQ n)
+
+      compL : (n : _) (x : _) (a : _)
+        → cong (λ w → preboundary.isoCofBouquet cofibCWskel (suc n)
+                            (inr (pushoutMapₛ terminalCW f (suc n) (inr x , w)))) (merid a)
+        ≡ cong (PB n ∘ Iso-Pushoutα-PushoutPushoutMapₛ terminalCW f n .Iso.fun)
+                 (PushoutA→PushoutPushoutMapLR terminalCW f n (α B (suc n) (x , a)))
+       ∙ cong (PB n ∘ Iso-Pushoutα-PushoutPushoutMapₛ terminalCW f n .Iso.fun)
+              (cong (PushoutA→PushoutPushoutMapR terminalCW f n)
+                        (comm f (suc n) (α B (suc n) (x , a))
+                       ∙ cong (∣ f ∣ (suc (suc n))) (push (x , a))))
+      compL n x a =
+                  cong (cong (PB n))
+                        (cong (cong (Iso-Pushoutα-PushoutPushoutMapₛ terminalCW f n .Iso.fun))
+                          λ j i → PushoutA→PushoutPushoutMap'≡  n
+                                    (pushoutMapₛ terminalCW f (suc n) (inr x , merid a i)) j )
+                ∙ cong-∙ (PB n
+                         ∘ Iso-Pushoutα-PushoutPushoutMapₛ terminalCW f n .Iso.fun
+                         ∘ PushoutA→PushoutPushoutMap' n) _ _
+                ∙ cong₂ _∙_ (cong-∙ (PB n ∘ Iso-Pushoutα-PushoutPushoutMapₛ terminalCW f n .Iso.fun) _ _
+                            ∙ refl)
+                            refl
+                ∙ sym (assoc _ _ _)
+                ∙ cong₂ _∙_ refl
+                  (sym (cong-∙ (PB n
+                       ∘ Iso-Pushoutα-PushoutPushoutMapₛ terminalCW f n .Iso.fun
+                       ∘ PushoutA→PushoutPushoutMapR terminalCW f n)
+                        ((comm f (suc n) (α B (suc n) (x , a))))
+                        (cong (∣ f ∣ (suc (suc n))) (push (x , a))))
+                  ∙ refl)
+
+      CTB' : (n : ℕ) → _
+      CTB' n = BouquetFuns.CTB (suc n)
+                (card (strictCWskel D') (suc n))
+                (α (strictCWskel D') (suc n))
+                (idEquiv _)
+
+      f1f2lemPre : (n : _) (x : _) (a : _)
+        → preboundary.isoCofBouquet cofibCWskel (suc n)
+             (inr
+              (pushoutMapₛ terminalCW f (suc n)
+               (inr x , a)))
+         ≡ ∙Π (f1 n x) (f2 n x) .fst (Iso.inv (IsoSucSphereSusp n) a)
+      f1f2lemPre n x = λ { north → L n x ; south → R n x
+                       ; (merid a i) j → LR n x a j i}
+        where
+        L : (n : ℕ) (x : _) → inl tt ≡ ∙Π (f1 n x) (f2 n x) .fst (Iso.inv (IsoSucSphereSusp n) north)
+        L zero x = refl
+        L (suc n) x = refl
+
+        Rr :  (n : ℕ) (x : _) → ∙Π (f1 n x) (f2 n x) .fst (Iso.inv (IsoSucSphereSusp n) south) ≡ inl tt
+        Rr zero x = refl
+        Rr (suc n) x = refl
+
+        R : (n : ℕ) (x : _) → preboundary.isoCofBouquet cofibCWskel (suc n)
+                                 (inr (inr (∣ f ∣ (suc (suc n)) (inr x))))
+                            ≡ ∙Π (f1 n x) (f2 n x) .fst (Iso.inv (IsoSucSphereSusp n) south)
+        R n x = cong (λ x → preboundary.isoCofBouquet cofibCWskel (suc n) (inr (inr x)))
+            (cong (∣ f ∣ (suc (suc n))) (sym (push (x , ptSn n)))
+            ∙ sym (comm f (suc n) (α B (suc n) (x , ptSn n))))
+           ∙ sym (Rr n x)
+
+        LRmain : (n : ℕ) (x : _) (a : _)
+          → Square (cong (PB n ∘ Iso.fun (Iso-Pushoutα-PushoutPushoutMapₛ terminalCW f n)
+                                ∘ PushoutA→PushoutPushoutMap terminalCW f n)
+                                  (push (α (strictCWskel B') (suc n) (x , a)))
+                  ∙ cong (PB n ∘ Iso.fun (Iso-Pushoutα-PushoutPushoutMapₛ terminalCW f n)
+                                ∘ PushoutA→PushoutPushoutMap terminalCW f n)
+                          λ i → inr (∣ f ∣ (suc (suc n)) ((push (x , a) i))))
+                    (cong (∙Π (f1 n x) (f2 n x) .fst
+                         ∘ Iso.inv (IsoSucSphereSusp n)) (merid a))
+                    (L n x) (R n x)
+        LRmain zero x a = {!a!}
+        LRmain (suc n) x a = {!preboundary.pre∂ B (suc n) --  (inr (x , merid a ?))!}
+          ▷ cong₂ _∙_
+            (((rUnit _ ∙ cong₂ _∙_ (λ _ → cong (f1 (suc n) x .fst) (merid a))
+                    (sym ((λ i j → Iso.inv (SphereBouquetCellIso (suc n) (suc (suc n)))
+                                     (inl (inr (T2 i (~ j))))))))
+            ∙ sym (cong-∙ (f1 (suc n) x .fst) (merid a) (sym (merid (ptSn (suc n))))))
+            ∙ rUnit _)
+            ((rUnit _ ∙ cong₂ _∙_ (λ _ → cong (f2 (suc n) x .fst) (merid a))
+                    (sym (cong-∙∙ W _ _ _
+                       ∙ cong₃ _∙∙_∙∙_ refl
+                         (cong sym (cong-∙ (λ x → W (inr x)) (push (x , ptSn (suc n)))
+                           (sym (push (x , ptSn (suc n)))) ∙ rCancel _)) refl
+                       ∙ ∙∙lCancel _))
+            ∙ sym (cong-∙ (f2 (suc n) x .fst) (merid a) (sym (merid (ptSn (suc n))))))
+            ∙ rUnit _)
+          where
+          W = Iso.inv (SphereBouquetCellIso (suc n) (suc (suc n)))
+              ∘ inr ∘ SuspBouquet→Bouquet (Fin (preboundary.An B (suc n)))
+                 (λ _ → S₊∙ (suc n))
+                ∘ (suspFun (preboundary.isoCofBouquet B (suc n)))
+                ∘ (suspFun (to suc n cofibCW B))
+                ∘ (δ-pre (CW↪ B (suc (suc n))))
+          T2 : cong (λ a → prefunctoriality.bouquetFunct (suc (suc (suc n)))
+                 (cellMap→finCellMap (suc (suc (suc n))) f) flast (inr (x , a)))
+                   (merid (ptSn (suc n)))
+             ≡ refl
+          T2 = cong-∙∙ (CTB' (suc n) ∘ prefunctoriality.fn+1/fn _ (cellMap→finCellMap (suc (suc (suc n))) f) flast) _ _ _
+             ∙ cong₃ _∙∙_∙∙_ refl
+                  (cong-∙ (λ x → (CTB' (suc n) (prefunctoriality.fn+1/fn _
+                                   (cellMap→finCellMap (suc (suc (suc n))) f) flast (inr x)))) _ _
+                                ∙ rCancel _) refl
+             ∙ ∙∙lCancel _
+
+
+        LR : (n : ℕ) (x : _) (a : _)
+          → Square (λ i → preboundary.isoCofBouquet cofibCWskel (suc n)
+                             (inr (pushoutMapₛ terminalCW f (suc n) (inr x , merid a i))))
+                    (cong (∙Π (f1 n x) (f2 n x) .fst
+                         ∘ Iso.inv (IsoSucSphereSusp n)) (merid a))
+                    (L n x) (R n x)
+        LR n x a =
+         --  (((λ j i → PB n (Iso.fun (Iso-Pushoutα-PushoutPushoutMapₛ terminalCW f n)
+         --             (PushoutA→PushoutPushoutMap'≡ n
+         --               (pushoutMapₛ terminalCW f (suc n) (inr x , merid a i)) j))))
+         -- ∙
+           cong-∙ (PB n ∘ Iso.fun (Iso-Pushoutα-PushoutPushoutMapₛ terminalCW f n)
+                        ∘ PushoutA→PushoutPushoutMap terminalCW f n) _ _
+         ◁ (LRmain n x a)
+
+      f1f2lem : (n : _) (x : _) (a : _) → preboundary.isoCofBouquet cofibCWskel (suc n)
+                                             (inr
+                                              (pushoutMapₛ terminalCW f (suc n)
+                                               (inr x , Iso.fun (IsoSucSphereSusp n) a)))
+                                             ≡ ∙Π (f1 n x) (f2 n x) .fst a
+      f1f2lem n x a = {!!}
+
+      L1-vanish : (n : ℕ) (x : _) → L1 n (inr x) (ptSn (suc n)) i1 ≡ refl
+      L1-vanish zero x = refl
+      L1-vanish (suc n) x = refl
+      bouquetSusp→merid-pt : ∀ {ℓ} {A B : Type ℓ} (n : ℕ) (a : A) 
+        (f : SphereBouquet (suc n) A → SphereBouquet (suc n) B)
+        (fp : f (inl tt) ≡ inl tt)
+        → cong (bouquetSusp→ f) (λ i → inr (a , merid (ptSn (suc n)) i))
+        ≡ refl
+      bouquetSusp→merid-pt {B = B} n a f fp =
+        cong (Bouquet→ΩBouquetSusp B (λ _ → S₊∙ (suc n))) (cong f (sym (push a)) ∙ fp)
+        ∙ refl
+
+      p₁ : Path (SplitBouquet (suc n) (card C (suc n)) (card D (suc n)) (card (strictCWskel B') n)) _ _
+      p₁ =  (λ i → inl (push tt (~ i))) ∙ push tt
+
+      p₁≡ : cong (Iso.inv (SphereBouquetCellIso (suc n) (suc n))) p₁ ≡ refl
+      p₁≡ = cong-∙ (Iso.inv (SphereBouquetCellIso (suc n) (suc n))) (λ i → inl (push tt (~ i))) _ ∙ sym (lUnit _) ∙ refl
+      r' : cong (∂R n) (λ i → inr (inr (x , (merid a i))))
+        ≡ (sym p₁
+        ∙∙ (λ i → inl (inr (bouquetSusp→
+            (prefunctoriality.bouquetFunct (suc (suc n))
+             (cellMap→finCellMap (suc (suc n)) f) flast)
+               (inr (x , merid a i)))))
+         ∙∙ p₁)
+        ∙ λ i → inr (bouquetSusp→ (preboundary.pre∂ B n) (inr (x , merid a i)))
+      r' = cong₂ _∙_ (cong₃ _∙∙_∙∙_ (cong sym (sym (lUnit _) ∙ sym (lUnit p₁) ∙ refl))
+                     (cong-∙ (λ w → inl (inr
+                                      (bouquetSusp→
+                                       (prefunctoriality.bouquetFunct (suc (suc n))
+                                        (cellMap→finCellMap (suc (suc n)) f) flast)
+                                       (inr (x , w))))) (merid a) (sym (merid (ptSn (suc n))))
+                   ∙ cong₂ _∙_ refl
+                     (cong sym
+                       λ i j → inl (inr (bouquetSusp→merid-pt n x
+                        (prefunctoriality.bouquetFunct (suc (suc n))
+                          (cellMap→finCellMap (suc (suc n)) f) flast)
+                            refl i j)))
+                   ∙ sym (rUnit _))
+                     (sym (lUnit _) ∙ sym (lUnit p₁) ∙ refl)
+                   ∙ refl)
+                   (cong₃ _∙∙_∙∙_
+                     (cong sym (sym (lUnit _) ∙ sym (rUnit _)
+                     ∙ refl))
+                     (cong-∙ (λ w → inr (bouquetSusp→ (preboundary.pre∂ B n) (inr (x , w))))
+                             (merid a) (sym (merid (ptSn (suc n))))
+                   ∙ cong₂ _∙_ refl
+                     (cong sym (λ i j → inr (bouquetSusp→merid-pt n x (preboundary.pre∂ B n)
+                                             sphereBouquetSuspIso∙ i j) ))
+                   ∙ sym (rUnit _))
+                     (sym (lUnit _) ∙ sym (rUnit _)
+                     ∙ refl)
+                 ∙∙ sym (rUnit _)
+                 ∙∙ refl)
+
+    ∂L'≡∂R' : (n : _) (x : _) (a : _)
+      → cong (∂L' n) (λ i → inl (inr (inr (x , (merid a i)))))
+      ≡ cong (∂R' n) (λ i → inl (inr (inr (x , (merid a i)))))
+    ∂L'≡∂R' n x a =
+      cong-∙∙ (F1 (suc n) ∘ F2 (suc n) ∘ F3 (suc n) ∘ F4 (suc n)) _ _ _
+         ∙ cong₃ _∙∙_∙∙_ (L1 n (inl (inr x)) a) (λ _ _ → inl tt)
+                         (cong sym (L1 n (inl (inr x)) (ptSn (suc n))))
+         ∙ refl
+     ∙ (cong₃ _∙∙_∙∙_
+                   (cong (Bouquet→ΩBouquetSusp (Fin (card D (suc n) +ℕ card B n)) (λ _ → S₊∙ (suc n)))
+                         ((λ i → preboundary.isoCofBouquet cofibCWskel (suc n)
+                                    (inr (inr (α (strictCWskel D') (suc (suc n))
+                                       (x , Iso.leftInv (IsoSucSphereSusp n) a i)))))
+                         ∙ congSphereBouquetCellIsoLemma n _)
+                  ∙ congSphereBouquetCellIsoLemma2 n _)
+         refl
+         (cong sym (cong (Bouquet→ΩBouquetSusp (Fin (card D (suc n) +ℕ card B n)) (λ _ → S₊∙ (suc n)))
+                         ((λ i → preboundary.isoCofBouquet cofibCWskel (suc n)
+                                    (inr (inr (α (strictCWskel D') (suc (suc n))
+                                       (x , Iso.leftInv (IsoSucSphereSusp n) (ptSn (suc n)) i)))))
+                         ∙ congSphereBouquetCellIsoLemma n _)
+                  ∙ congSphereBouquetCellIsoLemma2 n _))
+     ∙ sym (cong-∙∙ (Iso.inv (SphereBouquetCellIso (suc n) _)) _ _ _))
+     ∙ cong (cong (Iso.inv (SphereBouquetCellIso (suc n) _)))
+            (((sym (cong-∙∙ (λ x → inl (inr (SuspBouquet→Bouquet (Fin (preboundary.An D (suc n)))
+                                (λ _ → S₊∙ (suc n))
+                                (suspFun (preboundary.isoCofBouquet D (suc n))
+                                 (suspFun (to suc n cofibCW D)
+                                  (δ-pre (CW↪ D (suc (suc n))) x))))))
+                           (push (preboundary.αn+1 D (suc n) (x , a)))
+                           (λ i → inr ((push (x , a) ∙ sym (push (x , ptSn (suc n)))) i))
+                           (sym (push (preboundary.αn+1 D (suc n) (x , ptSn (suc n)))))))
+            ∙ (λ _ i → inl (inr (preboundary.pre∂ D (suc n) (inr (x , merid a i))))))
+            ∙ (λ _ → cong (∂R n) (λ i → inl (inr (inr (x , (merid a i)))))))
+
+
+
+
+    charac∂ : (n : ℕ) (x : _)
+      → ∂L' n x ≡ ∂R' n x
+    charac∂ n (inl (inl (inl tt))) = refl
+    charac∂ n (inl (inr (inl tt))) = refl
+    charac∂ n (inl (inr (inr (x , north)))) = refl
+    charac∂ n (inl (inr (inr (x , south)))) = refl
+    charac∂ n (inl (inr (inr (x , merid a i)))) j = ∂L'≡∂R' n x a j i
+    charac∂ n (inl (inr (push a i))) = refl
+    charac∂ n (inl (push a i)) = refl
+    charac∂ n (inr (inl x)) = refl
+    charac∂ n (inr (inr (x , north))) = refl
+    charac∂ n (inr (inr (x , south))) = refl
+    charac∂ n (inr (inr (x , merid a i))) = {!!}
+    charac∂ n (inr (push a i)) = refl
+    charac∂ n (push tt i) = {!∂R' n (push tt i)!}
 
 
   -- module _ {ℓ ℓ' ℓ'' : Level} {B' : CWskel ℓ} {C' : CWskel ℓ'} {D' : CWskel ℓ''}
