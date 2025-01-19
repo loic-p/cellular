@@ -1145,8 +1145,10 @@ module _ (isEquivPushoutA→PushoutPushoutMapStrict : ∀ {ℓ ℓ' ℓ''} {B : 
                     (cong (∙Π (f1 n x) (f2 n x) .fst
                          ∘ Iso.inv (IsoSucSphereSusp n)) (merid a))
                     (L n x) (R n x)
-        LRmain zero x a = {!a!}
-        LRmain (suc n) x a = {!preboundary.pre∂ B (suc n) --  (inr (x , merid a ?))!}
+        LRmain zero x a = {!!}
+        LRmain (suc n) x a = {!cong (PB (suc n) ∘ Iso.fun (Iso-Pushoutα-PushoutPushoutMapₛ terminalCW f (suc n))
+                                ∘ PushoutA→PushoutPushoutMap terminalCW f (suc n))
+                                  (push (α (strictCWskel B') (suc (suc n)) (x , a))) i1!}
           ▷ cong₂ _∙_
             (((rUnit _ ∙ cong₂ _∙_ (λ _ → cong (f1 (suc n) x .fst) (merid a))
                     (sym ((λ i j → Iso.inv (SphereBouquetCellIso (suc n) (suc (suc n)))
@@ -1162,6 +1164,13 @@ module _ (isEquivPushoutA→PushoutPushoutMapStrict : ∀ {ℓ ℓ' ℓ''} {B : 
             ∙ sym (cong-∙ (f2 (suc n) x .fst) (merid a) (sym (merid (ptSn (suc n))))))
             ∙ rUnit _)
           where
+          P1 : cong
+                (PB (suc n) ∘ Iso.fun (Iso-Pushoutα-PushoutPushoutMapₛ terminalCW f (suc n)) ∘
+                 PushoutA→PushoutPushoutMap terminalCW f (suc n))
+                (push (α (strictCWskel B') (suc (suc n)) (x , a)))
+                ≡ (refl ∙∙ (λ i → f1 (suc n) x .fst (merid a i)) ∙∙ {!!})
+          P1 = {!!}
+
           W = Iso.inv (SphereBouquetCellIso (suc n) (suc (suc n)))
               ∘ inr ∘ SuspBouquet→Bouquet (Fin (preboundary.An B (suc n)))
                  (λ _ → S₊∙ (suc n))

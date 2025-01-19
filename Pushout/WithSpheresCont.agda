@@ -51,6 +51,15 @@ open import Cubical.Foundations.Path
 open import Pushout.WithSpheres
 open import Pushout.BouquetFunsGen
 
+-- invSides-filler-filler : ∀ {ℓ} {A : Type ℓ} {x y z : A} (p : x ≡ y) (q : x ≡ z) → (i j k : _) → A
+-- invSides-filler-filler {x = x} p q i j k =
+--   hfill (λ k → λ { (i = i0) → p (k ∧ j)
+--                  ; (i = i1) → q (~ j ∧ k)
+--                  ; (j = i0) → q (i ∧ k)
+--                  ; (j = i1) → p (~ i ∧ k)})
+--         (inS x)
+--         k
+
 module _ {ℓ ℓ'} (A : Pointed ℓ) {B : Pointed ℓ'} (f g : Susp∙ (typ A) →∙ B)
   where
   cong-·Susp-meridPt : cong (·Susp A f g .fst) (merid (pt A)) ≡ refl
@@ -529,7 +538,7 @@ module _ (isEquivPushoutA→PushoutPushoutMapStrict : ∀ {ℓ ℓ' ℓ''} {B : 
           ∙ cong (cofib→wedgeInr n ∘ fst (Iso-cofibskel' (suc n)) ∘ inr)
                  (sym (comm f (suc (suc n)) (α B (suc (suc n)) (x , ptSn (suc n)))))
          ∙ push tt
-      mainSuspLem n x (merid a i) j = {!!}
+      mainSuspLem n x (merid a i) j = {!fst (Iso-cofibskel' (suc n))!}
         where
         rCancelFiller : ∀ {ℓ} {A : Type ℓ} {x : A} (p : x ≡ x) (pr : p ≡ refl)
           → (i j k : _) → A
@@ -560,7 +569,7 @@ module _ (isEquivPushoutA→PushoutPushoutMapStrict : ∀ {ℓ ℓ' ℓ''} {B : 
                       (inS (inr north)) k
 
 
-        LeftInl : ∀ {ℓ} {A : Type ℓ} {x y z : A} (p : x ≡ y) {q r : y ≡ y}
+        LeftInl : ∀ {ℓ} {A : Type ℓ} {x y : A} (p : x ≡ y) {q r : y ≡ y}
           (qr : q ≡ r) (qrefl : refl ≡ q) → (i j k : _) → A
         LeftInl p {q = q} {r} qr qrefl i j k =
           hfill (λ k → λ {(i = i0) → p (~ k)
@@ -585,51 +594,78 @@ module _ (isEquivPushoutA→PushoutPushoutMapStrict : ∀ {ℓ ℓ' ℓ''} {B : 
         LEFT (suc n) (inr x₁) i j =
           hcomp (λ r → λ {(i = i0) → cofib→wedgeInr (suc n)
                                         (doubleCompPath-filler (push (inr x₁ , north))
-                                          refl (sym (push (inr x₁ , south))) i1 (~ j))
-                         ; (i = i1) → inr (toSusp (QuotCW B (suc (suc n)) , inl tt)
+                                          refl (sym (push (inr x₁ , south))) r (~ j))
+                         ; (i = i1) → {!!}
+                         {- inr (toSusp (QuotCW B (suc (suc n)) , inl tt)
                                              ((push (α B (suc (suc n)) (x₁ , ptSn (suc n)))
                                              ∙ (λ r → inr (push (x₁ , ptSn (suc n)) r))) r) j)
-                         ; (j = i0) → push tt i
-                         ; (j = i1) → push tt i
+                                             -}
+                         ; (j = i0) → compPath-filler' (push tt) (λ j → inr
+                                          (toSusp (Pushout (λ _ → tt) (CW↪ B (suc (suc n))) , inl tt)
+                                           (cofib→wedgeInrσ (suc (suc n)) south x₁) j)) (~ i) (~ r)
+                         ; (j = i1) → compPath-filler' (push tt) (λ j → inr
+                                          (toSusp (Pushout (λ _ → tt) (CW↪ B (suc (suc n))) , inl tt)
+                                           (cofib→wedgeInrσ (suc (suc n)) south x₁) j)) (~ i) (~ r) 
                          })
-              (F1 n x₁ i j i1)
+              {!!} -- (F1 n x₁ i j i1)
         LEFT zero (push (a , t) i) = {!a!}
         LEFT (suc n) (push (a , t) i) j k =
-          hcomp (λ r → λ {(j = i0) → c1 r k i
+          hcomp (λ r → λ { (i = i0) → {!!}
+                         ; (i = i1) → {!!}
+                         ; (j = i0) → ? -- cofib→wedgeInr (suc n) (PushoutA→PushoutPushoutMapLR-push-filler terminalCW f (suc n) a t i (~ k) r)
+                         ; (j = i1) → {!!}
+                         ; (k = i0) → {!cofib→wedgeInr (suc n)
+                                                 (invSides-filler-filler (push (inr a , north))
+                                                   (λ i → inl (inl (∣ f ∣ (suc (suc (suc n))) ( (push (a , t) (~ i)))))) i r (~ j))!}
+                         ; (k = i1) → {!cofib→wedgeInr (suc n) (invSides-filler-filler (push (inr a , north))
+                                                 (λ i → inl (inl (∣ f ∣ (suc (suc (suc n))) ( (push (a , t) (~ i)))))) r i (~ j))!}})
+                {!!}
+        {-
+          hcomp (λ r → λ { (i = i0) → LeftInl (push tt)
+                                           (λ i j → inr (toSusp (QuotCW B (suc (suc n)) , inl tt)
+                                                      (push (α B (suc (suc n)) (a , t)) i) j))
+                                           (λ j i → inr (rCancel (merid (inl tt)) (~ j) i)) j k r
+                         ; (j = i0) → c1 r k i
                          ; (j = i1) → inr (toSusp (QuotCW B (suc (suc n)) , inl tt)
                                            (minilem _ _ (push (a , t)) _ (sym (push (a , ptSn (suc n)))) inr _
                                              (sym (push (α B (suc (suc n)) (a , t))))  _
                                              (sym (push (α B (suc (suc n)) (a , ptSn (suc n))))) r i) k)
                          ; (k = i0) → push tt (j ∨ (~ r ∧ ~ i))
                          ; (k = i1) → push tt (j ∨ (~ r ∧ ~ i))})
-            (hcomp (λ r → λ {(i = i0) → SQ k i0 r
+            (hcomp (λ r → λ {(i = i0) → inr (rCancelFiller-coh3 _ (sym (rCancel (merid (inl tt)))) r j k)
                          ; (i = i1) → F1 n a j k r
-                         ; (j = i0) → SQ k i r
-                         ; (j = i1) → {!SQ k i0 r -- F1 n a (? ∨ ~ i) i0 ? -- SQ k i0 r -- F1 n a i1 i0 r!}
-                         ; (k = i0) → F1 n a (j ∨ ~ i) i0 r
-                         ; (k = i1) → F1 n a (j ∨ ~ i) i0 r})
-                   {!F1 n a i1 i0 ? -- F1 n a (j ∨ ~ i) i0 r!} -- (SQ k i i0)
-                   )
-           where --  r k i
-           inr* : _ → QuotCW B (suc (suc n))
-           inr* = inr
-           CubeO : Cube {A = QuotCW∙ D (suc (suc (suc n))) ⋁ Susp∙ (QuotCW B (suc (suc n)))} {!!}
-             (λ k i → inr ((toSusp (QuotCW B (suc (suc n)) , inl tt)
+                         ; (j = i0) → SQ k i r -- 
+                         ; (j = i1) → inr (rCancelFiller-coh2
+                                            _ (sym (rCancel _))
+                                            (cong (toSusp (QuotCW B (suc (suc n)) , inl tt))
                                              ((sym (λ i₃ → push (α B (suc (suc n)) (a , t)) (~ i₃)) ∙∙
                                                cong inr* (push (a , t) ∙ (λ i₃ → push (a , ptSn (suc n)) (~ i₃)))
-                                               ∙∙ (λ i₃ → push (α B (suc (suc n)) (a , ptSn (suc n))) (~ i₃)))
-                                              i)
-                                             k)))
-                       (λ r i → F1 n a i1 i0 r) (λ r i → F1 n a i1 i0 r)
-                       {!λ r k → inr (toSusp (QuotCW B (suc (suc n)) , inl tt) (inl tt) (~ k))!} -- (λ r k → SQ k i0 r)
-                       (λ r k → F1 n a i1 k r)
-                      
-           CubeO = {!!}
-           rCancelFiller-coh2 :  ∀ {ℓ} {A : Type ℓ} {x : A} (p : x ≡ x) (P : p ≡ p) (pr : refl ≡ p)
-             → Cube {!λ k i → !} (λ k i → P i k)
-                     (λ r i → p (~ r)) (λ r i → p (~ r))
-                     {!λ !} {!!}
-           rCancelFiller-coh2 = {!!}
+                                               ∙∙ (λ i₃ → push (α B (suc (suc n)) (a , ptSn (suc n))) (~ i₃)))))
+                                             r i k)
+                         ; (k = i0) → rCancelFiller-coh4 r j i
+                         ; (k = i1) → rCancelFiller-coh4 r j i
+                         })
+                   (SQ k i i0)
+                   )
+           where --  r k i
+
+
+
+           inr* : _ → QuotCW B (suc (suc n))
+           inr* = inr
+
+           rCancelFiller-coh2 :  ∀ {ℓ} {A : Type ℓ} {x : A} (p : x ≡ x) (pr : refl ≡ p)  (P : p ≡ p)
+             → Cube ((pr ∙∙ P ∙∙ sym pr)) P -- r i k
+                     pr (λ r k → rCancelFiller _ (sym pr) r k i1)
+                     (λ j i → pr i (~ j)) λ j i → pr i (~ j)
+           rCancelFiller-coh2 {x = x} = J> λ P → sym (rUnit P)
+             ◁ flipSquare ((λ i _ → P i)
+             ▷ λ j i k → rCancelFiller (λ _ → x) refl i k j)
+
+           rCancelFiller-coh3 :  ∀ {ℓ} {A : Type ℓ} {x : A} (p : x ≡ x) (pr : refl ≡ p)
+             -- r j k
+             → Cube (λ _ _ → x) pr (λ r k → p (~ r)) pr (λ j i → pr (~ i) (~ j)) λ j i → pr (~ i) (~ j) 
+           rCancelFiller-coh3 = J> refl
 
 
            minilem : ∀ {ℓ} {A B : Type ℓ}
@@ -656,6 +692,26 @@ module _ (isEquivPushoutA→PushoutPushoutMapStrict : ∀ {ℓ ℓ' ℓ''} {B : 
                             (cofib→wedgeInrσ (suc (suc n)) (merid t i) a))
                 ∙∙ rCancel (merid (inl tt))) j i))) k
              -- k
+
+
+           rCancelFiller-gen : ∀ {ℓ ℓ'} {A : Type ℓ} {B : Type ℓ'} (f : A → B) {n : A} (finl : B)
+             (pushtt⁻¹ : f n ≡ finl) (p : n ≡ n) (q : refl ≡ p)
+             → Cube (λ j i → f n) (λ j i → pushtt⁻¹ (~ (j ∨ ~ i)))
+                                      (λ r i → compPath-filler' (sym pushtt⁻¹) (cong f p) i (~ r)) -- (λ r i → SQ i0 i r)
+                                      (λ r i →  f (q i (~ r)))
+                                      (λ r j → f (q (~ j) (~ r)))
+                                      λ r i → compPath-filler' (sym pushtt⁻¹) (cong f p) (~ i) (~ r)
+           rCancelFiller-gen f {n = n} = J> (J> λ i j k → compPath-filler' (λ _ → f n) refl (~ j ∧ k) (~ i) )
+
+           rCancelFiller-coh4 :  Cube (λ j i → inr north) (λ j i → push tt (j ∨ ~ i))
+                                      (λ r i → SQ i0 i r)
+                                      (λ r i →  inr (rCancel (merid (inl tt)) (~ i) (~ r)))
+                                      (λ r j → inr (rCancel (merid (inl tt)) j (~ r)))
+                                      λ r j → F1 n a j i0 r
+           rCancelFiller-coh4 =
+             rCancelFiller-gen inr _ (sym (push tt)) _ (sym (rCancel (merid (inl tt))))
+
+
            c1 : Cube {A = QuotCW∙ D (suc (suc (suc n))) ⋁ Susp∙ (QuotCW B (suc (suc n)))}
                 (λ i j → SQ i j i1)
                 (λ i j → cofib→wedgeInr (suc n)
@@ -666,7 +722,29 @@ module _ (isEquivPushoutA→PushoutPushoutMapStrict : ∀ {ℓ ℓ' ℓ''} {B : 
                 λ r k → cofib→wedgeInr (suc n)
                            (doubleCompPath-filler (push (inr a , north))
                              refl (sym (push (inr a , south))) i1 (~ k))
-           c1 = {!!}
+           c1 r i j =
+             hcomp (λ k → λ {(i = i0) → {!cofib→wedgeInr (suc n)
+                                             (PushoutA→PushoutPushoutMapLR-push-filler terminalCW f (suc n) a t
+                                              r i1 k)!}
+                         ; (i = i1) → {!!}
+                         ; (j = i0) → push tt (~ r)
+                         ; (j = i1) → cofib→wedgeInr (suc n)
+                                        (doubleCompPath-filler (push (inr a , north))
+                                          refl (sym (push (inr a , south))) k (~ i))
+                         ; (r = i0) → {!SQ i j k!} --  -- 
+                         ; (r = i1)
+                           → cofib→wedgeInr (suc n)
+                                (PushoutA→PushoutPushoutMapLR-push-filler terminalCW f (suc n) a t j (~ i) k)
+                         })
+                   (compPath-filler' (push tt)
+                     (λ ii → inr
+                        (toSusp (Pushout (λ _ → tt) (CW↪ B (suc (suc n))) , inl tt)
+                         (cofib→wedgeInrσ (suc (suc n)) (merid t (~ i)) a) ii)) r j)
+                 where
+                 big : {!!}
+                 big = {!!}
+
+-}
 
         -- LEFT : (n : ℕ) (z : _)
         --   → Square (cong (cofib→wedgeInr n)
