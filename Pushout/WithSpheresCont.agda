@@ -612,7 +612,7 @@ module _ (isEquivPushoutA→PushoutPushoutMapStrict : ∀ {ℓ ℓ' ℓ''} {B : 
         LEFT (suc n) (push (a , t) i) j k =
           hcomp (λ r → λ { (i = i0) → {!!}
                          ; (i = i1) → {!!}
-                         ; (j = i0) → ? -- cofib→wedgeInr (suc n) (PushoutA→PushoutPushoutMapLR-push-filler terminalCW f (suc n) a t i (~ k) r)
+                         ; (j = i0) → {!!} -- cofib→wedgeInr (suc n) (PushoutA→PushoutPushoutMapLR-push-filler terminalCW f (suc n) a t i (~ k) r)
                          ; (j = i1) → {!!}
                          ; (k = i0) → {!cofib→wedgeInr (suc n)
                                                  (invSides-filler-filler (push (inr a , north))

@@ -524,14 +524,14 @@ module _ {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 n) where
     ... | gt x | st | ah = refl
 
 
-  HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap : Hˢᵏᵉˡ SphereBouquet/ˢᵏᵉˡ n .fst → ℤ[]/ImSphereMap .fst
+  HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap : H̃ˢᵏᵉˡ SphereBouquet/ˢᵏᵉˡ (suc n) .fst → ℤ[]/ImSphereMap .fst
   HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap =
     SQ.rec squash/
       (λ f → [ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun' (suc n ≟ᵗ suc n) (suc n ≟ᵗ suc (suc n)) (fst f) ])
       λ {(a , ak) (b , bk) → PT.elim (λ _ → squash/ _ _) λ {(t , s) → pathlemma a b ak bk (t , cong fst s)}}
 
-  HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-hom : (x y : Hˢᵏᵉˡ SphereBouquet/ˢᵏᵉˡ n .fst)
-    → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap (GroupStr._·_ (Hˢᵏᵉˡ SphereBouquet/ˢᵏᵉˡ n .snd) x y)
+  HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-hom : (x y : H̃ˢᵏᵉˡ SphereBouquet/ˢᵏᵉˡ (suc n) .fst)
+    → HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap (GroupStr._·_ (H̃ˢᵏᵉˡ SphereBouquet/ˢᵏᵉˡ (suc n) .snd) x y)
     ≡ GroupStr._·_ (ℤ[]/ImSphereMap .snd)
                    (HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap x)
                    (HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap y)
@@ -539,7 +539,7 @@ module _ {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 n) where
     (λ _ _ → squash/ _ _)
     λ f g → cong [_] (HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-fun'-hom _ _ (fst f) (fst g))
 
-  ℤ[]/ImSphereMap→HₙSphereBouquetⁿ/ : ℤ[]/ImSphereMap .fst → Hˢᵏᵉˡ SphereBouquet/ˢᵏᵉˡ n .fst
+  ℤ[]/ImSphereMap→HₙSphereBouquetⁿ/ : ℤ[]/ImSphereMap .fst → H̃ˢᵏᵉˡ SphereBouquet/ˢᵏᵉˡ (suc n) .fst
   ℤ[]/ImSphereMap→HₙSphereBouquetⁿ/ =
     SQ.rec squash/
       (λ a → [ HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-inv'
@@ -613,7 +613,7 @@ module _ {c1 c2 : ℕ} {n : ℕ} (α : SphereBouquetMap c1 c2 n) where
                      (HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap-inv'
                        (suc n ≟ᵗ suc n) (suc n ≟ᵗ suc (suc n)) a)
 
-  GroupIso-Hₙ₊₁SphereBouquetⁿ/→ℤ[]/ImSphereMap : GroupIso (Hˢᵏᵉˡ SphereBouquet/ˢᵏᵉˡ n) ℤ[]/ImSphereMap
+  GroupIso-Hₙ₊₁SphereBouquetⁿ/→ℤ[]/ImSphereMap : GroupIso (H̃ˢᵏᵉˡ SphereBouquet/ˢᵏᵉˡ (suc n)) ℤ[]/ImSphereMap
   Iso.fun (fst GroupIso-Hₙ₊₁SphereBouquetⁿ/→ℤ[]/ImSphereMap) = HₙSphereBouquetⁿ/→ℤ[]/ImSphereMap
   Iso.inv (fst GroupIso-Hₙ₊₁SphereBouquetⁿ/→ℤ[]/ImSphereMap) = ℤ[]/ImSphereMap→HₙSphereBouquetⁿ/
   Iso.rightInv (fst GroupIso-Hₙ₊₁SphereBouquetⁿ/→ℤ[]/ImSphereMap) =
@@ -670,17 +670,17 @@ opaque
   inKerGenerator {n = n} α k = inKerAll α k _
 
 
-genHˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ : {c1 c2 n : ℕ} (α : SphereBouquetMap c1 c2 n) (k : Fin c2) → Hˢᵏᵉˡ (SphereBouquet/ˢᵏᵉˡ α) n .fst
-genHˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ α k =
+genH̃ˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ : {c1 c2 n : ℕ} (α : SphereBouquetMap c1 c2 n) (k : Fin c2) → H̃ˢᵏᵉˡ (SphereBouquet/ˢᵏᵉˡ α) (suc n) .fst
+genH̃ˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ α k =
   [ ℤFinGenerator (fin→SphereBouquet/Cell α _ _ k)
   , inKerGenerator α k ]
 
 
-isGen-genHˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ : {c1 c2 n : ℕ} (α : SphereBouquetMap c1 c2 n) (k : Fin c2)
+isGen-genH̃ˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ : {c1 c2 n : ℕ} (α : SphereBouquetMap c1 c2 n) (k : Fin c2)
   → Iso.fun (fst (GroupIso-Hₙ₊₁SphereBouquetⁿ/→ℤ[]/ImSphereMap α))
-             (genHˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ α k)
+             (genH̃ˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ α k)
    ≡ [ ℤFinGenerator k ]
-isGen-genHˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ {n = n} α k with (suc n ≟ᵗ suc (suc n)) | (n ≟ᵗ n)
+isGen-genH̃ˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ {n = n} α k with (suc n ≟ᵗ suc (suc n)) | (n ≟ᵗ n)
 ... | lt x | lt x₁ = ⊥.rec (¬m<ᵗm x₁)
 ... | lt x | eq x₁ = refl
 ... | lt x | gt x₁ = ⊥.rec (¬m<ᵗm x₁)

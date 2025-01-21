@@ -133,31 +133,31 @@ isPropIsInducedAbelianisationGroupEquiv =
 -- todo: update universe level after fixing it in abelianisaion file
 module _ where
   preHurewiczMap : {n : ℕ} (X : CW ℓ-zero) (x : fst X) (f : S₊∙ (suc n) →∙ (fst X , x))
-    → GroupHom (Hᶜʷ (Sᶜʷ (suc n)) n) (Hᶜʷ X n)
-  preHurewiczMap {n = n} X x f = Hᶜʷ→ {C = Sᶜʷ (suc n)} {D = X} n (fst f)
+    → GroupHom (H̃ᶜʷ (Sᶜʷ (suc n)) (suc n)) (H̃ᶜʷ X (suc n))
+  preHurewiczMap {n = n} X x f = H̃ᶜʷ→ {C = Sᶜʷ (suc n)} {D = X} (suc n) (fst f)
 
   HurewiczMapUntrunc :  {n : ℕ} (X : CW ℓ-zero) (x : fst X)
-    (f : S₊∙ (suc n) →∙ (fst X , x)) → Hᶜʷ X n .fst
+    (f : S₊∙ (suc n) →∙ (fst X , x)) → H̃ᶜʷ X (suc n) .fst
   HurewiczMapUntrunc {n = n} X x f = preHurewiczMap X x f .fst (genHₙSⁿ n)
 
   HurewiczMap : {n : ℕ} (X : CW ℓ-zero) (x : fst X)
     → π' (suc n) (fst X , x)
-    → fst (Hᶜʷ X n)
-  HurewiczMap X x = ST.rec (GroupStr.is-set (snd (Hᶜʷ X _))) (HurewiczMapUntrunc X x)
+    → fst (H̃ᶜʷ X (suc n))
+  HurewiczMap X x = ST.rec (GroupStr.is-set (snd (H̃ᶜʷ X _))) (HurewiczMapUntrunc X x)
 
 
-  
+
   HurewiczMapHom :  {n : ℕ} (X : CW ℓ-zero) (x : fst X) (f g : π' (suc n) (fst X , x))
     → isConnected 2 (fst X)
      → HurewiczMap X x (·π' n f g)
-      ≡ GroupStr._·_ (snd (Hᶜʷ X n))
+      ≡ GroupStr._·_ (snd (H̃ᶜʷ X (suc n)))
           (HurewiczMap X x f) (HurewiczMap X x g)
   HurewiczMapHom {n = n} = uncurry λ X → PT.elim
-    (λ x → isPropΠ4 λ _ _ _ _ → GroupStr.is-set (snd (Hᶜʷ (X , x) n)) _ _)
+    (λ x → isPropΠ4 λ _ _ _ _ → GroupStr.is-set (snd (H̃ᶜʷ (X , x) (suc n))) _ _)
     (uncurry λ Xsk → EquivJ (λ X y → (x : X) (f g : π' (suc n) (X , x)) →
       isConnected 2 X →
       HurewiczMap (X , ∣ Xsk , y ∣₁) x (·π' n f g) ≡
-      (snd (Hᶜʷ (X , ∣ Xsk , y ∣₁) n) GroupStr.·
+      (snd (H̃ᶜʷ (X , ∣ Xsk , y ∣₁) (suc n)) GroupStr.·
        HurewiczMap (X , ∣ Xsk , y ∣₁) x f)
       (HurewiczMap (X , ∣ Xsk , y ∣₁) x g))
       (λ x → TR.rec (isPropΠ3 (λ _ _ _ → squash/ _ _))
@@ -176,7 +176,7 @@ module _ where
         (f g : π' (suc n) (realise Xsk , x))
         → isConnected 2 (realise Xsk)
         → HurewiczMap X' x (·π' n f g)
-        ≡ GroupStr._·_ (snd (Hᶜʷ X' n))
+        ≡ GroupStr._·_ (snd (H̃ᶜʷ X' (suc n)))
            (HurewiczMap X' x f) (HurewiczMap X' x g)
       resch x₀ = J> ST.elim2 (λ _ _ → isSetΠ λ _ → isProp→isSet (squash/ _ _))
         λ f g t → PT.rec2 (squash/ _ _)
@@ -193,15 +193,15 @@ module _ where
        GoalTy : (f g : S₊∙ (suc n) →∙ (realise Xsk , CW↪∞ Xsk 1 x₀)) → Type _
        GoalTy f g =
          HurewiczMap X' (CW↪∞ Xsk 1 x₀) (·π' n ∣ f ∣₂ ∣ g ∣₂)
-             ≡ GroupStr._·_ (snd (Hᶜʷ X' n))
+             ≡ GroupStr._·_ (snd (H̃ᶜʷ X' (suc n)))
                (HurewiczMap X' (CW↪∞ Xsk 1 x₀) ∣ f ∣₂)
                (HurewiczMap X' (CW↪∞ Xsk 1 x₀) ∣ g ∣₂)
        module _ (f' g' : S₊∙ (suc n) →∙ X∙) where
          multCellMap : finCellApprox (Sˢᵏᵉˡ (suc n)) Xsk (fst (∙Π (incl∙ Xsk x₀ ∘∙ f') (incl∙ Xsk x₀ ∘∙ g')) ∘
            invEq (isCWSphere (suc n) .snd))
-                        (suc (suc (suc n)))
+                        (suc (suc (suc (suc n))))
          multCellMap =  betterFinCellApproxS Xsk (suc n) x₀ (∙Π f' g') (∙Π (incl∙ Xsk x₀ ∘∙ f') (incl∙ Xsk x₀ ∘∙ g'))
-                            (λ x → funExt⁻ (cong fst (∙Π∘∙ n f' g' (incl∙ Xsk x₀))) x ∙ refl) (suc (suc (suc n)))
+                            (λ x → funExt⁻ (cong fst (∙Π∘∙ n f' g' (incl∙ Xsk x₀))) x ∙ refl) (suc (suc (suc (suc n))))
 
          G : (n : ℕ) → _
          G n = BouquetFuns.CTB (suc n) (CWskel-fields.card Xsk (suc n))
@@ -212,8 +212,8 @@ module _ where
          fEq : (n : ℕ) (f' : S₊∙ (suc n) →∙ X* n) (q : _) (x : _) (a : _)
            → f' .fst ((invEq (SαEqGen (suc n) (suc n) (eq x) q) ∘ inl) a) ≡ CWskel∙ Xsk x₀ (suc n)
          fEq n f' (lt x₁) x a = snd f'
-         fEq n f' (eq x₁) x a = ⊥.rec (¬m<ᵗm (subst (_<ᵗ_ (suc n)) ((sym x₁) ∙ cong predℕ x) <ᵗsucm)) -- 
-         fEq n f' (gt x₁) x a = ⊥.rec (¬-suc-n<ᵗn (subst (_<ᵗ_ (suc (suc n))) (λ i → predℕ ( (x i))) x₁)) -- 
+         fEq n f' (eq x₁) x a = ⊥.rec (¬m<ᵗm (subst (_<ᵗ_ (suc n)) ((sym x₁) ∙ cong predℕ x) <ᵗsucm)) --
+         fEq n f' (gt x₁) x a = ⊥.rec (¬-suc-n<ᵗn (subst (_<ᵗ_ (suc (suc n))) (λ i → predℕ ( (x i))) x₁)) --
 
          alt : (n : ℕ) (f : S₊∙ (suc n) →∙ X* n) (p : _) (q : _)
            → cofib (invEq (SαEqGen (suc n) (suc n) p q) ∘ inl) → cofibCW (suc n) Xsk
@@ -236,10 +236,10 @@ module _ where
          module _ (f' : S₊∙ (suc n) →∙ X∙) (Q : _) where
            private
              fbet = (betterFinCellApproxS Xsk (suc n) x₀ f'
-                 (incl∙ Xsk x₀ ∘∙ f') Q (suc (suc (suc n))))
+                 (incl∙ Xsk x₀ ∘∙ f') Q (suc (suc (suc (suc n)))))
 
            alt≡inr : (x : _)
-             → prefunctoriality.fn+1/fn (suc (suc (suc n))) (fbet .fst) (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm) (inr x)
+             → prefunctoriality.fn+1/fn (suc (suc (suc (suc n)))) (fbet .fst) (suc n , <ᵗ-trans-suc (<ᵗ-trans <ᵗsucm <ᵗsucm)) (inr x)
              ≡ alt n f' (suc (suc n) ≟ᵗ suc (suc n)) (suc n ≟ᵗ suc (suc n)) (inr x)
            alt≡inr x with (n ≟ᵗ n)
            ... | lt x₁ = ⊥.rec (¬m<ᵗm x₁)
@@ -257,7 +257,7 @@ module _ where
            ... | lt x = ⊥.rec (¬m<ᵗm x)
            ... | eq x = flipSquare (help (cong suc (cong suc x)) (sym (isSetℕ _ _ _ _)))
              where
-             
+
              cool : makeFinSequenceMapGen∙ Xsk _ x₀ (fst f') (snd f') (suc n) (eq refl)
                   ≡ transportRefl _ ∙ snd f'
              cool = cong₂ _∙_ (λ j i → subst (fst Xsk) (isSet→isGroupoid isSetℕ _ _ _ _ (isSetℕ (suc (suc n)) _ refl refl) refl j i)
@@ -291,21 +291,21 @@ module _ where
              ... | gt x = ⊥.rec (¬-suc-n<ᵗn x)
            ... | gt x = ⊥.rec (¬m<ᵗm x)
 
-           alt≡ : (x : _) → prefunctoriality.fn+1/fn (suc (suc (suc n))) (fbet .fst) (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm) x
+           alt≡ : (x : _) → prefunctoriality.fn+1/fn (suc (suc (suc (suc n)))) (fbet .fst) (suc n , <ᵗ-trans-suc (<ᵗ-trans <ᵗsucm <ᵗsucm)) x
                           ≡ alt n f' (suc (suc n) ≟ᵗ suc (suc n)) (suc n ≟ᵗ suc (suc n)) x
            alt≡ (inl x) = refl
            alt≡ (inr x) = alt≡inr x
            alt≡ (push a i) = alt≡push a i
 
-           bouquetFunct≡ : prefunctoriality.bouquetFunct (suc (suc (suc n))) (fbet .fst) (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm)
+           bouquetFunct≡ : prefunctoriality.bouquetFunct (suc (suc (suc (suc n)))) (fbet .fst) (suc n , <ᵗ-trans-suc (<ᵗ-trans <ᵗsucm <ᵗsucm))
                          ≡ F n f' (suc (suc n) ≟ᵗ suc (suc n)) (suc n ≟ᵗ suc (suc n))
            bouquetFunct≡ = funExt (λ x → cong (G n) (alt≡ _))
-    
+
 
          fbet = (betterFinCellApproxS Xsk (suc n) x₀ f'
-                        (incl∙ Xsk x₀ ∘∙ f') (λ _ → refl) (suc (suc (suc n))))
+                        (incl∙ Xsk x₀ ∘∙ f') (λ _ → refl) (suc (suc (suc (suc n)))))
          gbet = (betterFinCellApproxS Xsk (suc n) x₀ g'
-                        (incl∙ Xsk x₀ ∘∙ g') (λ _ → refl) (suc (suc (suc n))))
+                        (incl∙ Xsk x₀ ∘∙ g') (λ _ → refl) (suc (suc (suc (suc n)))))
 
 
          wraplem : ∀ {ℓ} {A : Type ℓ} {x : A} (y : A) (p : x ≡ y) (l1 l2 : y ≡ y)
@@ -446,13 +446,14 @@ module _ where
          itMain n f' g' (eq x₁) (gt x₂) x = ⊥.rec (¬-suc-n<ᵗn x₂)
          itMain n f' g' (gt x₁) q x = ⊥.rec (¬m<ᵗm x₁)
 
-         it : (x : _) → prefunctoriality.bouquetFunct (suc (suc (suc n)))
-                (multCellMap .fst) (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm) x
+         it : (x : _) → prefunctoriality.bouquetFunct (suc (suc (suc (suc n))))
+                (multCellMap .fst) (suc n , <ᵗ-trans-suc (<ᵗ-trans <ᵗsucm <ᵗsucm)) x
             ≡ SphereBouquet∙Π
-               (prefunctoriality.bouquetFunct (suc (suc (suc n)))
-                 (fbet .fst) (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm) , refl)
-               (prefunctoriality.bouquetFunct (suc (suc (suc n)))
-                 (gbet .fst) (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm) , refl) .fst x
+               (prefunctoriality.bouquetFunct (suc (suc (suc (suc n))))
+                 (fbet .fst) (suc n , <ᵗ-trans-suc (<ᵗ-trans <ᵗsucm <ᵗsucm)) , refl)
+               (prefunctoriality.bouquetFunct (suc (suc (suc (suc n))))
+                 (gbet .fst) (suc n , <ᵗ-trans-suc (<ᵗ-trans <ᵗsucm <ᵗsucm)) , refl) .fst x
+
          it x = funExt⁻ (bouquetFunct≡ (∙Π f' g') λ _ → refl) x
            ∙ itMain n f' g' _ _ x
            ∙ λ i → SphereBouquet∙Π
@@ -460,72 +461,75 @@ module _ where
                      (bouquetFunct≡ g' (λ _ → refl) (~ i) , (λ _ → inl tt)) .fst x
 
          main : GoalTy (incl∙ Xsk x₀ ∘∙ f') (incl∙ Xsk x₀ ∘∙ g')
-         main = funExt⁻ (cong fst (Hˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n)) Xsk n multCellMap)) (genHₙSⁿ n)
+         main = funExt⁻ (cong fst (H̃ˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n)) Xsk (suc n)
+             {f = (fst (∙Π (incl∙ Xsk x₀ ∘∙ f') (incl∙ Xsk x₀ ∘∙ g')) ∘
+                invEq (isCWSphere (suc n) .snd))} multCellMap)) (genHₙSⁿ n)
               ∙ cong [_] (Σ≡Prop (λ _ → isSetΠ (λ _ → isSetℤ) _ _)
                 ((λ i → bouquetDegree (λ x → it x i) .fst (λ _ → pos 1))
                    ∙ funExt⁻ (cong fst (bouquetDegree+ _ _ _
-                      (prefunctoriality.bouquetFunct (suc (suc (suc n)))
-                        (fbet .fst) (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm) , refl)
-                      (prefunctoriality.bouquetFunct (suc (suc (suc n)))
-                        (gbet .fst) (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm) , refl)))
+                      (prefunctoriality.bouquetFunct (suc (suc (suc (suc n))))
+                        (fbet .fst) (suc n , <ᵗ-trans-suc (<ᵗ-trans <ᵗsucm <ᵗsucm)) , refl)
+                      (prefunctoriality.bouquetFunct (suc (suc (suc (suc n))))
+                        (gbet .fst) (suc n , <ᵗ-trans-suc (<ᵗ-trans <ᵗsucm <ᵗsucm)) , refl)))
                       λ _ → pos 1))
-              ∙ cong₂ (GroupStr._·_ (snd (Hᶜʷ X' n)))
-                      (funExt⁻ (cong fst (sym (Hˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n)) Xsk n
+              ∙ cong₂ (GroupStr._·_ (snd (H̃ᶜʷ X' (suc n))))
+                      (funExt⁻ (cong fst (sym (H̃ˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n)) Xsk (suc n)
                         {f = incl ∘ fst f' ∘ invEq (isCWSphere (suc n) .snd)} fbet))) (genHₙSⁿ n))
-                      ((funExt⁻ (cong fst (sym (Hˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n)) Xsk n
+                      ((funExt⁻ (cong fst (sym (H̃ˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n)) Xsk (suc n)
                         {f = incl ∘ fst g' ∘ invEq (isCWSphere (suc n) .snd)} gbet))) (genHₙSⁿ n)))
 
          lem : (f : _) (fp : incl∙ Xsk x₀ ∘∙ f' ≡ f)
                (g : _) (gp : incl∙ Xsk x₀ ∘∙ g' ≡ g)
            → GoalTy f g
-         lem = J> (J> main)
+         lem = J> (J> main) -- J> (J> main)
+
 
   HurewiczHom : {n : ℕ} (X : CW ℓ-zero) (x : fst X) (conX : isConnected 2 (fst X))
-              → GroupHom (π'Gr n (fst X , x)) (Hᶜʷ X n)
+              → GroupHom (π'Gr n (fst X , x)) (H̃ᶜʷ X (suc n))
   fst (HurewiczHom {n = n} X x conX) = HurewiczMap X x
   snd (HurewiczHom {n = n} X x conX) = makeIsGroupHom λ f g → HurewiczMapHom X x f g conX
 
 HurewiczMapNat : {n : ℕ} (X Y : CW ℓ-zero) (x : fst X) (y : fst Y)
                     (g : (fst X , x) →∙ (fst Y , y))
-    → Hᶜʷ→ {C = X} {D = Y} n (fst g) .fst ∘ HurewiczMap X x
+    → H̃ᶜʷ→ {C = X} {D = Y} (suc n) (fst g) .fst ∘ HurewiczMap X x
     ≡ HurewiczMap Y y ∘ π'∘∙Hom n g .fst
 HurewiczMapNat {n = n} X Y x y g =
-  funExt (ST.elim (λ _ → isOfHLevelPath 2 (GroupStr.is-set (Hᶜʷ Y n .snd)) _ _)
-    λ f → funExt⁻ (sym (cong fst (Hᶜʷ→comp
-             {C = Sᶜʷ (suc n)} {D = X} {E = Y} n (fst g) (fst f))))
+  funExt (ST.elim (λ _ → isOfHLevelPath 2 (GroupStr.is-set (H̃ᶜʷ Y (suc n) .snd)) _ _)
+    λ f → funExt⁻ (sym (cong fst (H̃ᶜʷ→comp
+             {C = Sᶜʷ (suc n)} {D = X} {E = Y} (suc n) (fst g) (fst f))))
              (genHₙSⁿ n))
 
-Hˢᵏᵉˡ-comm : ∀ {ℓ} {n : ℕ} {X : CWskel ℓ} (x y : Hˢᵏᵉˡ X n .fst)
-  → GroupStr._·_ (Hˢᵏᵉˡ X n .snd) x y ≡ GroupStr._·_ (Hˢᵏᵉˡ X n .snd) y x
-Hˢᵏᵉˡ-comm = SQ.elimProp2 (λ _ _ → GroupStr.is-set (Hˢᵏᵉˡ _ _ .snd) _ _)
+H̃ˢᵏᵉˡ-comm : ∀ {ℓ} {n : ℕ} {X : CWskel ℓ} (x y : H̃ˢᵏᵉˡ X (suc n) .fst)
+  → GroupStr._·_ (H̃ˢᵏᵉˡ X (suc n) .snd) x y ≡ GroupStr._·_ (H̃ˢᵏᵉˡ X (suc n) .snd) y x
+H̃ˢᵏᵉˡ-comm = SQ.elimProp2 (λ _ _ → GroupStr.is-set (H̃ˢᵏᵉˡ _ _ .snd) _ _)
   λ a b → cong [_] (Σ≡Prop (λ _ → isSetΠ (λ _ → isSetℤ) _ _)
     (funExt λ _ → +Comm _ _))
 
-Hᶜʷ-comm : ∀ {ℓ} {n : ℕ} (X : CW ℓ) (x y : Hᶜʷ X n .fst)
-  → GroupStr._·_ (Hᶜʷ X n .snd) x y ≡ GroupStr._·_ (Hᶜʷ X n .snd) y x
-Hᶜʷ-comm {n = n} = uncurry λ X
-  → PT.elim (λ _ → isPropΠ2 λ _ _ → GroupStr.is-set (Hᶜʷ (X , _) n .snd) _ _)
-            λ x → Hˢᵏᵉˡ-comm
+H̃ᶜʷ-comm : ∀ {ℓ} {n : ℕ} (X : CW ℓ) (x y : H̃ᶜʷ X (suc n) .fst)
+  → GroupStr._·_ (H̃ᶜʷ X (suc n) .snd) x y ≡ GroupStr._·_ (H̃ᶜʷ X (suc n) .snd) y x
+H̃ᶜʷ-comm {n = n} = uncurry λ X
+  → PT.elim (λ _ → isPropΠ2 λ _ _ → GroupStr.is-set (H̃ᶜʷ (X , _) (suc n) .snd) _ _)
+            λ x → H̃ˢᵏᵉˡ-comm
 
-HᶜʷAb : ∀ {ℓ} → CW ℓ → ℕ → AbGroup ℓ-zero
-HᶜʷAb X n = Group→AbGroup (Hᶜʷ X n) (Hᶜʷ-comm X)
+H̃ᶜʷAb : ∀ {ℓ} → CW ℓ → ℕ → AbGroup ℓ-zero
+H̃ᶜʷAb X n = Group→AbGroup (H̃ᶜʷ X (suc n)) (H̃ᶜʷ-comm X)
 
 HurewiczHomAb : (X : CW ℓ-zero) (x : fst X) (isC : isConnected 2 (fst X))
-  (n : ℕ) → AbGroupHom (AbelianizationAbGroup (π'Gr n (fst X , x))) (HᶜʷAb X n)
+  (n : ℕ) → AbGroupHom (AbelianizationAbGroup (π'Gr n (fst X , x))) (H̃ᶜʷAb X n)
 fst (HurewiczHomAb X x isC n) =
-  Abi.rec _ (AbGroupStr.is-set (snd (HᶜʷAb X n)))
+  Abi.rec _ (AbGroupStr.is-set (snd (H̃ᶜʷAb X n)))
             (HurewiczHom X x isC .fst)
             ish
   where
   ish : (a b c : _) → _
   ish a b c = IsGroupHom.pres· (HurewiczHom X x isC .snd) _ _
-            ∙ cong₂ (GroupStr._·_ (Hᶜʷ X n .snd)) refl
+            ∙ cong₂ (GroupStr._·_ (H̃ᶜʷ X (suc n) .snd)) refl
                 (IsGroupHom.pres· (HurewiczHom X x isC .snd) _ _
-                ∙ AbGroupStr.+Comm (snd (HᶜʷAb X n)) _ _
+                ∙ AbGroupStr.+Comm (snd (H̃ᶜʷAb X n)) _ _
                 ∙ sym (IsGroupHom.pres· (HurewiczHom X x isC .snd) _ _))
             ∙ sym (IsGroupHom.pres· (HurewiczHom X x isC .snd) _ _)
 snd (HurewiczHomAb X x isC n) =
-  makeIsGroupHom (Abi.elimProp2 _ (λ _ _ → GroupStr.is-set (snd (Hᶜʷ X n)) _ _)
+  makeIsGroupHom (Abi.elimProp2 _ (λ _ _ → GroupStr.is-set (snd (H̃ᶜʷ X (suc n))) _ _)
     (IsGroupHom.pres· (HurewiczHom X x isC .snd)))
 
 
@@ -535,14 +539,26 @@ HurewiczMapCofibEquiv : ∀ {n m k : ℕ}
   → isEquiv (fst (HurewiczHomAb (SphereBouquet/ᶜʷ (fst α)) (inl tt) isC n))
 HurewiczMapCofibEquiv {n = n} {m} {k} α isC =
   Badoo! α (HurewiczHomAb (SphereBouquet/ᶜʷ (fst α)) (inl tt) isC n)
-    λ w → (λ _ → Hˢᵏᵉˡ→ {C = Sˢᵏᵉˡ (suc n)} {D = SphereBouquet/ˢᵏᵉˡ (fst α)} n
+    λ w → (λ _ → H̃ˢᵏᵉˡ→ {C = Sˢᵏᵉˡ (suc n)} {D = SphereBouquet/ˢᵏᵉˡ (fst α)} (suc n)
                    (fst (isCWSphereBouquet/ (fst α) .snd)
                   ∘ preπSphereBouquet/Generator α w .fst
                   ∘ invEq (isCWSphere (suc n) .snd)) .fst (genHₙSⁿ n))
-         ∙ funExt⁻ (cong fst (Hˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n)) (SphereBouquet/ˢᵏᵉˡ (fst α)) n {f = ff w}
-                   (bst w)))
+         ∙ funExt⁻ (cong fst (H̃ˢᵏᵉˡ→β (Sˢᵏᵉˡ (suc n)) (SphereBouquet/ˢᵏᵉˡ (fst α)) (suc n) {f = ff w}
+                   (bst'' w) -- (bst w)
+                   ))
                    (genHₙSⁿ n)
          ∙ cong [_] (Σ≡Prop (λ _ → isOfHLevelPathP' 1 (isSetΠ (λ _ → isSetℤ)) _ _)
+                ((λ i x → sumFinℤ (λ a → degree (suc n)
+               λ asd → pickPetal x (F1 n α RR QQ (BaOH≡' w (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm) (F2 n α RR QQ a .fst asd) (~ i)))))
+              ∙  funExt λ x → sumFin-choose _+_ 0 (λ _ → refl) +Comm
+                 (λ a → degree (suc n)
+                   λ s → pickPetal x (F1 n α RR QQ (BaOH n α w (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm) RR QQ (F2 n α RR QQ a .fst s ))))
+                 (ℤFinGenerator (fin→SphereBouquet/Cell (fst α) RR QQ w) x)
+                 (F→ n RR)
+                 (nonVanish n α _ _ x w)
+                 λ x' q → ⊥.rec (www RR x' q)))
+         {-
+         cong [_] (Σ≡Prop (λ _ → isOfHLevelPathP' 1 (isSetΠ (λ _ → isSetℤ)) _ _)
              ((λ i x → sumFinℤ (λ a → degree (suc n)
                λ asd → pickPetal x (F1 n α RR QQ (BaOH≡ w (suc n , <ᵗ-trans <ᵗsucm <ᵗsucm) (F2 n α RR QQ a .fst asd) (~ i)))))
              ∙ funExt λ x → sumFin-choose _+_ 0 (λ _ → refl) +Comm
@@ -552,6 +568,7 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC =
                  (F→ n RR)
                  (nonVanish n α _ _ x w)
                  λ x' q → ⊥.rec (www RR x' q)))
+                 -}
   where
 
   F→ : (n : ℕ) (RR : _) → Fin (ScardGen (suc n) (suc n) (Trichotomyᵗ-suc RR))
@@ -590,7 +607,7 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC =
 
   RR = (Trichotomyᵗ-suc (n ≟ᵗ n))
   QQ = (Trichotomyᵗ-suc (n ≟ᵗ suc n))
-  
+
   ff : (w : Fin k) → _
   ff w = (fst (isCWSphereBouquet/ (fst α) .snd)
                   ∘ preπSphereBouquet/Generator α w .fst
@@ -631,7 +648,7 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC =
       ∙ λ i → inr (FH m k α w (fst n') P Q a i)) i
 
     module _ (n : ℕ) (w : Fin k) (x : _) (p : Path (S₊ (suc n)) (ptSn (suc n)) (ptSn (suc n))) where
-      teGen : ¬ (fst w ≡ fst x) 
+      teGen : ¬ (fst w ≡ fst x)
         → (cong (pickPetal x) (push w) ∙∙
            (λ i → pickPetal x (inr (w , p i))) ∙∙
            cong (pickPetal x) (sym (push w))) ≡ refl
@@ -640,7 +657,7 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC =
       ... | eq x = ⊥.rec (nope (sym x))
       ... | gt x = sym (rUnit refl)
 
-      teGen' : (fst w ≡ fst x) 
+      teGen' : (fst w ≡ fst x)
         → (cong (pickPetal x) (push w) ∙∙
            (λ i → pickPetal x (inr (w , p i))) ∙∙
            cong (pickPetal x) (sym (push w))) ≡ p
@@ -708,7 +725,7 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC =
           ≡ refl
     lemp1 = sym (rUnit _)
 
-    comm∙∙S¹ : ∀ (p q : ΩS¹) → p ∙∙ q ∙∙ sym p ≡ q 
+    comm∙∙S¹ : ∀ (p q : ΩS¹) → p ∙∙ q ∙∙ sym p ≡ q
     comm∙∙S¹ p q = doubleCompPath≡compPath p q (sym p)
                  ∙ comm-ΩS¹ p _
                  ∙ sym (GL.assoc _ _ _)
@@ -777,7 +794,7 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC =
 
       transportRefl-transportRefl : ∀ {ℓ} {A : Type ℓ} (x : A)
         → Square {A = A} (λ i → transportRefl (transportRefl x i) (~ i))
-                          refl refl refl 
+                          refl refl refl
       transportRefl-transportRefl x =
         (gen _ _ _ _ _ _ _ _
           (λ i j → transportRefl (transportRefl x i) j)
@@ -804,7 +821,7 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC =
                  ∙ cong₂ _∙_ refl
                    (λ j i → inr (transportRefl-transportRefl w j i , north))
                  ∙ sym (GL.assoc _ _ _)
-                 
+
                  ∙ (λ j → push (transportRefl w j)
                    ∙ (λ i → inr (transportRefl w j
                           , σS (transportRefl a j) i))
@@ -837,7 +854,7 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC =
                   ∙ cong-∙∙ (pickPetal x) _ _ _)
                   (cong sym hyp)
               ∙ sym (rUnit _)
-           
+
 
 
 
@@ -877,7 +894,7 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC =
     F m k α w r (r ≟ᵗ suc (suc n))
   FinSequenceMap.fcomm (fst (bst w)) (r , s) =
     FH m k α w r _ _
-  snd (bst w) = 
+  snd (bst w) =
     →FinSeqColimHomotopy _ _ λ s → cong (incl {n = suc (suc (suc n))})
       (aoh _ s
       ∙ cong (SphereBouquet/FamTopElement* m k (suc (suc (suc n))) (fst α)
@@ -912,7 +929,7 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC =
       maa : incl x
         ≡ fst (isCWSphere (suc n) .snd) (invEq (SfamGenTopElement (suc n) (suc (suc (suc n)))
              (<ᵗ-trans {n = n} {m = suc n} {k = suc (suc n)} <ᵗsucm <ᵗsucm)
-             (suc (suc (suc n)) ≟ᵗ suc (suc n))) x) 
+             (suc (suc (suc n)) ≟ᵗ suc (suc n))) x)
       maa = cong incl (maGen _ _ x) ∙ sym (push _)
         where
         maGen : (P : _) (Q : _) (x : Sgen.Sfam (suc n) (suc (suc (suc n))) P)
@@ -929,16 +946,50 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC =
 
   BaOH≡ : (w : _) (n' : Fin (suc (suc (suc n)))) (x : _)
     → BaOH n α w n' (fst n' ≟ᵗ suc n) (fst n' ≟ᵗ suc (suc n)) x
-    ≡ prefunctoriality.fn+1/fn (suc (suc (suc n))) (fst (bst w)) n' x 
+    ≡ prefunctoriality.fn+1/fn (suc (suc (suc n))) (fst (bst w)) n' x
   BaOH≡ w n' (inl x) = refl
   BaOH≡ w n' (inr x) = refl
   BaOH≡ w n' (push a i) = refl
 
 
+  bst'' : (w : _) → finCellApprox (Sˢᵏᵉˡ (suc n)) (SphereBouquet/ˢᵏᵉˡ (fst α))
+                      (ff w) (suc (suc (suc (suc n))))
+  FinSequenceMap.fmap (fst (bst'' w)) m' x = F m k α w (fst m') (fst m' ≟ᵗ suc (suc n)) x
+  FinSequenceMap.fcomm (fst (bst'' w)) n x = FH m k α w (fst n) _ _ x
+  snd (bst'' w) = →FinSeqColimHomotopy _ _
+    λ s → ((cong (incl {n = suc (suc (suc (suc n)))})
+             (cong (F m k α w (suc (suc (suc (suc n))))
+      (Trichotomyᵗ-suc (Trichotomyᵗ-suc (suc (suc n) ≟ᵗ n)))) (sym (secEq (_ , SˢᵏᵉˡConverges (suc n) 1) s))
+             ∙ mainL (Trichotomyᵗ-suc (Trichotomyᵗ-suc (suc (suc n) ≟ᵗ n))) (suc (suc (suc n)) ≟ᵗ suc n) (suc (suc (suc n)) ≟ᵗ suc (suc n))
+               (invEq (invEq (SαEq (suc n) (1 +ℕ suc (suc n))) ∘ inl , SˢᵏᵉˡConverges (suc n) 1) s))
+        ∙ sym (push _))
+        ∙ funExt⁻ (snd (bst w)) (fincl (suc (suc (suc n)) , <ᵗsucm) (invEq
+                              (invEq (SαEq (suc n) (1 +ℕ suc (suc n))) ∘ inl ,
+                               SˢᵏᵉˡConverges (suc n) 1) s))
+        ∙ cong (ff w) (push (invEq
+                              (invEq (SαEq (suc n) (1 +ℕ suc (suc n))) ∘ inl ,
+                               SˢᵏᵉˡConverges (suc n) 1)
+                              s)))
+          ∙ λ i → ff w (incl {n = suc (suc (suc (suc n)))} (secEq (_ , SˢᵏᵉˡConverges (suc n) 1) s i))
+    where
+    mainL : (P : _) (Q : _) (R : _)
+      (s : _) → F m k α w (suc (suc (suc (suc n)))) P (invEq (SαEqGen (suc n) (suc (suc (suc n))) P R) (inl s))
+          ≡ invEq (SphereBouquet/Eq* m k (suc (suc (suc n))) (fst α) P
+                                     Q R) (inl (F m k α w (suc (suc (suc n))) R s))
+    mainL (lt x) Q R s = ⊥.rec (¬-suc-n<ᵗn (<ᵗ-trans x <ᵗsucm))
+    mainL (eq x) Q R s = ⊥.rec (¬m<ᵗm (subst (_<ᵗ suc (suc n)) (sym (cong (predℕ ∘ predℕ) x)) (<ᵗ-trans <ᵗsucm <ᵗsucm)))
+    mainL (gt x) Q (lt x₁) s = ⊥.rec (¬-suc-n<ᵗn x₁)
+    mainL (gt x) Q (eq x₁) s = ⊥.rec (⊥.rec (¬m<ᵗm (subst (_<ᵗ suc (suc n)) (sym (cong predℕ x₁)) <ᵗsucm)))
+    mainL (gt x) (lt x₂) (gt x₁) s = ⊥.rec (¬m<ᵗm (<ᵗ-trans x x₂))
+    mainL (gt x) (eq x₂) (gt x₁) s = ⊥.rec (¬m<ᵗm (subst (_<ᵗ suc (suc (suc n))) (λ i → x₂ (~ i)) x))
+    mainL (gt x) (gt x₂) (gt x₁) s = refl
 
-
-
-
+  BaOH≡' : (w : _) (n' : Fin (suc (suc (suc n)))) (x : _)
+    → BaOH n α w n' (fst n' ≟ᵗ suc n) (fst n' ≟ᵗ suc (suc n)) x
+    ≡ prefunctoriality.fn+1/fn (suc (suc (suc (suc n)))) (fst (bst'' w)) (injectSuc n') x
+  BaOH≡' w n' (inl x) = refl
+  BaOH≡' w n' (inr x) = refl
+  BaOH≡' w n' (push a i) = refl
 
 
 subCWExplicit : ∀ {ℓ} (n : ℕ) → CWexplicit ℓ → CWexplicit ℓ
@@ -1033,7 +1084,7 @@ PreHurewiczLemma n X conX ind' x =
                  (transportRefl _)))))
 
     altEquiv : AbGroupEquiv (AbelianizationAbGroup (π'Gr n (fst X , x)))
-                            ((HᶜʷAb (fst X , ∣ snd X ∣₁) n))
+                            ((H̃ᶜʷAb (fst X , ∣ snd X ∣₁) n))
     altEquiv =
       compGroupEquiv
         (invGroupEquiv (connected→Abπ'Equiv n F∙ isConnF∙))
@@ -1047,23 +1098,23 @@ PreHurewiczLemma n X conX ind' x =
            (secEq (fst (connected→Abπ'Equiv n F∙ isConnF∙)) (η f)))
       where
       better : (t : _)
-        → Hᶜʷ→ {C = subCW (suc (suc (suc n))) X}
-                 {D = realise (fst (snd X)) , ∣ (fst (snd X)) , (idEquiv _) ∣₁} n incl
+        → H̃ᶜʷ→ {C = subCW (suc (suc (suc n))) X}
+                 {D = realise (fst (snd X)) , ∣ (fst (snd X)) , (idEquiv _) ∣₁} (suc n) incl
                  .fst (HurewiczHomAb SubX x' conS n .fst (η t))
           ≡ HurewiczHomAb (fst X , ∣ snd X ∣₁) x conX n .fst (fst (fst (connected→Abπ'Equiv n F∙ isConnF∙)) (η t))
       better = ST.elim (λ _ → isProp→isSet (squash/ _ _))
         λ g → funExt⁻ (cong fst
-            (sym (Hᶜʷ→comp {C = Sᶜʷ (suc n)}
+            (sym (H̃ᶜʷ→comp {C = Sᶜʷ (suc n)}
                            {D = SubX}
                            {E = realise (fst (snd X))
                               , ∣ (fst (snd X)) , (idEquiv _) ∣₁}
-                  n (incl
+                  (suc n) (incl
                   ∘ Iso.inv (realiseSubComplex (suc (suc (suc n))) (fst (snd X))))
                   (fst g))))
                   (genHₙSⁿ n)
-             ∙ λ i → Hᶜʷ→ {C = Sᶜʷ (suc n)}
+             ∙ λ i → H̃ᶜʷ→ {C = Sᶜʷ (suc n)}
                         {D = realise (fst (snd X))
-                           , ∣ (fst (snd X)) , (idEquiv _) ∣₁} n
+                           , ∣ (fst (snd X)) , (idEquiv _) ∣₁} (suc n)
                            (λ z → secEq (snd (snd X)) (incl (F₃ .fst (fst g z))) (~ i))
                            .fst (genHₙSⁿ n)
 
@@ -1101,7 +1152,7 @@ HurewiczTheorem n = uncurry λ X → PT.elim (λ _ → isPropΠ2  λ _ _ → isP
         (¬Fin0 ∘ subst Fin (snd (fst cwX) .snd .snd m l))))
         (invEquiv (snd (snd (snd (fst (snd (fst cwX))))) (suc m)))))
       (e1 n m (<ᵗ-trans l <ᵗsucm) X cwX)
-  
+
   e2 : (n : ℕ) (X : Type) (cwX : isConnectedCW n X)
     → fst (fst cwX) (suc (suc n))
     ≃ SphereBouquet (suc n) (Fin (fst (fst (snd (fst cwX))) (suc n)))

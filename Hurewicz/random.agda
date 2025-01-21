@@ -1097,7 +1097,7 @@ FinSequenceMap.fcomm (subComplex→ C m n) t = subComplex→comm C (fst t) m _ _
 --   → (e : realise (subComplex C m) ≃ fst C m)
 --   → ((x : _) → fst e (incl {n = m} x)
 --                ≡ subst (G.subComplexFam C m m) (isPropTrichotomyᵗ (m ≟ᵗ m) (eq refl)) x)
---   → Iso.inv (fst (subComplexHomology C m n p)) ≡ Hˢᵏᵉˡ→ n (incl ∘ fst e) .fst
+--   → Iso.inv (fst (subComplexHomology C m n p)) ≡ H̃ˢᵏᵉˡ→ n (incl ∘ fst e) .fst
 -- subComplexHomologyEquiv≡ C m n p e ide = {!!} -- funExt {!!}
 --   where
 --   help : finCellApprox (subComplex C m) C
@@ -1151,27 +1151,122 @@ Charac↑ C (suc m) (gt x₁) (eq x) with (m ≟ᵗ m)
 ... | gt x₂ =  ⊥.rec (¬m<ᵗm x₂)
 Charac↑ C m p (gt x) = ⊥.rec (¬m<ᵗm x)
 
-subComplexHomologyEquiv≡ : ∀ {ℓ} (C : CWskel ℓ) (m n : ℕ) (p : suc (suc n) <ᵗ m)
-  → Iso.inv (fst (subComplexHomology C m n p)) ≡ Hˢᵏᵉˡ→ n (incl ∘ Iso.inv (realiseSubComplex m C)) .fst
-subComplexHomologyEquiv≡ C m n p =
-  funExt (SQ.elimProp (λ _ → squash/ _ _) λ a → cong [_] (Σ≡Prop (λ _ → isSetΠ (λ _ → isSetℤ) _ _) (main (fst a)))) -- funExt {!!}
-  ∙ cong fst (sym (Hˢᵏᵉˡ→β (subComplex C m) C n {f = (incl ∘ Iso.inv (realiseSubComplex m C))}
-    help))
+subComplexHomologyEquiv≡ : ∀ {ℓ} (C : CWskel ℓ) (m n : ℕ)  (q : suc (suc n) <ᵗ m)
+  → Iso.inv (fst (subComplexHomology C m n q)) ≡ H̃ˢᵏᵉˡ→ (suc n) (incl ∘ Iso.inv (realiseSubComplex m C)) .fst
+subComplexHomologyEquiv≡ C m n q =
+  funExt (SQ.elimProp (λ _ → squash/ _ _)
+    λ a → cong [_] (Σ≡Prop (λ _ → isSetΠ (λ _ → isSetℤ) _ _)
+      (mainGen (suc n ≟ᵗ m) (suc (suc n) ≟ᵗ m) (fst a)
+      ∙ (λ i → bouquetDegree ((BouquetFuns.CTB (suc n) (C .snd .fst (suc n))
+       (C .snd .snd .fst (suc n)) (C .snd .snd .snd .snd (fst FIN))
+       ∘
+       f1/f2≡ i ∘
+       BouquetFuns.BTC (suc n) (G.subComplexCard C m (suc n) (suc n ≟ᵗ m))
+       (G.subComplexα C m (suc n) (suc n ≟ᵗ m))
+       (G.subComplexFam≃Pushout C m (suc n) (suc n ≟ᵗ m)
+        (suc (suc n) ≟ᵗ m)))) .fst (fst a))
+      ∙ refl {x = bouquetDegree (prefunctoriality.bouquetFunct (suc (suc (suc (suc n))))
+                                (help q .fst) (suc n , snd (injectSuc (suc n , <ᵗ-trans (snd flast) <ᵗsucm)))) .fst (fst a)})
+      ))
+    ∙ cong fst (sym (H̃ˢᵏᵉˡ→β (subComplex C m) C (suc n) {f = (incl ∘ Iso.inv (realiseSubComplex m C))}
+                 (help q)))
   where
-  help : finCellApprox (subComplex C m) C
-      (λ x → incl (Iso.inv (realiseSubComplex m C) x))
-      (suc (suc (suc n)))
-  fst help = subComplex→ C m (suc (suc (suc n)))
-  snd help = →FinSeqColimHomotopy _ _ λ x → CW↑Gen≡ C (suc (suc (suc n))) (suc m) (suc m ≟ᵗ suc (suc (suc (suc n)))) p _
-    ∙ cong (incl {n = suc m}) (funExt⁻ (CW↑GenComm C (suc (suc (suc n))) (suc m) m (suc m ≟ᵗ suc (suc (suc (suc n)))) p) x
+  help' : (m : _)  (k : _) (q : _) →  finCellApprox (subComplex C m) C
+      (λ x → incl (Iso.inv (realiseSubComplex m C) x)) k
+  fst (help' m k q) = subComplex→ C m k
+  snd (help' m k q) = →FinSeqColimHomotopy _ _ λ x → CW↑Gen≡ C k (suc m) (suc m ≟ᵗ suc k) q _
+    ∙ cong (incl {n = suc m}) (funExt⁻ (CW↑GenComm C k (suc m) m (suc m ≟ᵗ suc k) q) x
       ∙ funExt⁻ (Charac↑ C m (suc m ≟ᵗ m) (m ≟ᵗ m)) (CW↑Gen (subComplex C m)
-                  (suc (suc (suc n))) (suc m) (Trichotomyᵗ-suc (m ≟ᵗ suc (suc (suc n)))) p x)  -- funExt⁻ (Charac↑ C m _ ?)
+                  k (suc m) (Trichotomyᵗ-suc (m ≟ᵗ k)) q x)  -- funExt⁻ (Charac↑ C m _ ?)
       ∙ cong (CW↪ C m) (sym (Iso.leftInv ( (realiseSubComplex m C) ) _)
       ∙ cong (Iso.inv (realiseSubComplex m C))
         ((push _ ∙ cong (incl {n = suc m}) (cong (CW↪ (subComplex C m) m) (secEq (complex≃subcomplex' C m m <ᵗsucm (m ≟ᵗ m)) _)
           ∙ CW↪goDown C m (m ≟ᵗ m) (suc m ≟ᵗ m) _))
-        ∙ sym (CW↑Gen≡ (subComplex C m)  (suc (suc (suc n))) (suc m) ((suc m) ≟ᵗ (suc (suc (suc (suc n))))) p x))))
-    ∙ sym (push _) -- mainna x (suc (suc (suc n)) ≟ᵗ m)
+        ∙ sym (CW↑Gen≡ (subComplex C m)  k (suc m) ((suc m) ≟ᵗ (suc k)) q x))))
+    ∙ sym (push _)
+
+  help : (q : suc (suc n) <ᵗ m) → finCellApprox (subComplex C m) C
+       (λ x → incl (Iso.inv (realiseSubComplex m C) x))
+      (suc (suc (suc (suc n))))
+  fst (help q) = subComplex→ C m (suc (suc (suc (suc n))))
+  snd (help q) with (suc (suc (suc n)) ≟ᵗ m)
+  ... | lt x = help' m (suc (suc (suc (suc n)))) x .snd
+  ... | eq x = funExt (subst (λ m → (x : _)
+    → FinSeqColim→Colim (suc (suc (suc (suc n))))
+         (finCellMap→FinSeqColim (subComplex C m) C
+          (subComplex→ C m (suc (suc (suc (suc n))))) x) ≡ incl
+         (Iso.inv (realiseSubComplex m C)
+          (FinSeqColim→Colim (suc (suc (suc (suc n)))) x))) x
+          (funExt⁻ (→FinSeqColimHomotopy _ _
+            λ w → (cong (incl {n = suc (suc (suc (suc n)))})
+                    (cong (subComplex→map C (suc (suc (suc n))) (suc (suc (suc (suc n)))))
+                      (sym (secEq (_ , subComplexFin C (suc (suc (suc n))) (suc (suc (suc n)) , <ᵗsucm)) w)))
+            ∙ ((cong (incl {n = suc (suc (suc (suc n)))})
+                     (mm (suc (suc (suc n)))
+                       (Trichotomyᵗ-suc (Trichotomyᵗ-suc (Trichotomyᵗ-suc (suc n ≟ᵗ n))))
+                       (Trichotomyᵗ-suc (Trichotomyᵗ-suc (Trichotomyᵗ-suc (n ≟ᵗ n)))) (invEq
+                       (CW↪ (subComplex C (suc (suc (suc n)))) (suc (suc (suc n))) ,
+                        subComplexFin C (suc (suc (suc n))) (suc (suc (suc n)) , <ᵗsucm))
+                       w))
+            ∙ sym (push (FinSequenceMap.fmap
+                          (fst (help' (suc (suc (suc n))) (suc (suc (suc n))) <ᵗsucm))
+                          (suc (suc (suc n)) , <ᵗsucm)
+                          (invEq
+                           (CW↪ (subComplex C (suc (suc (suc n)))) (suc (suc (suc n))) ,
+                            subComplexFin C (suc (suc (suc n))) (suc (suc (suc n)) , <ᵗsucm))
+                           w)))) -- funExt⁻ (help' (suc (suc (suc n))) (suc (suc (suc n))) <ᵗsucm .snd) (fincl ((suc (suc (suc (suc n)))) , {!!}) {!!})
+                   ∙ funExt⁻ (help' (suc (suc (suc n))) (suc (suc (suc n))) <ᵗsucm .snd)
+                             (fincl (suc (suc (suc n)) , <ᵗsucm)
+                             _)))
+            ∙ cong (incl {n = suc (suc (suc n))})
+                (refl ∙
+                 (cong (Iso.inv (realiseSubComplex (suc (suc (suc n))) C))
+                   (push _
+                   ∙ cong (incl {n = suc (suc (suc (suc n)))})
+                   (secEq (_ , subComplexFin C (suc (suc (suc n))) (suc (suc (suc n)) , <ᵗsucm)) w))))))) -- →FinSeqColimHomotopy _ _ {!!}
+    where
+    mmmain : (n : ℕ) (x₂ : _) (x : _)
+      → CW↑Gen C n (suc n) (eq (λ _ → suc n)) x₂ x ≡
+           snd (snd (snd (snd (snd C))) n) .equiv-proof (inl x) .fst .fst
+    mmmain zero x₂ x = ⊥.rec (C .snd .snd .snd .fst x)
+    mmmain (suc n) x₂ x = cong (CW↪ C (suc n)) (transportRefl x)
+    
+    mm : (n : ℕ) (P : _) (Q : _) (x : _)
+      → subComplexMapGen.subComplex→map' C n (suc n) P
+          (invEq (G.subComplexFam≃Pushout C n n Q P) (inl x))
+      ≡ CW↪ C n (subComplexMapGen.subComplex→map' C n n Q x)
+    mm n P (lt x₁) x = ⊥.rec (¬m<ᵗm x₁)
+    mm n (lt x₂) (eq x₁) x = ⊥.rec (¬-suc-n<ᵗn x₂)
+    mm n (eq x₂) (eq x₁) x = ⊥.rec (¬m<ᵗm (subst (_<ᵗ suc n) (sym x₂) <ᵗsucm))
+    mm n (gt x₂) (eq x₁) x = ah
+      where
+      ah :  CW↑Gen C n (suc n) (Trichotomyᵗ-suc (n ≟ᵗ n)) x₂
+         (invEq (G.subComplexFam≃Pushout C n n (eq x₁) (gt x₂)) (inl x))
+         ≡ CW↪ C n (idfun (fst C n) x)
+      ah with (n ≟ᵗ n)
+      ... | lt x = ⊥.rec (¬m<ᵗm x)
+      ... | eq q = cong₂ (λ p r → CW↑Gen C n (suc n) (eq p) x₂ (transport refl (subst (fst C) r x)))
+                         (isSetℕ _ _ _ refl) (isSetℕ _ _ _ refl)
+                         ∙ cong (CW↑Gen C n (suc n) (eq (λ _ → suc n)) x₂)
+                           (transportRefl _ ∙ transportRefl x)
+                         ∙ mmmain n x₂ x
+      ... | gt x = ⊥.rec (¬m<ᵗm x)
+    mm n P (gt x₁) x = ⊥.rec (¬m<ᵗm x₁)
+    -- main : (n : ℕ) (x : subComplexFam C (suc (suc (suc n))) (suc (suc (suc (suc n)))))
+    --     → ? ≡ 
+    -- main = ?
+  ... | gt x = ⊥.rec (¬squeeze (q , x))
+  {- →FinSeqColimHomotopy _ _ λ x → CW↑Gen≡ C (suc (suc (suc (suc n)))) (suc m) (suc m ≟ᵗ suc (suc (suc (suc (suc n))))) p _
+    ∙ cong (incl {n = suc m}) (funExt⁻ (CW↑GenComm C (suc (suc (suc (suc n)))) (suc m) m (suc m ≟ᵗ suc (suc (suc (suc (suc n))))) p) x
+      ∙ funExt⁻ (Charac↑ C m (suc m ≟ᵗ m) (m ≟ᵗ m)) (CW↑Gen (subComplex C m)
+                  (suc (suc (suc (suc n)))) (suc m) (Trichotomyᵗ-suc (m ≟ᵗ suc (suc (suc (suc n))))) p x)  -- funExt⁻ (Charac↑ C m _ ?)
+      ∙ cong (CW↪ C m) (sym (Iso.leftInv ( (realiseSubComplex m C) ) _)
+      ∙ cong (Iso.inv (realiseSubComplex m C))
+        ((push _ ∙ cong (incl {n = suc m}) (cong (CW↪ (subComplex C m) m) (secEq (complex≃subcomplex' C m m <ᵗsucm (m ≟ᵗ m)) _)
+          ∙ CW↪goDown C m (m ≟ᵗ m) (suc m ≟ᵗ m) _))
+        ∙ sym (CW↑Gen≡ (subComplex C m)  (suc (suc (suc (suc n)))) (suc m) ((suc m) ≟ᵗ (suc (suc (suc (suc (suc n)))))) p x))))
+    ∙ sym (push _)
+    -}
 
   FIN : Fin (suc (suc (suc n)))
   FIN = suc n , <ᵗ-trans {n = suc n} {m = suc (suc n)}{k = suc (suc (suc n))} <ᵗsucm <ᵗsucm
@@ -1185,9 +1280,10 @@ subComplexHomologyEquiv≡ C m n p =
       (push (subComplexMapGen.subComplex→map' C m (suc n) q1 a)
     ∙ λ i → inr (subComplex→comm C (suc n) m q1 q2 a i)) i
 
-  f1/f2≡ : f1/f2gen (suc n ≟ᵗ m) (suc (suc n) ≟ᵗ m)
-         ≡ prefunctoriality.fn+1/fn (suc (suc (suc n))) (subComplex→ C m (suc (suc (suc n)))) FIN
+  f1/f2≡ :  f1/f2gen (suc n ≟ᵗ m) (suc (suc n) ≟ᵗ m)
+         ≡ prefunctoriality.fn+1/fn (suc (suc (suc (suc n)))) (subComplex→ C m (suc (suc (suc (suc n))))) ((suc n , <ᵗ-trans-suc (<ᵗ-trans (snd flast) <ᵗsucm)))
   f1/f2≡ = funExt λ { (inl x) → refl ; (inr x) → refl ; (push a i) → refl}
+
 
   f1/f2genId : (q1 : _) (q2 : _) → f1/f2gen (lt q1) (lt q2) ≡ idfun _
   f1/f2genId q1 q2 = funExt λ { (inl x) → refl ; (inr x) → refl ; (push a i) j
@@ -1197,7 +1293,7 @@ subComplexHomologyEquiv≡ C m n p =
     help2 (suc m) q1 q2 a = refl
 
   mainGen : (q1 : _) (q2 : _) (a : _)
-    → Iso.inv (fst (subChainIsoGen C m (suc n , <ᵗ-trans <ᵗsucm p) q1)) a
+    → Iso.inv (fst (subChainIsoGen C m (suc n , <ᵗ-trans <ᵗsucm q) q1)) a
     ≡ bouquetDegree
       (BouquetFuns.CTB (suc n) (C .snd .fst (suc n)) (C .snd .snd .fst (suc n)) (C .snd .snd .snd .snd (fst FIN))
       ∘ f1/f2gen q1 q2
@@ -1215,41 +1311,109 @@ subComplexHomologyEquiv≡ C m n p =
     cool = funExt λ a → cong (BouquetFuns.CTB (suc n) (C .snd .fst (suc n)) (C .snd .snd .fst (suc n)) (C .snd .snd .snd .snd (fst FIN)))
                   (funExt⁻ (f1/f2genId x x₁) _)
                 ∙ CTB-BTC-cancel (suc n) (C .snd .fst (suc n)) (C .snd .snd .fst (suc n)) (C .snd .snd .snd .snd (fst FIN)) .fst _
-  mainGen (lt x) (eq x₁) a = ⊥.rec (¬m<ᵗm (subst (suc (suc n) <ᵗ_) (sym x₁) p))
+  mainGen (lt x) (eq x₁) a = ⊥.rec (¬m<ᵗm (subst (suc (suc n) <ᵗ_) (sym x₁) q))
   mainGen (lt x) (gt x₁) a =  ⊥.rec (¬squeeze (x , x₁))
-  mainGen (eq x) q2 a = ⊥.rec (¬m<ᵗm  (subst (_<ᵗ_ (suc n)) (sym x) (<ᵗ-trans <ᵗsucm p)))
-  mainGen (gt x) q2 a = ⊥.rec (¬m<ᵗm (<ᵗ-trans x (<ᵗ-trans <ᵗsucm p)))
+  mainGen (eq x) q2 a = ⊥.rec (¬m<ᵗm  (subst (_<ᵗ_ (suc n)) (sym x) (<ᵗ-trans <ᵗsucm q)))
+  mainGen (gt x) q2 a = ⊥.rec (¬m<ᵗm (<ᵗ-trans x (<ᵗ-trans <ᵗsucm q)))
 
-  main : (a : _) → Iso.inv
-      (fst (subChainIso C m (suc n , <ᵗ-trans <ᵗsucm p)))
-      a
-      ≡ _
-  main a = mainGen (suc n ≟ᵗ m) (suc (suc n) ≟ᵗ m) a
-        ∙ λ j → bouquetDegree
-      (BouquetFuns.CTB (suc n) (C .snd .fst (suc n))
-       (C .snd .snd .fst (suc n)) (C .snd .snd .snd .snd (fst FIN))
-       ∘
-       f1/f2≡ j ∘
-       BouquetFuns.BTC (suc n) (G.subComplexCard C m (suc n) (suc n ≟ᵗ m))
-       (G.subComplexα C m (suc n) (suc n ≟ᵗ m))
-       (G.subComplexFam≃Pushout C m (suc n) (suc n ≟ᵗ m)
-        (suc (suc n) ≟ᵗ m)))
-      .fst a
+
+-- subComplexHomologyEquiv≡ : ∀ {ℓ} (C : CWskel ℓ) (m n : ℕ)  {q : suc (suc n) <ᵗ m} (p : suc (suc (suc n)) <ᵗ m)
+--   → Iso.inv (fst (subComplexHomology C m n q)) ≡ H̃ˢᵏᵉˡ→ (suc n) (incl ∘ Iso.inv (realiseSubComplex m C)) .fst
+-- subComplexHomologyEquiv≡ C m n {q = q} p =
+--   funExt (SQ.elimProp (λ _ → squash/ _ _)
+--     λ a → cong [_] (Σ≡Prop (λ _ → isSetΠ (λ _ → isSetℤ) _ _)
+--       (mainGen (suc n ≟ᵗ m) (suc (suc n) ≟ᵗ m) (fst a)
+--       ∙ (λ i → bouquetDegree ((BouquetFuns.CTB (suc n) (C .snd .fst (suc n))
+--        (C .snd .snd .fst (suc n)) (C .snd .snd .snd .snd (fst FIN))
+--        ∘
+--        f1/f2≡ i ∘
+--        BouquetFuns.BTC (suc n) (G.subComplexCard C m (suc n) (suc n ≟ᵗ m))
+--        (G.subComplexα C m (suc n) (suc n ≟ᵗ m))
+--        (G.subComplexFam≃Pushout C m (suc n) (suc n ≟ᵗ m)
+--         (suc (suc n) ≟ᵗ m)))) .fst (fst a))
+--       ∙ refl {x = bouquetDegree (prefunctoriality.bouquetFunct (suc (suc (suc (suc n))))
+--                                 (help .fst) (suc n , snd (injectSuc (suc n , <ᵗ-trans (snd flast) <ᵗsucm)))) .fst (fst a)})
+--       ))
+--     ∙ cong fst (sym (H̃ˢᵏᵉˡ→β (subComplex C m) C (suc n) {f = (incl ∘ Iso.inv (realiseSubComplex m C))}
+--                  help))
+--   where
+--   help : finCellApprox (subComplex C m) C
+--       (λ x → incl (Iso.inv (realiseSubComplex m C) x))
+--       (suc (suc (suc (suc n))))
+--   fst help = subComplex→ C m (suc (suc (suc (suc n))))
+--   snd help = →FinSeqColimHomotopy _ _ λ x → CW↑Gen≡ C (suc (suc (suc (suc n)))) (suc m) (suc m ≟ᵗ suc (suc (suc (suc (suc n))))) p _
+--     ∙ cong (incl {n = suc m}) (funExt⁻ (CW↑GenComm C (suc (suc (suc (suc n)))) (suc m) m (suc m ≟ᵗ suc (suc (suc (suc (suc n))))) p) x
+--       ∙ funExt⁻ (Charac↑ C m (suc m ≟ᵗ m) (m ≟ᵗ m)) (CW↑Gen (subComplex C m)
+--                   (suc (suc (suc (suc n)))) (suc m) (Trichotomyᵗ-suc (m ≟ᵗ suc (suc (suc (suc n))))) p x)  -- funExt⁻ (Charac↑ C m _ ?)
+--       ∙ cong (CW↪ C m) (sym (Iso.leftInv ( (realiseSubComplex m C) ) _)
+--       ∙ cong (Iso.inv (realiseSubComplex m C))
+--         ((push _ ∙ cong (incl {n = suc m}) (cong (CW↪ (subComplex C m) m) (secEq (complex≃subcomplex' C m m <ᵗsucm (m ≟ᵗ m)) _)
+--           ∙ CW↪goDown C m (m ≟ᵗ m) (suc m ≟ᵗ m) _))
+--         ∙ sym (CW↑Gen≡ (subComplex C m)  (suc (suc (suc (suc n)))) (suc m) ((suc m) ≟ᵗ (suc (suc (suc (suc (suc n)))))) p x))))
+--     ∙ sym (push _)
+
+--   FIN : Fin (suc (suc (suc n)))
+--   FIN = suc n , <ᵗ-trans {n = suc n} {m = suc (suc n)}{k = suc (suc (suc n))} <ᵗsucm <ᵗsucm
+
+--   f1/f2gen :  (q1 : _) (q2 : _)
+--            → cofib (invEq (G.subComplexFam≃Pushout C m (suc n) q1 q2) ∘ inl) →
+--              Pushout (λ _ → tt) (invEq (C .snd .snd .snd .snd (fst FIN)) ∘ inl)
+--   f1/f2gen q1 q2 (inl x) = inl x
+--   f1/f2gen q1 q2 (inr x) = inr (subComplexMapGen.subComplex→map' C m (suc (suc n)) q2 x)
+--   f1/f2gen q1 q2 (push a i) =
+--       (push (subComplexMapGen.subComplex→map' C m (suc n) q1 a)
+--     ∙ λ i → inr (subComplex→comm C (suc n) m q1 q2 a i)) i
+
+--   f1/f2≡ :  f1/f2gen (suc n ≟ᵗ m) (suc (suc n) ≟ᵗ m)
+--          ≡ prefunctoriality.fn+1/fn (suc (suc (suc (suc n)))) (subComplex→ C m (suc (suc (suc (suc n))))) ((suc n , <ᵗ-trans-suc (<ᵗ-trans (snd flast) <ᵗsucm)))
+--   f1/f2≡ = funExt λ { (inl x) → refl ; (inr x) → refl ; (push a i) → refl}
+
+
+--   f1/f2genId : (q1 : _) (q2 : _) → f1/f2gen (lt q1) (lt q2) ≡ idfun _
+--   f1/f2genId q1 q2 = funExt λ { (inl x) → refl ; (inr x) → refl ; (push a i) j
+--     → ((λ i → push a ∙ (λ j → inr (help2 m q1 q2 a i j))) ∙ sym (rUnit (push a))) j i}
+--     where
+--     help2 : (m : ℕ) (q1 : _) (q2 : _) (a : _) → subComplex→comm C (suc n) m (lt q1) (lt q2) a ≡ refl
+--     help2 (suc m) q1 q2 a = refl
+
+--   mainGen : (q1 : _) (q2 : _) (a : _)
+--     → Iso.inv (fst (subChainIsoGen C m (suc n , <ᵗ-trans <ᵗsucm q) q1)) a
+--     ≡ bouquetDegree
+--       (BouquetFuns.CTB (suc n) (C .snd .fst (suc n)) (C .snd .snd .fst (suc n)) (C .snd .snd .snd .snd (fst FIN))
+--       ∘ f1/f2gen q1 q2
+--       ∘ (BouquetFuns.BTC (suc n) (G.subComplexCard C m (suc n) q1)
+--          (G.subComplexα C m (suc n) q1)
+--            (G.subComplexFam≃Pushout C m (suc n) q1 q2))) .fst a
+--   mainGen (lt x) (lt x₁) a = funExt⁻ (sym (cong fst (bouquetDegreeId))) a ∙ λ i → bouquetDegree (cool (~ i)) .fst a
+--     where
+--     cool : BouquetFuns.CTB (suc n) (C .snd .fst (suc n)) (C .snd .snd .fst (suc n)) (C .snd .snd .snd .snd (fst FIN))
+--          ∘ f1/f2gen (lt x) (lt x₁)
+--          ∘ BouquetFuns.BTC (suc n) (G.subComplexCard C m (suc n) (lt x))
+--          (G.subComplexα C m (suc n) (lt x))
+--            (G.subComplexFam≃Pushout C m (suc n) (lt x) (lt x₁))
+--          ≡ idfun _
+--     cool = funExt λ a → cong (BouquetFuns.CTB (suc n) (C .snd .fst (suc n)) (C .snd .snd .fst (suc n)) (C .snd .snd .snd .snd (fst FIN)))
+--                   (funExt⁻ (f1/f2genId x x₁) _)
+--                 ∙ CTB-BTC-cancel (suc n) (C .snd .fst (suc n)) (C .snd .snd .fst (suc n)) (C .snd .snd .snd .snd (fst FIN)) .fst _
+--   mainGen (lt x) (eq x₁) a = ⊥.rec (¬m<ᵗm (subst (suc (suc n) <ᵗ_) (sym x₁) q))
+--   mainGen (lt x) (gt x₁) a =  ⊥.rec (¬squeeze (x , x₁))
+--   mainGen (eq x) q2 a = ⊥.rec (¬m<ᵗm  (subst (_<ᵗ_ (suc n)) (sym x) (<ᵗ-trans <ᵗsucm q)))
+--   mainGen (gt x) q2 a = ⊥.rec (¬m<ᵗm (<ᵗ-trans x (<ᵗ-trans <ᵗsucm q)))
 
 subComplexHomologyEquiv : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ) (m : ℕ) (p : suc (suc n) <ᵗ m)
-  → GroupEquiv (Hˢᵏᵉˡ (subComplex C m) n)
-                (Hˢᵏᵉˡ C n)
-fst (fst (subComplexHomologyEquiv C n m p)) = Hˢᵏᵉˡ→ n (incl ∘ Iso.inv (realiseSubComplex m C)) .fst
+  → GroupEquiv (H̃ˢᵏᵉˡ (subComplex C m) (suc n))
+                (H̃ˢᵏᵉˡ C (suc n))
+fst (fst (subComplexHomologyEquiv C n m p)) = H̃ˢᵏᵉˡ→ (suc n) (incl ∘ Iso.inv (realiseSubComplex m C)) .fst
 snd (fst (subComplexHomologyEquiv C n m p)) =
   subst isEquiv (subComplexHomologyEquiv≡ C m n p)
     (isoToIsEquiv (invIso (fst (subComplexHomology C m n p))))
-snd (subComplexHomologyEquiv C n m p) = Hˢᵏᵉˡ→ n (incl ∘ Iso.inv (realiseSubComplex m C)) .snd
+snd (subComplexHomologyEquiv C n m p) = H̃ˢᵏᵉˡ→ (suc n) (incl ∘ Iso.inv (realiseSubComplex m C)) .snd
 
 subComplexHomologyᶜʷEquiv : ∀ {ℓ} (C : CWexplicit ℓ) (n : ℕ) (m : ℕ) (p : suc (suc n) <ᵗ m)
-  → GroupEquiv (Hᶜʷ ((fst (fst (snd C))) m , ∣ subComplex (snd C .fst) m , isoToEquiv (realiseSubComplex m (snd C .fst)) ∣₁) n)
-                (Hᶜʷ (realise (snd C .fst) , ∣ fst (snd C) , idEquiv _ ∣₁) n)
-fst (subComplexHomologyᶜʷEquiv C n m p) = Hᶜʷ→ n (incl {n = m}) .fst , subComplexHomologyEquiv (snd C .fst) n m p .fst .snd
-snd (subComplexHomologyᶜʷEquiv C n m p) = Hᶜʷ→ n (incl {n = m}) .snd
+  → GroupEquiv (H̃ᶜʷ ((fst (fst (snd C))) m , ∣ subComplex (snd C .fst) m , isoToEquiv (realiseSubComplex m (snd C .fst)) ∣₁) (suc n))
+                (H̃ᶜʷ (realise (snd C .fst) , ∣ fst (snd C) , idEquiv _ ∣₁) (suc n))
+fst (subComplexHomologyᶜʷEquiv C n m p) = H̃ᶜʷ→ (suc n) (incl {n = m}) .fst , subComplexHomologyEquiv (snd C .fst) n m p .fst .snd
+snd (subComplexHomologyᶜʷEquiv C n m p) = H̃ᶜʷ→ (suc n) (incl {n = m}) .snd
 
 --- bouquetDegreeHom
 SphereBouquet∙Π : ∀ {ℓ ℓ'} {n : ℕ} {A : Type ℓ} {B : Pointed ℓ'}

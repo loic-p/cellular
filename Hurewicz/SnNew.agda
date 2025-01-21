@@ -309,7 +309,7 @@ module _ (n : ℕ) where
                      ∙ cong (a fzero +_) (-Cancel' (b fzero)))
   ... | gt x | t = ⊥.rec (¬m<ᵗm x)
 
-  HₙSⁿ→ℤ : Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) n . fst → ℤ
+  HₙSⁿ→ℤ : H̃ˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) (suc n) . fst → ℤ
   HₙSⁿ→ℤ = SQ.elim (λ _ → isSetℤ) (λ a → HₙSⁿ→ℤ-fun (fst a))
     λ a b → PT.elim (λ _ → isSetℤ _ _)
       λ x →  HₙSⁿ→ℤ-coh (fst a) (fst b) (snd a) (snd b) (fst x , cong fst (snd x))
@@ -318,10 +318,10 @@ module _ (n : ℕ) where
   ∂VanishS zero t = funExt λ { (zero , p) → ·Comm (t fzero) (pos 0)}
   ∂VanishS (suc n) t = funExt λ y → ⊥.rec (¬Scard' n y)
 
-  ℤ→HₙSⁿ-fun : ℤ → Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) n . fst
+  ℤ→HₙSⁿ-fun : ℤ → H̃ˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) (suc n) . fst
   ℤ→HₙSⁿ-fun z = [ (λ _ → z) , ∂VanishS n (λ _ → z) ]
 
-  ℤ→HₙSⁿ : GroupHom ℤGroup (Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) n)
+  ℤ→HₙSⁿ : GroupHom ℤGroup (H̃ˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) (suc n))
   fst (ℤ→HₙSⁿ) = ℤ→HₙSⁿ-fun
   snd (ℤ→HₙSⁿ) = makeIsGroupHom λ x y
     → cong [_] (Σ≡Prop (λ _ → isOfHLevelPath' 1 (isSetΠ (λ _ → isSetℤ)) _ _)
@@ -329,21 +329,19 @@ module _ (n : ℕ) where
 
   HₙSⁿ→ℤ→HₙSⁿ : (x : _) → ℤ→HₙSⁿ-fun (HₙSⁿ→ℤ x) ≡ x
   HₙSⁿ→ℤ→HₙSⁿ =
-    SQ.elimProp (λ _ → GroupStr.is-set (snd (Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) n)) _ _)
+    SQ.elimProp (λ _ → GroupStr.is-set (snd (H̃ˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) (suc n))) _ _)
         λ {(a , p) → cong [_] (Σ≡Prop (λ _ → isSetΠ (λ _ → isSetℤ) _ _)
                                (funExt λ t → cong a (ScardDiag .snd t)))}
 
-  ℤ≅HₙSⁿ : GroupIso ℤGroup (Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) n)
+  ℤ≅HₙSⁿ : GroupIso ℤGroup (H̃ˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) (suc n))
   Iso.fun (fst ℤ≅HₙSⁿ) = ℤ→HₙSⁿ .fst
   Iso.inv (fst ℤ≅HₙSⁿ) = HₙSⁿ→ℤ
   Iso.rightInv (fst ℤ≅HₙSⁿ) = HₙSⁿ→ℤ→HₙSⁿ
   Iso.leftInv (fst ℤ≅HₙSⁿ) _ = refl
   snd ℤ≅HₙSⁿ = ℤ→HₙSⁿ .snd
 
-  HₙSⁿ≅ℤ : GroupIso (Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) n) ℤGroup
+  HₙSⁿ≅ℤ : GroupIso (H̃ˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) (suc n)) ℤGroup
   HₙSⁿ≅ℤ = invGroupIso ℤ≅HₙSⁿ
 
-  genHₙSⁿ : Hˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) n .fst
+  genHₙSⁿ : H̃ˢᵏᵉˡ (Sˢᵏᵉˡ (suc n)) (suc n) .fst
   genHₙSⁿ = [ (λ _ → 1) , (∂VanishS n (λ _ → 1)) ]
-
-

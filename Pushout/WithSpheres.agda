@@ -409,6 +409,113 @@ module _ {ℓ ℓ' ℓ'' ℓ'''} {P : CWskel ℓ → CWskel ℓ' → CWskel ℓ'
              (λ B C → elimStrictCW (e B C)) B C) (strictCWskel D)
     ∙ elimStrictCWβ {P = P (strictCWskel B) (strictCWskel C)} (e B C) D
 
+module _ where
+PushoutA→PushoutPushoutMapLRGen0 : ∀ {ℓ ℓ'} {A : Type ℓ} {B : Type ℓ'} (inl* : A → B) {x : A}
+  → {fml fmr frr : A}  (f-l : x ≡ fml) (f-m : fml ≡ fmr) (f-r : fmr ≡ frr)
+  → {tml tmr : A}  (t-l : x ≡ tml) (t-m : tml ≡ tmr) (t-r : tmr ≡ frr)
+  {t : B}
+  (push-inr-base  : inl* x ≡ t)
+  (bot : Square (sym push-inr-base) (sym push-inr-base) refl
+                (cong inl* ((f-l ∙∙ f-m ∙∙ f-r) ∙∙ refl ∙∙ sym (t-l ∙∙ t-m ∙∙ t-r))))
+  → (i j k : I) → B
+PushoutA→PushoutPushoutMapLRGen0 inl* f-l f-m f-r t-l t-m t-r push-inr-base bot i j k =
+  hfill (λ k → λ {(i = i0) → invSides-filler push-inr-base (cong inl* ((f-l ∙∙ f-m ∙∙ f-r))) j (~ k)
+                 ; (i = i1) → invSides-filler push-inr-base (cong inl* ((t-l ∙∙ t-m ∙∙ t-r))) j (~ k)
+                 ; (j = i0) → push-inr-base (~ k)
+                 ; (j = i1) → inl* (doubleCompPath-filler
+                                      (f-l ∙∙ f-m ∙∙ f-r)
+                                      refl
+                                      (sym (t-l ∙∙ t-m ∙∙ t-r)) (~ k) i)})
+        (inS (bot i j))
+        k
+cong-PushoutA→PushoutPushoutMapLRGen0 : ∀ {ℓ ℓ' ℓ''} {A : Type ℓ} {B : Type ℓ'} {C : Type ℓ''}
+  (f : B → C) (inl* : A → B) {x : A}
+  → {fml fmr frr : A}  (f-l : x ≡ fml) (f-m : fml ≡ fmr) (f-r : fmr ≡ frr)
+  → {tml tmr : A}  (t-l : x ≡ tml) (t-m : tml ≡ tmr) (t-r : tmr ≡ frr)
+     {t : B}
+     (push-inr-base  : inl* x ≡ t)
+     (bot : Square (sym push-inr-base) (sym push-inr-base) refl
+                   (cong inl* ((f-l ∙∙ f-m ∙∙ f-r) ∙∙ refl ∙∙ sym (t-l ∙∙ t-m ∙∙ t-r))))
+     → Cube {A = C}
+            (λ i j → f (PushoutA→PushoutPushoutMapLRGen0 inl* f-l f-m f-r t-l t-m t-r
+                         push-inr-base bot i j i1))
+            (λ i j → PushoutA→PushoutPushoutMapLRGen0 (f ∘ inl*)
+                         f-l f-m f-r t-l t-m t-r (cong f push-inr-base) (λ i j → f (bot i j)) i j i1)
+            refl refl (λ _ _ → f (inl* x)) λ _ _ → f (inl* frr)
+cong-PushoutA→PushoutPushoutMapLRGen0 f inl*
+  f-l f-m f-r t-l t-m t-r push-inr-base bot = cong-hcomp f
+    ∙ λ r i j → hcomp (λ k
+              → λ {(i = i0) → cong-invSides-filler f push-inr-base (cong inl* ((f-l ∙∙ f-m ∙∙ f-r))) r j (~ k)
+                  ; (i = i1) → cong-invSides-filler f push-inr-base (cong inl* ((t-l ∙∙ t-m ∙∙ t-r))) r j (~ k)
+                  ; (j = i0) → f (push-inr-base (~ k))
+                  ; (j = i1) → f (inl* (doubleCompPath-filler
+                                       (f-l ∙∙ f-m ∙∙ f-r)
+                                       refl
+                                       (sym (t-l ∙∙ t-m ∙∙ t-r)) (~ k) i))})
+         ((f (bot i j)))
+
+PushoutA→PushoutPushoutMapLRGen>1 : ∀ {ℓ ℓ'} {A : Type ℓ} {B : Type ℓ'} (inl* : A → B) {x y z w : A}
+  → (inl-push-t-s : y ≡ x) (psh : y ≡ z) (inr-push-t-s : w ≡ z)
+  {t : B}
+  (push-inr-north  : inl* x ≡ t) (push-inr-south : inl* w ≡ t)
+  (bot : Square push-inr-north push-inr-south (cong inl* (sym inl-push-t-s ∙∙ psh ∙∙ sym inr-push-t-s)) refl) -- 
+  → (i j k : I) → B
+PushoutA→PushoutPushoutMapLRGen>1 inl* inl-push-t-s psh inr-push-t-s {t = t} push-inr-north push-inr-south bot i j k =
+  hfill (λ k → λ {(i = i0) → inl* (doubleCompPath-filler (sym inl-push-t-s) psh (sym inr-push-t-s) (~ k) j)
+                 ; (i = i1) → doubleCompPath-filler push-inr-north refl (sym push-inr-south) k j
+                 ; (j = i0) → invSides-filler push-inr-north (cong inl* (sym inl-push-t-s)) k i
+                 ; (j = i1) → invSides-filler push-inr-south (cong inl* inr-push-t-s) k i}) -- (cong inl* inr-push-t-s) k i})
+        (inS (bot j i))
+        k
+
+cong-PushoutA→PushoutPushoutMapLRGen>1 :
+  ∀ {ℓ ℓ' ℓ''} {A : Type ℓ} {B : Type ℓ'} {C : Type ℓ''} (f : B → C) (inl* : A → B) {x y z w : A}
+   (inl-push-t-s : y ≡ x) (psh : y ≡ z) (inr-push-t-s : w ≡ z)
+   {t : B}
+   (push-inr-north  : inl* x ≡ t) (push-inr-south : inl* w ≡ t)
+   (bot : Square push-inr-north push-inr-south
+                 (cong inl* (sym inl-push-t-s ∙∙ psh ∙∙ sym inr-push-t-s)) refl)
+    → Cube {A = C} (λ i j → f (PushoutA→PushoutPushoutMapLRGen>1 inl* inl-push-t-s
+                                psh inr-push-t-s {t = t} push-inr-north push-inr-south bot i j i1))
+         (λ i j → PushoutA→PushoutPushoutMapLRGen>1 (f ∘ inl*)
+                   inl-push-t-s psh inr-push-t-s (cong f push-inr-north) (cong f push-inr-south)
+                     (λ i j → f (bot i j)) i j i1)
+         (λ _ j → f (inl* (psh j)))
+         (cong-∙∙ f push-inr-north refl (sym push-inr-south))
+         (λ _ i → f (inl* (inl-push-t-s i)))
+         λ _ i → f (inl* (inr-push-t-s (~ i)))
+cong-PushoutA→PushoutPushoutMapLRGen>1 {C = C} f inl* inl-push-t-s psh inr-push-t-s push-inr-north push-inr-south bot i j k =
+  hcomp (λ r → λ {(i = i0) → f (PushoutA→PushoutPushoutMapLRGen>1 inl* inl-push-t-s psh
+                                 inr-push-t-s push-inr-north push-inr-south bot j k r)
+                 ; (i = i1) → PushoutA→PushoutPushoutMapLRGen>1 (f ∘ inl*)
+                                inl-push-t-s psh inr-push-t-s
+                                (cong f push-inr-north) (cong f push-inr-south)
+                                  (λ i j → f (bot i j)) j k r
+                 ; (j = i0) → f (inl* (doubleCompPath-filler (λ i₁ → inl-push-t-s (~ i₁)) psh
+                                      (λ i₁ → inr-push-t-s (~ i₁)) (~ r) k))
+                 ; (k = i0) → slem i r j
+                 ; (k = i1) → slem2 i r j})
+          (f (bot k j))
+   where
+   slem : Path (Square {A = C} _ _ _ _)
+     (λ r j → f
+       (PushoutA→PushoutPushoutMapLRGen>1 inl* inl-push-t-s psh
+        inr-push-t-s push-inr-north push-inr-south bot j i0 r))
+     (λ r j → PushoutA→PushoutPushoutMapLRGen>1 (λ x₁ → f (inl* x₁))
+       inl-push-t-s psh inr-push-t-s (λ i₁ → f (push-inr-north i₁))
+       (λ i₁ → f (push-inr-south i₁)) (λ i₁ j₁ → f (bot i₁ j₁)) j i0 r)
+   slem = cong-hcomp f
+
+   slem2 : Path (Square {A = C} _ _ _ _)
+     (λ r j → f
+       (PushoutA→PushoutPushoutMapLRGen>1 inl* inl-push-t-s psh
+        inr-push-t-s push-inr-north push-inr-south bot j i1 r))
+     (λ r j → PushoutA→PushoutPushoutMapLRGen>1 (λ x₁ → f (inl* x₁))
+       inl-push-t-s psh inr-push-t-s (λ i₁ → f (push-inr-north i₁))
+       (λ i₁ → f (push-inr-south i₁)) (λ i₁ j₁ → f (bot i₁ j₁)) j i1 r)
+   slem2 = cong-hcomp f
+
+
 module _ {ℓ ℓ' ℓ'' : Level} {B : CWskel ℓ} {C : CWskel ℓ'} {D : CWskel ℓ''}
   (f : cellMap B C)
   (g : cellMap B D) where
@@ -429,12 +536,12 @@ module _ {ℓ ℓ' ℓ'' : Level} {B : CWskel ℓ} {C : CWskel ℓ'} {D : CWskel
       ((λ i → inl (∣ f ∣ (suc (suc zero)) (invEq (e B (suc zero)) (push (b , x) (~ i)))))) k i
 -}
 
-  pushoutMapₛ-filler₁ : (x : A B (suc zero)) (b : Bool)
-                     → I → I → pushoutA (suc zero)
-  pushoutMapₛ-filler₁ x b i k =
-    {!doubleCompPath-filler (λ i → inl (∣ f ∣ 2 (invEq (e B 1) (push (x , b) (~ i)))))
-     (λ i → ((push (α B (suc zero) (x , b))) i))
-     (λ i → (inr (∣ g ∣ 2 (invEq (e B 1) (push (x , b) i))))) k i!}
+  -- pushoutMapₛ-filler₁ : (x : A B (suc zero)) (b : Bool)
+  --                    → I → I → pushoutA (suc zero)
+  -- pushoutMapₛ-filler₁ x b i k =
+  --   {!doubleCompPath-filler (λ i → inl (∣ f ∣ 2 (invEq (e B 1) (push (x , b) (~ i)))))
+  --    (λ i → ((push (α B (suc zero) (x , b))) i))
+  --    (λ i → (inr (∣ g ∣ 2 (invEq (e B 1) (push (x , b) i))))) k i!}
 
   pushoutMapₛ-filler : (n : ℕ) → (A B (suc n)) → S₊ n
                      → I → I → pushoutA (suc (suc n))
@@ -522,111 +629,6 @@ module _ {ℓ ℓ' ℓ'' : Level} {B : CWskel ℓ} {C : CWskel ℓ'} {D : CWskel
     (push (((inl (inr (fst a)))) , (snd a))) i
 
 
-  module _ where
-  PushoutA→PushoutPushoutMapLRGen0 : ∀ {ℓ ℓ'} {A : Type ℓ} {B : Type ℓ'} (inl* : A → B) {x : A}
-    → {fml fmr frr : A}  (f-l : x ≡ fml) (f-m : fml ≡ fmr) (f-r : fmr ≡ frr)
-    → {tml tmr : A}  (t-l : x ≡ tml) (t-m : tml ≡ tmr) (t-r : tmr ≡ frr)
-    {t : B}
-    (push-inr-base  : inl* x ≡ t)
-    (bot : Square (sym push-inr-base) (sym push-inr-base) refl
-                  (cong inl* ((f-l ∙∙ f-m ∙∙ f-r) ∙∙ refl ∙∙ sym (t-l ∙∙ t-m ∙∙ t-r))))
-    → (i j k : I) → B
-  PushoutA→PushoutPushoutMapLRGen0 inl* f-l f-m f-r t-l t-m t-r push-inr-base bot i j k =
-    hfill (λ k → λ {(i = i0) → invSides-filler push-inr-base (cong inl* ((f-l ∙∙ f-m ∙∙ f-r))) j (~ k)
-                   ; (i = i1) → invSides-filler push-inr-base (cong inl* ((t-l ∙∙ t-m ∙∙ t-r))) j (~ k)
-                   ; (j = i0) → push-inr-base (~ k)
-                   ; (j = i1) → inl* (doubleCompPath-filler
-                                        (f-l ∙∙ f-m ∙∙ f-r)
-                                        refl
-                                        (sym (t-l ∙∙ t-m ∙∙ t-r)) (~ k) i)})
-          (inS (bot i j))
-          k
-  cong-PushoutA→PushoutPushoutMapLRGen0 : ∀ {ℓ ℓ' ℓ''} {A : Type ℓ} {B : Type ℓ'} {C : Type ℓ''}
-    (f : B → C) (inl* : A → B) {x : A}
-    → {fml fmr frr : A}  (f-l : x ≡ fml) (f-m : fml ≡ fmr) (f-r : fmr ≡ frr)
-    → {tml tmr : A}  (t-l : x ≡ tml) (t-m : tml ≡ tmr) (t-r : tmr ≡ frr)
-       {t : B}
-       (push-inr-base  : inl* x ≡ t)
-       (bot : Square (sym push-inr-base) (sym push-inr-base) refl
-                     (cong inl* ((f-l ∙∙ f-m ∙∙ f-r) ∙∙ refl ∙∙ sym (t-l ∙∙ t-m ∙∙ t-r))))
-       → Cube {A = C}
-              (λ i j → f (PushoutA→PushoutPushoutMapLRGen0 inl* f-l f-m f-r t-l t-m t-r
-                           push-inr-base bot i j i1))
-              (λ i j → PushoutA→PushoutPushoutMapLRGen0 (f ∘ inl*)
-                           f-l f-m f-r t-l t-m t-r (cong f push-inr-base) (λ i j → f (bot i j)) i j i1)
-              refl refl (λ _ _ → f (inl* x)) λ _ _ → f (inl* frr)
-  cong-PushoutA→PushoutPushoutMapLRGen0 f inl*
-    f-l f-m f-r t-l t-m t-r push-inr-base bot = cong-hcomp f
-      ∙ λ r i j → hcomp (λ k
-                → λ {(i = i0) → cong-invSides-filler f push-inr-base (cong inl* ((f-l ∙∙ f-m ∙∙ f-r))) r j (~ k)
-                    ; (i = i1) → cong-invSides-filler f push-inr-base (cong inl* ((t-l ∙∙ t-m ∙∙ t-r))) r j (~ k)
-                    ; (j = i0) → f (push-inr-base (~ k))
-                    ; (j = i1) → f (inl* (doubleCompPath-filler
-                                         (f-l ∙∙ f-m ∙∙ f-r)
-                                         refl
-                                         (sym (t-l ∙∙ t-m ∙∙ t-r)) (~ k) i))})
-           ((f (bot i j)))
-
-  PushoutA→PushoutPushoutMapLRGen>1 : ∀ {ℓ ℓ'} {A : Type ℓ} {B : Type ℓ'} (inl* : A → B) {x y z w : A}
-    → (inl-push-t-s : y ≡ x) (psh : y ≡ z) (inr-push-t-s : w ≡ z)
-    {t : B}
-    (push-inr-north  : inl* x ≡ t) (push-inr-south : inl* w ≡ t)
-    (bot : Square push-inr-north push-inr-south (cong inl* (sym inl-push-t-s ∙∙ psh ∙∙ sym inr-push-t-s)) refl) -- 
-    → (i j k : I) → B
-  PushoutA→PushoutPushoutMapLRGen>1 inl* inl-push-t-s psh inr-push-t-s {t = t} push-inr-north push-inr-south bot i j k =
-    hfill (λ k → λ {(i = i0) → inl* (doubleCompPath-filler (sym inl-push-t-s) psh (sym inr-push-t-s) (~ k) j)
-                   ; (i = i1) → doubleCompPath-filler push-inr-north refl (sym push-inr-south) k j
-                   ; (j = i0) → invSides-filler push-inr-north (cong inl* (sym inl-push-t-s)) k i
-                   ; (j = i1) → invSides-filler push-inr-south (cong inl* inr-push-t-s) k i}) -- (cong inl* inr-push-t-s) k i})
-          (inS (bot j i))
-          k
-
-  cong-PushoutA→PushoutPushoutMapLRGen>1 :
-    ∀ {ℓ ℓ' ℓ''} {A : Type ℓ} {B : Type ℓ'} {C : Type ℓ''} (f : B → C) (inl* : A → B) {x y z w : A}
-     (inl-push-t-s : y ≡ x) (psh : y ≡ z) (inr-push-t-s : w ≡ z)
-     {t : B}
-     (push-inr-north  : inl* x ≡ t) (push-inr-south : inl* w ≡ t)
-     (bot : Square push-inr-north push-inr-south
-                   (cong inl* (sym inl-push-t-s ∙∙ psh ∙∙ sym inr-push-t-s)) refl)
-      → Cube {A = C} (λ i j → f (PushoutA→PushoutPushoutMapLRGen>1 inl* inl-push-t-s
-                                  psh inr-push-t-s {t = t} push-inr-north push-inr-south bot i j i1))
-           (λ i j → PushoutA→PushoutPushoutMapLRGen>1 (f ∘ inl*)
-                     inl-push-t-s psh inr-push-t-s (cong f push-inr-north) (cong f push-inr-south)
-                       (λ i j → f (bot i j)) i j i1)
-           (λ _ j → f (inl* (psh j)))
-           (cong-∙∙ f push-inr-north refl (sym push-inr-south))
-           (λ _ i → f (inl* (inl-push-t-s i)))
-           λ _ i → f (inl* (inr-push-t-s (~ i)))
-  cong-PushoutA→PushoutPushoutMapLRGen>1 {C = C} f inl* inl-push-t-s psh inr-push-t-s push-inr-north push-inr-south bot i j k =
-    hcomp (λ r → λ {(i = i0) → f (PushoutA→PushoutPushoutMapLRGen>1 inl* inl-push-t-s psh
-                                   inr-push-t-s push-inr-north push-inr-south bot j k r)
-                   ; (i = i1) → PushoutA→PushoutPushoutMapLRGen>1 (f ∘ inl*)
-                                  inl-push-t-s psh inr-push-t-s
-                                  (cong f push-inr-north) (cong f push-inr-south)
-                                    (λ i j → f (bot i j)) j k r
-                   ; (j = i0) → f (inl* (doubleCompPath-filler (λ i₁ → inl-push-t-s (~ i₁)) psh
-                                        (λ i₁ → inr-push-t-s (~ i₁)) (~ r) k))
-                   ; (k = i0) → slem i r j
-                   ; (k = i1) → slem2 i r j})
-            (f (bot k j))
-     where
-     slem : Path (Square {A = C} _ _ _ _)
-       (λ r j → f
-         (PushoutA→PushoutPushoutMapLRGen>1 inl* inl-push-t-s psh
-          inr-push-t-s push-inr-north push-inr-south bot j i0 r))
-       (λ r j → PushoutA→PushoutPushoutMapLRGen>1 (λ x₁ → f (inl* x₁))
-         inl-push-t-s psh inr-push-t-s (λ i₁ → f (push-inr-north i₁))
-         (λ i₁ → f (push-inr-south i₁)) (λ i₁ j₁ → f (bot i₁ j₁)) j i0 r)
-     slem = cong-hcomp f
-
-     slem2 : Path (Square {A = C} _ _ _ _)
-       (λ r j → f
-         (PushoutA→PushoutPushoutMapLRGen>1 inl* inl-push-t-s psh
-          inr-push-t-s push-inr-north push-inr-south bot j i1 r))
-       (λ r j → PushoutA→PushoutPushoutMapLRGen>1 (λ x₁ → f (inl* x₁))
-         inl-push-t-s psh inr-push-t-s (λ i₁ → f (push-inr-north i₁))
-         (λ i₁ → f (push-inr-south i₁)) (λ i₁ j₁ → f (bot i₁ j₁)) j i1 r)
-     slem2 = cong-hcomp f
 
 
 
@@ -755,7 +757,17 @@ module _ {ℓ ℓ' ℓ'' : Level} {B : CWskel ℓ} {C : CWskel ℓ'} {D : CWskel
                                     (λ i₁ → inl (comm f (suc n) (invEq (e B n) (inr x)) (~ i₁))) k i})
               (inS (push (invEq (e B n) (inr x)) (~ i ∧ j)))
               k
-
+    {-
+      hfill (λ k → λ {(i = i0) → PushoutPushoutMap→PushoutABotFillSide-filler k j i1
+                    ; (i = i1) → inl (comm f (suc n) (invEq (e B n) (inr x)) (~ k))
+                    ; (j = i0) → inl (comm f (suc n) (invEq (e B n) (inr x)) (~ k))
+                    ; (j = i1) → doubleCompPath-filler
+                                    (λ i → inr (comm g (suc n) (invEq (e B n) (inr x)) i))
+                                    (sym (push (invEq (e B n) (inr x))))
+                                    (λ i₁ → inl (comm f (suc n) (invEq (e B n) (inr x)) (~ i₁))) k i})
+              (inS (push (invEq (e B n) (inr x)) (~ i ∧ j)))
+              k
+-}
   PushoutPushoutMap→PushoutABot :
     (n : ℕ) (x : A B n) (s : S₊ n)
     → Path (pushoutA (suc (suc n))) (pushoutA↑ n (pushoutMapₛ n (inr x , s)))
@@ -883,14 +895,24 @@ module _ {ℓ ℓ' ℓ'' : Level} {B' : CWskel ℓ} {C' : CWskel ℓ'} {D' : CWs
                         ; (j = i1) → push (push (a , s) i) k
                         ; (k = i0) → inl (comm f (suc (suc (suc n))) (push (a , s) i) j)
                         ; (k = i1) → inr (comm g (suc (suc (suc n))) (push (a , s) i) j)})
-           (hcomp (λ r → λ {(i = i0) → {!!}
-                        ; (i = i1) → {!!}
-                        ; (j = i1) → {!!}
-                        ; (k = i0) → {!!}
-                        ; (k = i1) → {!!}})
-                  {!!})
-         where -- j i k
-         W = cong-PushoutA→PushoutPushoutMapLRGen>1 f g (PushoutPushoutMap→PushoutA f g (suc (suc n)))
+           (hcomp (λ r → λ {(i = i0) → compPath-filler' (λ j₁ → W1 i0 k j₁)
+                                          (λ j → inlfiller (suc (suc n)) (α B (suc (suc n)) (a , s)) j k)
+                                           (~ r) j
+                        ; (i = i1) → compPath-filler' (λ j₁ → W1 i1 k j₁)
+                                          (λ j → inr2filler n a j k i1)
+                                          (~ r) j
+                        ; (j = i0) → W1 i k r
+                        ; (j = i1) → push (push (a , s) i) k
+                        ; (k = i0) → compPath-filler' (λ j → W1 i i0 j) (λ j → inl (comm f (suc (suc (suc n))) (push (a , s) i) j)) (~ r) j
+                        ; (k = i1) → compPath-filler' (λ j → W1 i i1 j) (λ j → inr (comm g (suc (suc (suc n))) (push (a , s) i) j)) (~ r) j})
+              (hcomp (λ r → λ {(i = i0) → {!!}
+                              ; (i = i1) → {!!}
+                              ; (j = i1) → push (push (a , s) (i ∨ ~ r)) k
+                              ; (k = i0) → {!compPath-filler (λ j₁ → W1 i i0 j₁) (λ r → inl (comm f (suc (suc (suc n))) (push (a , s) (j ∨ ~ r))))!}
+                              ; (k = i1) → {!!}})
+                   {!!})) -- (push (invEq (e (strictCWskel B') (suc (suc n))) (inr a))  ((~ i ∨ j) ∧ k))))
+         where --
+         W = cong-PushoutA→PushoutPushoutMapLRGen>1 (PushoutPushoutMap→PushoutA f g (suc (suc n)))
                inl
                (λ i → inl (∣ f ∣ (suc (suc (suc n))) (invEq (e B (suc (suc n))) (push (a , s) i))))
                (push (α B (suc (suc n)) (a , s)))
@@ -899,17 +921,66 @@ module _ {ℓ ℓ' ℓ'' : Level} {B' : CWskel ℓ} {C' : CWskel ℓ'} {D' : CWs
                (push (inr a , south))
                (λ j i → (push (inr a , merid s j)) i)
 
-         CC : Cube (λ i k → (PushoutPushoutMap→PushoutA f g (suc (suc n))
-                     (PushoutA→PushoutPushoutMapLR f g (suc (suc n))
-                       (push (a , s) i) k)))
+         W1 : (i j k : I) → _
+         W1 i j k = PushoutA→PushoutPushoutMapLRGen>1
+                  (PushoutPushoutMap→PushoutA f g (suc (suc n)) ∘ inl)
+                     (λ i₂ →
+                        inl
+                        (∣ f ∣ (suc (suc (suc n)))
+                         (invEq (e B (suc (suc n))) (push (a , s) i₂))))
+                     (push (α B (suc (suc n)) (a , s)))
+                     (λ i₂ →
+                        inr
+                        (∣ g ∣ (suc (suc (suc n)))
+                         (invEq (e B (suc (suc n))) (push (a , s) (~ i₂)))))
+                     refl
+                     ((λ i → inr (comm g (suc (suc (suc n))) (inr a) i))
+                           ∙∙ sym (push (inr a))
+                           ∙∙ (λ i → inl (comm f (suc (suc (suc n))) (inr a) (~ i))))
+                     (λ i₂ j₂ → PushoutPushoutMap→PushoutA f g (suc (suc n))
+                        (push (inr a , merid s i₂) j₂))
+                     i j k
+
+         W1Charac : Path (Square _ _ _ _) (λ i j → W1 i j i1) {!!}
+         W1Charac = {!!}
+  
+         i1C : Cube {!PushoutPushoutMap→PushoutA f g (suc (suc n)) (inl (push (α B (suc (suc n)) (a , s)) ?))!} {!!} --  (λ k j → inlfiller (suc (suc n)) (α B (suc (suc n)) (a , s)) j k)
+                    {!!} {!!}
+                    {!!} {!!} -- (λ r k → W1 i0 k r) λ r k → push (inl (strictifyFamα B' (suc (suc n)) (a , s))) k
+         i1C = {!Goal: Pushout
+      (λ x₁ →
+         ∣ f ∣ (suc (suc (suc (suc n))))
+         (CW↪ (strictCWskel B') (suc (suc (suc n))) x₁))
+      (λ x₁ →
+         ∣ g ∣ (suc (suc (suc (suc n))))
+         (CW↪ (strictCWskel B') (suc (suc (suc n))) x₁))
+———— Boundary (wanted) —————————————————————————————————————
+k = i0 ⊢ (?14 (r = i0))
+k = i1 ⊢ (?15 (r = i0))
+j = i0 ⊢ (W1 i k i0)
+j = i1 ⊢ (inl
+          (∣ f ∣ (suc (suc (suc (suc n))))
+           (CW↪ (strictCWskel B') (suc (suc (suc n))) (push (a , s) i))))
+i = i0 ⊢ (?13 (r = i0))
+i = i1 ⊢ (inr2filler n a j k i0)!}
+
+
+         CC : Cube {!(cong (PushoutPushoutMap→PushoutA f g (suc (suc n)))
+                      (push (inr a , south)))!}
                    (λ i k → push (push (a , s) i) k)
                    (λ j k → inlfiller (suc (suc n)) (α B (suc (suc n)) (a , s)) j k)
                    {!!} -- (λ j k → inr2filler n a j k i1)
                    (λ j i → inl (comm f (suc (suc (suc n))) (push (a , s) i) j))
                    λ j i → inr (comm g (suc (suc (suc n))) (push (a , s) i) j)
-         CC = {!!} -- cong-hcomp (PushoutPushoutMap→PushoutA f g (suc (suc n)))
-           ◁ {!
-!}
+         CC = {!cong-PushoutA→PushoutPushoutMapLRGen>1 f g (PushoutPushoutMap→PushoutA f g (suc (suc n)))
+               inl
+               (λ i → inl (∣ f ∣ (suc (suc (suc n))) (invEq (e B (suc (suc n))) (push (a , s) i))))
+               (push (α B (suc (suc n)) (a , s)))
+               (λ i → inr (∣ g ∣ (suc (suc (suc n))) (invEq (e B (suc (suc n))) (push (a , s) (~ i)))))
+               (push (inr a , north))
+               (push (inr a , south))
+               (λ j i → (push (inr a , merid s j)) i)!} -- cong-hcomp (PushoutPushoutMap→PushoutA f g (suc (suc n)))
+           ◁ {!!}
                
 {-
 ed) —————————————————————————————————————

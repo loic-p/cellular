@@ -411,9 +411,9 @@ Badoo! : {n m k : ℕ} (α : SphereBouquet∙ (suc n) (Fin m)
                        →∙ SphereBouquet∙ (suc n) (Fin k))
   (ϕ : GroupHom (AbGroup→Group (AbelianizationAbGroup
                   (π'Gr n (cofib (fst α) , inl tt))))
-                (Hˢᵏᵉˡ (SphereBouquet/ˢᵏᵉˡ (fst α)) n))
+                (H̃ˢᵏᵉˡ (SphereBouquet/ˢᵏᵉˡ (fst α)) (suc n)))
   → ((k : _) → fst ϕ (πᵃᵇSphereBouquet/Generator α k)
-               ≡ genHˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ (fst α) k)
+               ≡ genH̃ˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ (fst α) k)
   → isEquiv (fst ϕ)
 Badoo! α ϕ hyp =
   makeℤ[]/Equiv
@@ -427,9 +427,9 @@ Badoo! α ϕ hyp =
           ∙ Iso.leftInv (fst (π'ᵃᵇCofibBouquetMap≅ℤ[]/BouquetDegree α)) _)
         ∙ hyp k
         ∙ sym (Iso.leftInv (fst (GroupIso-Hₙ₊₁SphereBouquetⁿ/→ℤ[]/ImSphereMap (fst α)))
-          (genHˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ (fst α) k))
+          (genH̃ˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ (fst α) k))
         ∙ cong (ℤ[]/ImSphereMap→HₙSphereBouquetⁿ/ (fst α))
-          (isGen-genHˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ (fst α) k)
+          (isGen-genH̃ˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ (fst α) k)
 
 
 
