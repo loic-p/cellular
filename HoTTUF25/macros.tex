@@ -1,0 +1,360 @@
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{disclaimer}[theorem]{Disclaimer}
+\newtheorem{question}[theorem]{Question}
+\newtheorem{remark}[theorem]{Remark}
+
+%% Configure appearance of system names here
+\newcommand{\teletype}[1]{\ensuremath{\mathtt{#1}}}
+\newcommand{\systemname}[1]{\teletype{\color{darkgray}#1}\xspace}
+
+%% Systems referred to in the paper
+\newcommand{\Agda}{\systemname{Agda}}
+\newcommand{\HoTTAgda}{\systemname{HoTT}-\Agda}
+\newcommand{\agdaCubical}{\systemname{agda/cubical}}
+\newcommand{\Coq}{\systemname{Coq}}
+\newcommand{\CubicalAgda}{\systemname{Cubical} \systemname{Agda}}
+\newcommand{\cubicaltt}{\systemname{cubicaltt}}
+\newcommand{\cooltt}{\texttt{\textcolor[rgb]{.012,.27,.46}{cool}tt}}
+\newcommand{\Idris}{\systemname{Idris}}
+\newcommand{\Haskell}{\systemname{Haskell}}
+\newcommand{\Lean}{\systemname{Lean}}
+
+
+\definecolor{Revolutionary}{RGB}{232,70,68}
+\newcommand{\redtt}{\textbf{\teletype{{\color{Revolutionary}red}tt}}}
+
+\newcommand{\eg}{{e.g.}}
+\newcommand{\ie}{{i.e.}}
+\newcommand{\cf}{{cf.}}
+
+%% Type theory macros
+\newcommand{\su}[2]{#1/#2}
+\newcommand{\subst}[2]{(\su #1 #2)}
+\newcommand{\esubst}[3]{(#1, \su #2 #3)}
+\newcommand{\substnop}[2]{{#2}\, / \,{#1}}
+
+\usepackage{catchfilebetweentags}
+%% \usepackage{MnSymbol}
+\usepackage{newunicodechar}
+\newunicodechar{≃}{\ensuremath{\simeq}}
+\newunicodechar{≅}{\ensuremath{\cong}}
+\newunicodechar{∈}{\ensuremath{\in}}
+\newunicodechar{⁻}{\ensuremath{^{-}}}
+\newunicodechar{ᴹ}{\ensuremath{_{M}}}
+\newunicodechar{ᴺ}{\ensuremath{_{N}}}
+\newunicodechar{≡}{\ensuremath{\equiv}}
+\newunicodechar{λ}{\ensuremath{\lambda}}
+\newunicodechar{⊎}{\ensuremath{\uplus}}
+\newunicodechar{∷}{\ensuremath{::}}
+\newunicodechar{ℓ}{\ensuremath{\ell}}
+\newunicodechar{ᵢ}{\ensuremath{_i}}
+\newunicodechar{⟨}{\ensuremath{\langle}}
+\newunicodechar{⟩}{\ensuremath{\rangle}}
+\newunicodechar{α}{\ensuremath{\alpha}}
+\newunicodechar{β}{\ensuremath{\beta}}
+\newunicodechar{θ}{\ensuremath{\theta}}
+\newunicodechar{φ}{\ensuremath{\varphi}}
+\newunicodechar{ψ}{\ensuremath{\psi}}
+\newunicodechar{η}{\ensuremath{\eta}}
+\newunicodechar{ε}{\ensuremath{\varepsilon}}
+\newunicodechar{ι}{\ensuremath{\iota}}
+\newunicodechar{Σ}{\ensuremath{\Sigma}}
+\newunicodechar{σ}{\ensuremath{\sigma}}
+\newunicodechar{∀}{\ensuremath{\forall}}
+\newunicodechar{ℕ}{\ensuremath{\mathbb{N}}}
+\newunicodechar{→}{\ensuremath{\to}}
+\newunicodechar{⊎}{\ensuremath{\uplus}}
+\newunicodechar{⋆}{\ensuremath{*}}
+\newunicodechar{¬}{\ensuremath{\lnot}}
+\newunicodechar{Θ}{\ensuremath{\theta}}
+\newunicodechar{ᴸ}{\ensuremath{{}^{\color{black}\leftarrow}}}  % hax
+\newunicodechar{ᴿ}{\ensuremath{{}^{\color{black}\rightarrow}}} % hax
+\newunicodechar{∧}{\ensuremath{\wedge}}
+\newunicodechar{∨}{\ensuremath{\vee}}
+\newunicodechar{∼}{\ensuremath{\sim}}
+\newunicodechar{≢}{\ensuremath{\nequiv}}
+\newunicodechar{Π}{\ensuremath{\Pi}}
+\newunicodechar{ℤ}{\ensuremath{\mathbb{Z}}}
+\newunicodechar{∥}{\ensuremath{\parallel}}
+\newunicodechar{∣}{\ensuremath{\mid}}
+\newunicodechar{ℚ}{\ensuremath{\mathbb{Q}}}
+\newunicodechar{₊}{\ensuremath{_+}}
+\newunicodechar{∗}{\ensuremath{\ast}}
+\newunicodechar{₁}{\ensuremath{_1}}
+\newunicodechar{₂}{\ensuremath{_2}}
+\newunicodechar{⊥}{\ensuremath{\bot}}
+\newunicodechar{∘}{\ensuremath{\circ}}
+\newunicodechar{ρ}{\ensuremath{\rho}}
+\newunicodechar{↦}{\ensuremath{\mapsto}}
+\newunicodechar{₀}{\ensuremath{_0}}
+\newunicodechar{∙}{\ensuremath{\boldsymbol{\cdot}}}
+\newunicodechar{Ω}{\ensuremath{\Omega}}
+\newunicodechar{§}{\ensuremath{\mathbb{S}}}
+\newunicodechar{𝟙}{\ensuremath{\mathbb{1}}}
+\newunicodechar{×}{\ensuremath{\times}}
+\newunicodechar{♥}{\textnormal{\func{Susp}}}
+\newunicodechar{₋}{\func{${}_{-}\!$}}
+\newunicodechar{✪}{\func{$\sigma\!$}}
+\newunicodechar{♢}{$\sphere{2}$}
+\newunicodechar{⋆}{\func{\text{\textasteriskcentered}}}
+\newunicodechar{®}{${}^{\text{\color{black}{$3$}}}$}
+\newunicodechar{ℏ}{,}
+\newunicodechar{⌣}{$\smile$}
+\newunicodechar{⋈}{\text{\textasteriskcentered}}
+\newunicodechar{▬}{${}^2$}
+\newunicodechar{𝕒}{\color{black}{\textnormal{$A$}}}
+\newunicodechar{𝕓}{\color{black}{\textnormal{$B$}}}
+\newunicodechar{𝕔}{$\star_A$}
+\newunicodechar{𝕕}{$\star_B$}
+\newunicodechar{∇}{$\nabla$}
+\newunicodechar{⊓}{\color{black}{\textnormal{$A$}}}
+\newunicodechar{𝕝}{\color{black}{\textnormal{$B$}}}
+\newunicodechar{𝕗}{$i^{\vee}$}
+\newunicodechar{𝟙}{$\mathbbm{1}$}
+\newunicodechar{⊗}{$\mathbb{S}^{{\color{black}2}}$}
+\newunicodechar{⊕}{$\mathbb{S}^{{\color{black}3}}$}
+\newunicodechar{₃}{${}_3$}
+\newunicodechar{∃}{$\exists$}
+\newunicodechar{≤}{$\leq$}
+
+% 𝕒 = fst A◃
+% 𝕓 = fst B◃
+
+% 𝕔 = snd A◃
+% 𝕕 = snd B◃
+
+
+%Ugly hacks for torus, klein and RP2
+
+\newcommand{\One}{\func{$\mathbbm{1}$}}
+
+% Hacks for ex computation
+\newunicodechar{ₕ}{\func{\ensuremath{_h}}}
+\newunicodechar{ϕ}{\func{\ensuremath{\phi}}}
+\newunicodechar{ζ}{\anum{3}\;\;\;\;\;\;\;\;\;}
+
+\newcommand{\winding}[1]{\textsf{winding}({#1})}
+\newcommand{\Type}{\textnormal{{\textsf{Type}}}}
+\newcommand{\nType}[1]{\textnormal{${#1}$-\func{Type}}}
+\newcommand{\ptrunc}[1]{\func{∥}\,{#1}\,\func{∥}}
+\newcommand{\tyProduct}[2]{{#1}\,\AgdaOperator{\AgdaFunction{×}}\,{#2}}
+\newcommand{\tySigma}[3]{\func{Σ[}\,{#1}\,\func{∈}\,{#2}\,\func{]}\,{#3}}
+\newcommand{\tyMaybe}[1]{\data{Maybe}\,{#1}}
+\newcommand{\tyNat}{\data{ℕ}}
+\newcommand{\tyPath}[2]{{#1}\,\func{≡}\,{#2}}
+\newcommand{\tyPathP}[4]{\primty{PathP}\,(\symb{λ}\,{#1} \to {#2})\,{#3}\,{#4}}
+\newcommand{\tyEquiv}[2]{{#1}\,\,\func{≃}\,\,{#2}}
+\newcommand{\tyIso}[2]{{#1}\,\,\func{$\cong$}\,\,{#2}}
+\newcommand{\tySum}[2]{{#1}\,\func{⊎}\,{#2}}
+\newcommand{\tyNot}[1]{\func{¬}\,{#1}}
+\newcommand{\tyStructEq}[3]{{#1}\,\func{≃[}\,{#2}\,\func{]}\,{#3}}
+
+
+\newlength{\LETTERheight}
+\AtBeginDocument{\settoheight{\LETTERheight}{I}}
+\newcommand*{\longleadsto}[1]{\ \raisebox{0.24\LETTERheight}{\tikz \draw [->,
+line join=round,
+decorate, decoration={
+    zigzag,
+    segment length=4,
+    amplitude=.9,
+    post=lineto,
+    post length=2pt
+}] (0,0) -- (#1,0);}\ }
+
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\newcommand{\equivDef}{\overset{\scriptscriptstyle \textsf{def}}{\equiv}}
+\newcommand{\trivGrp}{\func{𝟙}}
+\newcommand{\bS}{\mathbb{S}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\NN}{\mathbb{N}}
+\newcommand{\bZ}{\mathbb{Z}}
+\newcommand{\bN}{\mathbb{N}}
+\newcommand{\sphere}[1]{{§}^{#1}}
+\newcommand{\klein}{{$\mathbb{K}^{\,2}$}}
+\newcommand{\cohom}[2]{\textnormal{\func{H}}^{#1}\!\left({#2}\right)}
+\newcommand{\funspace}[2]{\left({{#2} \to \func{K}_{#1}}\right)}
+\newcommand{\funspaceP}[2]{{{#2} \to \func{K}_{#1}}}
+\newcommand{\torus}{\func{$\mathbb{T}^{\,2}$}}
+\newcommand{\RP}{\func{$\mathbb{R}P^2$}}
+\newcommand{\CP}{\func{$\mathbb{C}P^2$}}
+\newcommand{\refl}{\textnormal{\textsf{refl}}}
+\newcommand{\inr}[1]{\mathsf{inr}\,{#1}}
+\newcommand{\inl}[1]{\mathsf{inl}\,{#1}}
+\newcommand{\push}[1]{\mathsf{push}\,{#1}}
+\newcommand{\trunc}[1]{\left| #1 \right|}
+\newcommand{\truncT}[2]{{\left\lVert #2\right\rVert}_{#1}}
+\newcommand{\Loop}{\con{loop}}
+\newcommand{\base}{\con{base}}
+\newcommand{\surf}{\con{surf}}
+\newcommand{\north}{\mathsf{north}}
+\newcommand{\south}{\mathsf{south}}
+\newcommand{\Code}{\func{Code}}
+\newcommand{\cofib}{{\textnormal{\textsf{cofib}}}}
+\newcommand{\fib}{\textnormal{\textsf{fib}}}
+\newcommand{\merid}[1]{\mathsf{merid}\;{#1}}
+\newcommand{\transport}[2]{\func{transport}\;#1\;#2}
+\newcommand{\ap}[2]{\mathsf{ap}_{#1}{#2}}
+\newcommand{\app}[3]{\mathsf{ap$_2$}_{#1}({#2},{#3})}
+\newcommand{\tmPair}[2]{{#1}\,\con{,}\,{#2}}
+\newcommand{\tmTrunc}[1]{\con{[}\,{#1}\,\con{]}}
+\newcommand{\tmNil}{\con{[]}}
+\newcommand{\tmCons}[2]{{#1}\;\con{∷}\;{#2}}
+
+\newcommand{\cupprodop}{\func{$\smile$}}
+\newcommand{\cupprodkop}{\func{$\smile_k$}}
+\newcommand{\cupprodk}[2]{{#1}\;\cupprodkop\;{#2}}
+\newcommand{\cupprod}[2]{{#1}\;\cupprodop\;{#2}}
+\newcommand{\cupprodaltop}{\cupprodop_1}
+\newcommand{\cupprodalt}[2]{{#1}\;\cupprodaltop\;{#2}}
+\newcommand{\brunerie}{\func{$\beta$}}
+\newcommand{\abs}[1]{\left | {#1} \right |}
+\newcommand{\EM}[1]{\textnormal{\func{K}}_{#1}}
+\newcommand{\LoopSpace}[1]{\func{$\Omega$}\,{#1}}
+\newcommand{\LoopSpaceN}[2]{\func{$\Omega$}^{#1}\,{#2}}
+\newcommand{\plusk}{\func{+$_k$}}
+\newcommand{\Smash}{\func{$\wedge$}}
+\newcommand{\Susp}[1]{\textnormal{{$\Sigma #1$}}}
+\newcommand{\SuspN}[2]{\textnormal{{Susp}${}^{#1}$}{\,#2}}
+\newcommand{\JTrunc}{\truncT{3}{\js}}
+\newcommand{\sym}[1]{{#1}^{\func{$-1$}}}
+\newcommand{\JJoin}[2]{{#1}\func{\text{\textasteriskcentered}}\,{#2}}
+\newcommand{\JoinS}{\JJoin{\sphere{1}}{\sphere{1}}}
+\newcommand{\prehopf}{\textnormal{\func{h}}}
+\newcommand{\hopf}{\textnormal{\func{hopf}}}
+\newcommand{\HI}[1]{\textnormal{\func{HI}}\,#1}
+\newcommand{\Nabla}{\func{$\nabla$}}
+\newcommand{\ivee}{\func{$i^{\vee}$}}
+\newcommand{\james}[2]{\ensuremath{\textnormal{\func{J}}{}_{#1}{\,#2}}}
+\newcommand{\js}{\james{2}{\sphere{2}}}
+\newcommand{\encode}{\textnormal{\func{encode}}}
+\newcommand{\decode}{\textnormal{\func{decode}}}
+\newcommand{\idfun}{\textnormal{\func{id}}}
+
+
+
+%% Comment macro colors
+\definecolor{dkblue}{rgb}{0,0.1,0.5}
+\definecolor{lightblue}{rgb}{0,0.5,0.5}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{dkbrown}{rgb}{0.4,0,0}
+\definecolor{dkviolet}{rgb}{0.6,0,0.8}
+
+%% SUBMISSION: turn off all comments
+%% \newcommand{\mycomment}[3]{}
+\newcommand{\mycomment}[3]{\textcolor{#1}{[#2#3]}}
+\newcommand{\todo}[1]{\mycomment{red}{TODO: }{#1}}
+\newcommand{\loic}[1]{\mycomment{dkviolet}{Loïc: }{#1}}
+\newcommand{\axel}[1]{\mycomment{blue}{Axel: }{#1}}
+
+
+%%CW stuff
+%Categories
+\newcommand{\cwstr}{\textnormal{\ensuremath{\mathsf{CWstr}}}}
+\newcommand{\cw}{\textnormal{\ensuremath{\mathsf{CW}}}}
+\newcommand{\cwstrinf}{\textnormal{\ensuremath{\mathsf{CWstr}_\infty}}}
+\newcommand{\cwfin}{\textnormal{\ensuremath{\mathsf{CW}_{< \omega}}}}
+\newcommand{\cwstrfin}{\textnormal{\ensuremath{\mathsf{CWstr}_{< \omega}}}}
+\newcommand{\cwstrinffin}[1]{\textnormal{\ensuremath{\mathsf{CWstr}^{(#1)}_\infty}}}
+\newcommand{\cwstrpt}{\ensuremath{\cwstr_\star}}
+\newcommand{\cwpt}{\ensuremath{\cw_\star}}
+\newcommand{\cwstrinfpt}{\ensuremath{\cwstrinf_\star}}
+\newcommand{\ch}{\textnormal{\ensuremath{\mathsf{Ch}}}}
+\newcommand{\abgrp}{\textnormal{\ensuremath{\mathsf{AbGrp}}}}
+\newcommand{\grp}{\textnormal{\ensuremath{\mathsf{Grp}}}}
+\newcommand{\ho}{\textnormal{\ensuremath{\mathsf{Ho}}}}
+
+\newcommand{\hstr}[1]{\textnormal{\ensuremath{H^{\mathsf{str}}_{#1}}}}
+\newcommand{\hstrinf}[1]{\textnormal{\ensuremath{H^{\mathsf{str}_\infty}_{#1}}}}
+\newcommand{\hcw}[1]{\textnormal{\ensuremath{H^{\mathsf{cw}}_{#1}}}}
+
+\newcommand{\hredstr}[1]{\textnormal{\ensuremath{\widetilde{H}_{#1}}}}
+\newcommand{\hredstrinf}[1]{\textnormal{\ensuremath{\widetilde{H}^{\mathsf{str}_\infty}_{#1}}}}
+\newcommand{\hredcw}[1]{\textnormal{\ensuremath{\widetilde{H}_{#1}}}}
+
+\newcommand{\incl}[1]{\textnormal{\ensuremath{\iota_{#1}}}}
+\newcommand{\fin}[1]{\textnormal{\ensuremath{\mathsf{Fin}({#1})}}}
+
+%functorial action on n-chains. Need something better looking...
+\newcommand{\funct}[1]{\ensuremath{\overline{{#1}}}}
+
+\newcommand{\fst}{\mathsf{fst}}
+\newcommand{\snd}{\mathsf{snd}}
+\newcommand{\bOne}{\mathbbm{1}}
+\newcommand{\bZero}{\mathbbm{0}}
+\newcommand{\seqcolim}[2]{\textnormal{\ensuremath{\underset{{#1}\to \infty}{\mathsf{colim}}{#2}}}}
+
+\newcommand{\cell}{\mathsf{cell}}
+\newcommand{\glue}{\mathsf{glue}}
+
+\newcommand{\pushout}[3]{\textnormal{\ensuremath{{#1}\sqcup^{#2}{#3}}}}
+\newcommand{\pushouttighter}[3]{\textnormal{\ensuremath{{#1}{\text{\raisebox{2.7pt}{$\,\sqcup^{\text{\raisebox{3.2pt}{$#2$}}}$}}}{#3}}}}
+\newcommand{\pushouttight}[3]{\textnormal{${#1}$\!$\sqcup^{#2}$\!${#3}$}}%{\textnormal{\ensuremath{{#1}\sqcup^{#2}{#3}}}}
+\newcommand{\pushoutexpl}[5]{\textnormal{\ensuremath{{#1}\sqcup^{#2}_{{#4},{#5}}{#3}}}}
+\newcommand{\cellpushoutexpl}[5]{\pushoutexpl{{#1}_\bullet}{{#2}_\bullet}{{#3}_\bullet}{{#4}_\bullet}{{#5}_\bullet}}
+
+%dependent paths
+
+\newcommand{\deppath}[3]{
+\newlength{\myl}
+\settowidth{\myl}{\text{\ensuremath{#3}}}
+\begin{tikzcd}[ampersand replacement=\& , column sep = \the\myl]
+{#1} \& {#2}
+\arrow["{\tiny{#3}}"', from=1-1, to=1-2 , squiggly]
+\end{tikzcd}
+}
+
+\newcommand{\xra}[1]{\ensuremath{\underset{#1}{\rightsquigarrow}}}
+\newcommand{\xla}[1]{\ensuremath{\overset{#1}{\leftsquigarrow}}}
+%% \newcommand{\deppath}[3]{\ensuremath{{#1}\xra{#3} {#2}}}
+
+\newcommand{\spaces}{\textnormal{\ensuremath{\mathsf{Sp}}}}
+\newcommand{\Hom}{\textnormal{\ensuremath{\mathsf{Hom}}}}
+\newcommand{\ob}{\textnormal{\ensuremath{\mathsf{Ob}}}}
+\newcommand{\Ho}{\textnormal{\ensuremath{\mathsf{Ho}}}}
+\newcommand{\bouquetGen}[2]{\textnormal{\ensuremath{\bigvee_{#1}{\sphere{#2}}}}}
+\newcommand{\bouquetGenL}[2]{\textnormal{\ensuremath{\underset{#1}{\bigvee}{\,\sphere{#2}}}}}
+\newcommand{\bouquet}[2]{\ensuremath{\bouquetGen{\fin{#1}}{#2}}}
+\newcommand{\bouquetL}[2]{\textnormal{\ensuremath{\underset{#1}{\bigvee}{\sphere{#2}}}}}
+\newcommand{\degree}{\ensuremath{\mathsf{deg}}}
+\newcommand{\bdeg}{\ensuremath{\mathsf{bdeg}}}
+%change this notation
+\newcommand{\pincheq}{\ensuremath{e}}
+
+%hurewicz homomorphism
+\newcommand{\hur}{\ensuremath{\eta}}
+\newcommand{\hurstr}{\textnormal{\ensuremath{\eta^{\textsf{str}}}}}
+\newcommand{\prehur}{\ensuremath{\widehat{\eta}}}
+\newcommand{\cfcod}{\textnormal{\ensuremath{\textsf{cfcod}}}}
+
+\DeclareMathOperator{\Ima}{Im}
+\DeclareMathSymbol{\shortminus}{\mathbin}{AMSa}{"39}
+
+
+\newcommand\dhrightarrow{%
+  \mathrel{\ooalign{$\rightarrow$\cr%
+  $\mkern3.5mu\rightarrow$}}
+}
+
+\newcommand\dhxrightarrow[2][]{%
+  \mathrel{\ooalign{$\xrightarrow[#1\mkern4mu]{#2\mkern4mu}$\cr%
+  \hidewidth$\rightarrow\mkern4mu$}}
+}
+
+\newcommand{\ab}[1]{\textnormal{\ensuremath{{\pi}_{#1}^{\mathsf{ab}}}}}
+
+\newcommand{\smallsquare}{\text{\scalebox{.6}{$\square$}}}
+
+\newcommand{\smalltext}[1]{\small {#1} \normalsize}
+\newcommand{\xxx}{$3$$\times$$3$}
+
+% raisebox for mathmode
+\makeatletter
+\newcommand{\raisemath}[2][]{\mathpalette{\raisem@th{#1}{#2}}}
+\newcommand{\raisem@th}[4]{\raisebox{#2}[#1]{$#3#4$}}
+\makeatother

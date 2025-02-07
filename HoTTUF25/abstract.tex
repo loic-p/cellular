@@ -1,0 +1,257 @@
+\documentclass[a4page]{article}
+% \usepackage{biblatex}
+\usepackage[a4paper,
+            bindingoffset=0.2in,
+            left=1in,
+            right=1in,
+            top=1in,
+            bottom=1in,
+            footskip=.25in]{geometry}
+\usepackage{amsmath, amsfonts, amsthm , mathtools , bbold, float}
+
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usepackage{mathpartir}
+\usepackage[citecolor=blue,linkcolor=blue,urlcolor=blue,colorlinks]{hyperref}
+\usepackage[nameinlink,capitalize,noabbrev]{cleveref}
+\usepackage{quiver}
+\usepackage{xspace}
+\usepackage{xcolor}
+\usepackage{bbm}
+\usepackage{breakurl}
+\usepackage{bbding}
+\hypersetup{pdfborder={0 0 100}}
+\usepackage{lipsum}
+%\usepackage{biblatex}
+%\bibliographystyle{unsrt}
+\usepackage[backend=biber,style=alphabetic,sorting=nty,giveninits]{biblatex} % Bibliography management
+\addbibresource{refs.bib}
+
+\usepackage{textcomp}
+\usepackage{xspace}
+\usepackage{url}
+\usepackage{multirow}
+\usepackage{hhline}
+\usepackage{pifont}
+\usetikzlibrary{arrows,matrix,decorations.pathmorphing,
+  decorations.markings, calc, backgrounds}
+\usepackage{mathpartir}
+\usepackage{microtype}
+
+\DisableLigatures[-]{family=tt*}
+
+\input{macros}
+
+\title{Hurewicz and Brouwer}
+
+\author{
+  Axel Ljungström\\
+  \footnotesize{Stockholm University, Sweden}\\
+  \footnotesize{\texttt{axel.ljungstrom@math.su.se}}
+  \and
+  Loïc Pujet\\
+  \footnotesize{Stockholm University, Sweden}\\
+  \footnotesize{\texttt{loic@pujet.fr}}
+}
+\date{}
+
+\begin{document}
+
+\maketitle
+\vspace{-.5cm}
+%
+Witold Hurewicz is one of the most important names in algebraic topology.
+Most famously, he is credited with the definition of higher homotopy groups, and with the
+\emph{Hurewicz theorem} which establishes a relation between homology groups and these
+newly defined homotopy groups.
+%
+Interestingly, Hurewicz worked from 1927 to 1936 as an assistant of L.E.J. Brouwer,
+who is best known as the father of intuitionism.
+%
+However, it seems that Hurewicz did not inherit his mentor's interest for constructive proofs.
+%
+In this abstract, we will do our best to posthumously reconcile these two mathematicians
+by giving a constructive proof of the Hurewicz theorem in Homotopy Type Theory.
+
+We should note that Christensen and Scoccola have already proved a version of the Hurewicz
+theorem in HoTT~\cite{christensen2020hurewicz}.
+They work with Eilenberg-MacLane homology, and their proof boils down to connectivity
+properties of the smash product.
+%
+On the other hand, the proof that we give here uses the more elementary notion of
+\emph{cellular homology}, and the core of our argument is that \( n \)-connected spaces may be
+approximated by \emph{CW complexes} with no nontrivial cells in dimension~\( \le n \).
+%
+We use the definition of CW complexes that was introduced by Buchholtz and Favonia~\cite{BuchholtzFavonia18}:
+
+\begin{figure}[H]
+\begin{minipage}{0.68 \linewidth}
+\begin{definition}
+  A \textbf{CW structure} is an infinite sequence of types and maps
+  $(X_{-1} \xrightarrow{\incl{-1}} X_0 \xrightarrow{\incl{0}} X_1 \xrightarrow{\incl{1}} \dots )$
+  equipped with a function $c : \bN \to \bN$ and a set of attaching maps $\alpha_i : S^i \times \fin{c_{i+1}} \to X_i$ for
+\end{definition}
+\end{minipage}
+\vspace{-.1cm}
+\hspace{.1cm}
+\begin{minipage}{0.32 \linewidth}
+  %
+\begin{tikzcd}[ampersand replacement=\& , column sep = small , row sep = small]
+	{S^{i} \times \fin{c_{i+1}}} \&\& \fin{c_{i+1}} \\
+	{X_i} \&\& {X_{i+1}}
+	\arrow["{\mathsf{snd}}", from=1-1, to=1-3]
+	\arrow["{\alpha_{i}}"', from=1-1, to=2-1]
+	\arrow[from=2-1, to=2-3]
+	\arrow[from=1-3, to=2-3]
+	\arrow["\lrcorner"{anchor=center, pos=0.125, rotate=180}, draw=none, from=2-3, to=1-1]
+\end{tikzcd}
+\end{minipage}
+\emph{$i \geq -1$ s.t. $X_{-1}$ is empty and the square on the right is a (homotopy) pushout.
+  A type $A$ is said to be a \textbf{CW complex} if there merely exists some
+  CW structure $X_\ast$ s.t.\ $A$ is equivalent to the sequential colimit
+  of $X_\ast$, i.e.\ $A \simeq X_\infty$.}
+\end{figure}
+%
+Informally, a CW complex is a type that can be built by an iterative process of attaching
+cells: we start with a finite number of 0-dimensional points, then we add a finite
+amount of 1-dimensional edges, then we add a finite amount of 2-dimensional discs, and so on.
+%
+These explicit descriptions are quite convenient for defining properties and operations by
+induction on dimensions. Most notably, Buchholtz and Favonia showed how to define the
+\emph{cellular homology groups} of any CW complex.
+
+\begin{proposition}
+  Given any integer \( n \ge 0 \), one can define a functor \( \widetilde{H}_n \) from the
+  category of CW complexes to the category of abelian groups.
+  Moreover, the resulting family of functors satisfy the Eilenberg-Steenrod axioms for reduced homology.
+\end{proposition}
+
+Our goal is to prove the \emph{cellular Hurewicz theorem}, which informally states that if a CW complex is
+\( (n - 1) \)\nobreakdash-connected, then its cellular homology groups coincide with its homotopy groups up to
+dimension \( n \) (up to abelianisation in the case \( n = 1 \)).
+%
+The classical proof of this theorem takes an arbitrary \( (n - 1) \)-connected CW complex, and replaces
+its CW structure with an alternative one with no nontrivial cells in dimension~\( < n \).
+%
+This is done by defining the new set of \( n \)-cells to be the \( n \)th
+homotopy group of the space, from which the Hurewicz theorem will follow.
+%
+Unfortunately, this approach will not work with our definition of CW complexes which only allows
+a finite number of cells in every dimension, since finite CW complexes tend to have infinite
+homotopy groups (think of the \( n \)-sphere for instance).
+%
+Thankfully, it turns out that a slightly different approximation theorem is provable without leaving
+the world of finite CW complexes.
+
+\begin{definition}
+  We say that a CW structure $X_\ast$ is \textbf{Hurewicz $n$-connected} if $c^X_0 = 1$ and $c^X_i = 0$ for $0<i\le n$.
+  We use the same terminology for CW complexes which merely have a Hurewicz $n$-connected CW structure.
+\end{definition}
+
+\begin{theorem}\label{cor:hurewicz-con}
+  A CW complex is $n$-connected if and only if it is Hurewicz $n$-connected.
+\end{theorem}
+
+\begin{proof}
+A formal proof is available at \url{https://github.com/agda/cubical/blob/master/Cubical/CW/Connected.agda}.
+\end{proof}
+
+With this approximation theorem, we are in position to compute the homology and the homotopy
+of \( (n - 1) \)-connected CW complexes.
+%
+First, say that a type is a \( n \)-dimensional \emph{sphere bouquet} if it can be
+written as \( \bouquetGen{A}{n} \) for some finite set \( A \).
+%
+Then, \cref{cor:hurewicz-con} implies that for any \( (n - 1) \)-connected CW complex \( X_\ast \), the
+\( (n+1) \)-skeleton \( X_{n+1} \) is equivalent to the homotopy cofibre of a pointed map of
+\( n \)-dimensional sphere bouquets:
+%
+\[
+X_{n+1} \simeq \mathsf{cofib}\Big( \bouquetGen{A}{n} \xrightarrow{\ f\ }_\star \bouquetGen{B}{n} \Big).
+\]
+%
+Now, remark that \( \hredcw{n}(X_\ast) = \hredcw{n}(X_{n+1})\) for connectivity reasons.
+%
+We can compute this group using the exactness property of cellular homology:
+consider the sequence
+%
+\[
+\bouquetGenL{A}{n} \xrightarrow{f} \bouquetGenL{B}{n} \xrightarrow{\cfcod} C_f
+\xrightarrow{\cfcod} C_{(\cfcod : \bouquetGenL{B}{n} \to C_f)} \simeq \bouquetGenL{A}{n+1}
+\]
+%
+where \( C_f \) denotes the homotopy cofibre of \( f \), \( \cfcod \) denotes the embedding
+of the codomain into the homotopy cofibre, and the final equivalence is a standard characterisation
+of $X_{n+1}/X_{n}$ for CW structures~\cite{BuchholtzFavonia18}.
+%
+This is a cofibre sequence, and so the following sequence is exact:
+%
+\[
+\!\!\hredstr{n}\Big(\bouquetGen{A}{n}\Big) \xrightarrow{f_*} \hredstr{n}\Big(\bouquetGen{B}{n}\Big) \xrightarrow{\cfcod_*} \hredstr{n}{(C_f)} \to 0
+\]
+%
+where the final $0$ comes from that fact that $\hredstr{n}$ vanishes on $\bouquetGen{A}{n+1}$.
+We can compute the first two homology groups using additivity, and thus we see that
+$\hredstr{n}(C_f) \cong \bZ[B]/\bZ[A]$.
+%
+Similarly, the group $\pi_n(X_\ast)$ is equal to \( \pi_n(X_{n+1}) \), which is computed
+by the following lemma.
+
+\begin{proposition}\label{prop:hurewicz-seq}
+  For any $f : \bouquetGen{A}{n} \to \bouquetGen{B}{n}$ where $n\geq 1$ and $A$ and $B$ are finite
+  types, there is an exact sequence
+  \begin{center}
+    \( \pi_n\left(\bouquetGen{A}{n}\right) \xrightarrow{f_*} \pi_n\left(\bouquetGen{B}{n}\right)
+       \dhxrightarrow{\cfcod_*} \pi_n(C_f). \)
+  \end{center}
+\end{proposition}
+
+\begin{proof}
+  This follows from the Seifert-Van Kampen theorem \cite[Example 8.7.17]{HoTT13} in the case
+  \( n = 1 \), and from the Blakers-Massey theorem~\cite{FavoniaFinster+16} in the case \( n > 1 \).
+\end{proof}
+
+The case \( n = 1 \) is a bit special: the fundamental group of a bouquet of circles is a
+free group rather than a free abelian group. Therefore, in order to match what happens with homology,
+we introduce the \emph{abelian homotopy group} functor \( \ab{n} \) which is simply defined as the
+abelianisation of \( \pi_n \).
+%
+With this minor correction, we obtain that $\ab{n}(C_f) \cong \bZ[B]/\bZ[A]$.
+%
+Thus, we have proved that the \( n \)th homology group coincides with the abelianisation of the
+\( n \)th homotopy group for a \( (n - 1) \)-connected CW complex.
+%
+The Hurewicz theorem actually goes a step further that this, and gives an explicit description
+for the isomorphism between these two groups.
+
+\begin{theorem}
+  Let $X$ be a CW complex.
+  Define the \textbf{Hurewicz homomorphism} $\hur : \pi_n(X) \to \hredcw{n}(X)$ on canonical
+  elements $f : \sphere{n} \to_\star X$ by letting $\hur(\trunc{f}) : \hredcw{n}(X)$ be the image
+  of $1$ under the composition
+  \( \bZ\ \raisemath{-1pt}{\xrightarrow{\sim}}\ \hredcw{n}(\sphere{n})
+  \ \raisemath{-1pt}{\xrightarrow{f_*}}\ \hredcw{n}{(X)} \).
+\end{theorem}
+
+\begin{theorem}
+  The Hurewicz homomorphism $\hur : \ab{n}(X) \to \hredcw{n}(X)$ is an isomorphism for any
+  $(n-1)$-connected CW complex $X$.
+\end{theorem}
+
+\begin{proof}
+  A formal proof is available at \url{https://github.com/loic-p/cellular/blob/main/Hurewicz/Map.agda}
+  (\texttt{HurewiczTheorem}).
+\end{proof}
+
+In conclusion, we have a fully mechanised proof of the Hurewicz theorem for cellular homology.
+%
+This development was motivated by the recent proof of the Serre Finiteness theorem by Barton and
+Campion~\cite{SerreFiniteness}, which relies on homology computations and the Hurewicz theorem.
+%
+We hope that our formal development will be helpful to the ongoing formalisation of the Serre
+Finiteness theorem (by, in particular, Milner~\cite{MilnerTalk}).
+
+\printbibliography
+
+
+\end{document}
