@@ -61,12 +61,11 @@
 \vspace{-.5cm}
 %
 Witold Hurewicz is one of the most important names in algebraic topology.
-Most famously, he is credited with the definition of higher homotopy groups, and with the
-\emph{Hurewicz theorem} which establishes a relation between homology groups and these
-newly defined homotopy groups.
+Most famously, he is credited with the definition of higher homotopy groups and with the
+\emph{Hurewicz theorem} which establishes a relation between these and homology groups.
 %
 Interestingly, Hurewicz worked from 1927 to 1936 as an assistant of L.E.J. Brouwer,
-who is best known as the father of intuitionism.
+the father of intuitionism.
 %
 However, it seems that Hurewicz did not inherit his mentor's interest for constructive proofs.
 %
@@ -75,21 +74,26 @@ by giving a constructive proof of the Hurewicz theorem in Homotopy Type Theory.
 
 We should note that Christensen and Scoccola have already proved a version of the Hurewicz
 theorem in HoTT~\cite{christensen2020hurewicz}.
-They work with Eilenberg-MacLane homology, and their proof boils down to connectivity
-properties of the smash product.
 %
-On the other hand, the proof that we give here uses the more elementary notion of
-\emph{cellular homology}, and the core of our argument is that \( n \)-connected spaces may be
-approximated by \emph{CW complexes} with no nontrivial cells in dimension~\( \le n \).
+First, they work with a homology theory defined in terms of stable
+homotopy groups, while we work with cellular homology (two theories
+which are not known to be equivalent in HoTT).
 %
-We use the definition of CW complexes that was introduced by Buchholtz and Favonia~\cite{BuchholtzFavonia18}:
-
+Second, their proof boils down to connectedness properties of the
+smash product, while our strategy relies on the argument that \( n
+\)-connected spaces may be approximated by \emph{CW complexes} with no
+nontrivial cells in dimension~\( \le n \) -- an argument which
+somehwat surprisingly holds constructively and by all means is interesting in its own right.
+%
+We borrow the definition of CW complexes from last years
+submission~\cite{HoTTUF} which in turn is based on Buchholtz and
+Favonia's definition~\cite{BuchholtzFavonia18}.
 \begin{figure}[H]
 \begin{minipage}{0.68 \linewidth}
 \begin{definition}
-  A \textbf{CW structure} is an infinite sequence of types and maps
+  A \textbf{CW structure} is a sequence of types and maps
   $(X_{-1} \xrightarrow{\incl{-1}} X_0 \xrightarrow{\incl{0}} X_1 \xrightarrow{\incl{1}} \dots )$
-  equipped with a function $c : \bN \to \bN$ and a set of attaching maps $\alpha_i : S^i \times \fin{c_{i+1}} \to X_i$ for
+  equipped with a function $c : \bN \to \bN$ and a set of attaching maps $\alpha_i : S^i \times \fin{c_{i+1}} \to X_i$ for $i \geq -1$ s.t. $X_{-1}$
 \end{definition}
 \end{minipage}
 \vspace{-.1cm}
@@ -106,7 +110,7 @@ We use the definition of CW complexes that was introduced by Buchholtz and Favon
 	\arrow["\lrcorner"{anchor=center, pos=0.125, rotate=180}, draw=none, from=2-3, to=1-1]
 \end{tikzcd}
 \end{minipage}
-\emph{$i \geq -1$ s.t. $X_{-1}$ is empty and the square on the right is a (homotopy) pushout.
+\emph{is empty and the square on the right is a pushout.
   A type $A$ is said to be a \textbf{CW complex} if there merely exists some
   CW structure $X_\ast$ s.t.\ $A$ is equivalent to the sequential colimit
   of $X_\ast$, i.e.\ $A \simeq X_\infty$.}
@@ -118,7 +122,9 @@ amount of 1-dimensional edges, then we add a finite amount of 2-dimensional disc
 %
 These explicit descriptions are quite convenient for defining properties and operations by
 induction on dimensions. Most notably, Buchholtz and Favonia showed how to define the
-\emph{cellular homology groups} of any CW complex.
+\emph{cellular (co)homology groups} of any CW complex.
+%
+Recently, we proved that their definition of cellular homology groups forms a homology theory.
 
 \begin{proposition}
   Given any integer \( n \ge 0 \), one can define a functor \( \widetilde{H}_n \) from the
@@ -126,7 +132,7 @@ induction on dimensions. Most notably, Buchholtz and Favonia showed how to defin
   Moreover, the resulting family of functors satisfy the Eilenberg-Steenrod axioms for reduced homology.
 \end{proposition}
 
-Our goal is to prove the \emph{cellular Hurewicz theorem}, which informally states that if a CW complex is
+Our goal here, however, is to prove the \emph{cellular Hurewicz theorem}, which informally states that if a CW complex is
 \( (n - 1) \)\nobreakdash-connected, then its cellular homology groups coincide with its homotopy groups up to
 dimension \( n \) (up to abelianisation in the case \( n = 1 \)).
 %
@@ -156,21 +162,21 @@ the world of finite CW complexes.
 A formal proof is available at \url{https://github.com/agda/cubical/blob/master/Cubical/CW/Connected.agda}.
 \end{proof}
 
-With this approximation theorem, we are in position to compute the homology and the homotopy
+With this approximation theorem, we are in a position to compute the homology and the homotopy
 of \( (n - 1) \)-connected CW complexes.
 %
-First, say that a type is a \( n \)-dimensional \emph{sphere bouquet} if it can be
+First, say that a type is an \( n \)-dimensional \emph{sphere bouquet} if it can be
 written as \( \bouquetGen{A}{n} \) for some finite set \( A \).
 %
 Then, \cref{cor:hurewicz-con} implies that for any \( (n - 1) \)-connected CW complex \( X_\ast \), the
-\( (n+1) \)-skeleton \( X_{n+1} \) is equivalent to the homotopy cofibre of a pointed map of
+\( (n+1) \)-skeleton \( X_{n+1} \) is equivalent to the cofibre of a pointed map of
 \( n \)-dimensional sphere bouquets:
 %
 \[
 X_{n+1} \simeq \mathsf{cofib}\Big( \bouquetGen{A}{n} \xrightarrow{\ f\ }_\star \bouquetGen{B}{n} \Big).
 \]
 %
-Now, remark that \( \hredcw{n}(X_\ast) = \hredcw{n}(X_{n+1})\) for connectivity reasons.
+Now, note that \( \hredcw{n}(X_\ast) = \hredcw{n}(X_{n+1})\) for reasons of connectedness.
 %
 We can compute this group using the exactness property of cellular homology:
 consider the sequence
@@ -180,8 +186,8 @@ consider the sequence
 \xrightarrow{\cfcod} C_{(\cfcod : \bouquetGenL{B}{n} \to C_f)} \simeq \bouquetGenL{A}{n+1}
 \]
 %
-where \( C_f \) denotes the homotopy cofibre of \( f \), \( \cfcod \) denotes the embedding
-of the codomain into the homotopy cofibre, and the final equivalence is a standard characterisation
+where \( C_f \) denotes the cofibre of \( f \), \( \cfcod \) denotes the embedding
+of the codomain into the cofibre, and the final equivalence is a standard characterisation
 of $X_{n+1}/X_{n}$ for CW structures~\cite{BuchholtzFavonia18}.
 %
 This is a cofibre sequence, and so the following sequence is exact:
@@ -222,8 +228,8 @@ Thus, we have proved that the \( n \)th homology group coincides with the abelia
 \( n \)th homotopy group for a \( (n - 1) \)-connected CW complex.
 %
 The Hurewicz theorem actually goes a step further that this, and gives an explicit description
-for the isomorphism between these two groups.
-
+for the isomorphism between these two groups but checking that this map agrees with the one induced by our proof is direct.
+%
 \begin{theorem}
   Let $X$ be a CW complex.
   Define the \textbf{Hurewicz homomorphism} $\hur : \pi_n(X) \to \hredcw{n}(X)$ on canonical
