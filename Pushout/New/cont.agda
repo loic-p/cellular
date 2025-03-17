@@ -131,10 +131,8 @@ open import Pushout.New.finaltry
 --   hcgen = hcomp ((λ j → λ { (φ = i1) → u j 1=1}))
 --                 (outS u0)
 
-
 test : ∀ {ℓ} {A : Type ℓ} {x y : A} → (p : x ≡ y) → p ≡ p
 test {x = x} {y} p i j = {!!} -- hcgen {u = λ r → λ {(i = i0) → {!!} ; (i = i1) → {!!} ; (j = i0) → {!!} ; (j = i1) → {!!}}} {u0 = {!x!}}
-
 
 open import Cubical.Foundations.Path
 module _ {ℓ} {A : Type ℓ}
@@ -161,7 +159,7 @@ module _ {ℓ} {A : Type ℓ}
   cubePermute-ijk↦kji c i j k = c k j i
 
 
-
+ 
 -- elimPushout : ∀ {ℓ ℓ' ℓ'' ℓ'''} {A : Type ℓ} {B : Type ℓ'} {C : Type ℓ''} {f : A → B} {g : A → C}  {D : Pushout f g → Type ℓ'''}
 --   (inl* : (x : B) → D (inr* x)) (inr* : C → D) (comm : (c : A) → inl* (f c) ≡ inr* (g c))
 -- elimPushout = ?
@@ -509,8 +507,6 @@ FinSequenceMap.fcomm (cellMap→finCellMap m ϕ) (x , p) = SequenceMap.comm ϕ x
 
 
 
-
-
 module _ {ℓ : Level} {B' C' D' : CWskel ℓ}
   (f' : cellMap (strictCWskel B') (strictCWskel C'))
   (g' : cellMap (strictCWskel B') (strictCWskel D')) where
@@ -525,12 +521,8 @@ module _ {ℓ : Level} {B' C' D' : CWskel ℓ}
   open LoicPush ℓ B C D f g
 
 
---  pushoutIsoₛ : (n : ℕ) → Iso (strictPushout n) (Pushout (pushoutMapₛ n) fst)
---  pushoutIsoₛ n = iso (pushoutIsoₛ-fun n) (pushoutIsoₛ-inv n) (pushoutIsoₛ-rightInv n) (pushoutIsoₛ-leftInv n)
-
-
-
   open import Cubical.Foundations.Equiv.HalfAdjoint
+  
   -- module _ (E' : CWskel ℓ) (n : ℕ) where
   --   private
   --     E = strictCWskel E'
@@ -659,7 +651,6 @@ module _ {ℓ : Level} {B' C' D' : CWskel ℓ}
   -- strictPushoutIsoR : (n : ℕ) → Iso  (strict²A D' (2+ n)) (fst D (suc (suc n)))
   -- strictPushoutIsoR n = {!!} -- strictPushoutIso D' n
 
-
   cohL : (n : ℕ) (x : B .fst (suc n)) → strictMap f (suc n) x ≡ strictMapFun f' (suc n) x
   cohL n (inl x) = refl
   cohL n (inr x) = refl
@@ -671,7 +662,11 @@ module _ {ℓ : Level} {B' C' D' : CWskel ℓ}
   cohR n (push a i) j = lUnit (cong (strictMapFun g' (suc n)) (push a)) (~ j) i
 
   strictPushoutA*Iso : (n : ℕ) → Iso (pushoutA* (suc (suc n))) (strictPushout n)
-  strictPushoutA*Iso n = {!!}
+  strictPushoutA*Iso zero = {!!}
+  strictPushoutA*Iso (suc n) =
+    {!pushoutIso _ _ _ _ (idEquiv _)
+    (invEquiv (isoToEquiv (strictPushoutIsoL n))) (invEquiv (isoToEquiv (strictPushoutIsoR n)))
+      (funExt (cohL n)) (funExt (cohR n))!}
   {- pushoutIso _ _ _ _ (idEquiv _)
     (invEquiv (isoToEquiv (strictPushoutIsoL n))) (invEquiv (isoToEquiv (strictPushoutIsoR n)))
       (funExt (cohL n)) (funExt (cohR n))
@@ -682,588 +677,588 @@ module _ {ℓ : Level} {B' C' D' : CWskel ℓ}
     ( (isoToEquiv (strictPushoutIsoL n))) ( (isoToEquiv (strictPushoutIsoR n)))
       (λ i x → inl (cohL n x i)) λ i x → inl (cohR n x i)
 
-  -- strictPushoutA*Iso'altFun : (n : ℕ) →  (strictPushout n) → (pushoutA* (suc (suc n)))
-  -- strictPushoutA*Iso'altFun n (inl x) = {!Iso.fun (strictPushoutIsoL n)!}
-  -- strictPushoutA*Iso'altFun n (inr x) = {!!}
-  -- strictPushoutA*Iso'altFun n (push a i) = {!!}
+--   -- strictPushoutA*Iso'altFun : (n : ℕ) →  (strictPushout n) → (pushoutA* (suc (suc n)))
+--   -- strictPushoutA*Iso'altFun n (inl x) = {!Iso.fun (strictPushoutIsoL n)!}
+--   -- strictPushoutA*Iso'altFun n (inr x) = {!!}
+--   -- strictPushoutA*Iso'altFun n (push a i) = {!!}
 
 
-  -- myMap : (n : ℕ) → pushoutA* (suc (suc n)) → Pushout (pushoutMapₛ n) fst
-  -- myMap n (inl (inl x)) = inl (inl x)
-  -- myMap n (inl (inr x)) = inr (inl (inl x))
-  -- myMap zero (inl (push (a , false) i)) =  push (inl (inl a) , south) i
-  -- myMap zero (inl (push (a , true) i)) =  push (inl (inl a) , north) i
-  -- myMap (suc zero) (inl (push (a , b) i)) = {!!}
-  -- myMap (suc (suc n)) (inl (push (a , b) i)) = push (inl (inl a) , b) i
-  -- myMap n (inr (inl x)) = inl (inr x)
-  -- myMap n (inr (inr x)) = inr (inr x)
-  -- myMap zero (inr (push (a , false) i)) = push (inr a , south) i
-  -- myMap zero (inr (push (a , true) i)) = push (inr a , north) i
-  -- myMap (suc zero) (inr (push (a , b) i)) =
-  --   ((λ j → inl (inr (α D 2 (a , S¹→SuspBool→S¹ b (~ j)))))
-  --   ∙ push (inr a , Iso.fun (IsoSphereSusp 1) b)) i
-  -- myMap (suc (suc n)) (inr (push (a , b) i)) = push (inr a , b) i
-  -- myMap n (push (inl x) i) = inl (push x i)
-  -- myMap n (push (inr x) i) = inl {!!} -- ((push (inl (inr x) , north) ∙∙ refl ∙∙ (λ i → push (inl (inr x) , south) (~ i)))) i
-  -- myMap n (push (push a i₁) i) = {!!}
+--   -- myMap : (n : ℕ) → pushoutA* (suc (suc n)) → Pushout (pushoutMapₛ n) fst
+--   -- myMap n (inl (inl x)) = inl (inl x)
+--   -- myMap n (inl (inr x)) = inr (inl (inl x))
+--   -- myMap zero (inl (push (a , false) i)) =  push (inl (inl a) , south) i
+--   -- myMap zero (inl (push (a , true) i)) =  push (inl (inl a) , north) i
+--   -- myMap (suc zero) (inl (push (a , b) i)) = {!!}
+--   -- myMap (suc (suc n)) (inl (push (a , b) i)) = push (inl (inl a) , b) i
+--   -- myMap n (inr (inl x)) = inl (inr x)
+--   -- myMap n (inr (inr x)) = inr (inr x)
+--   -- myMap zero (inr (push (a , false) i)) = push (inr a , south) i
+--   -- myMap zero (inr (push (a , true) i)) = push (inr a , north) i
+--   -- myMap (suc zero) (inr (push (a , b) i)) =
+--   --   ((λ j → inl (inr (α D 2 (a , S¹→SuspBool→S¹ b (~ j)))))
+--   --   ∙ push (inr a , Iso.fun (IsoSphereSusp 1) b)) i
+--   -- myMap (suc (suc n)) (inr (push (a , b) i)) = push (inr a , b) i
+--   -- myMap n (push (inl x) i) = inl (push x i)
+--   -- myMap n (push (inr x) i) = inl {!!} -- ((push (inl (inr x) , north) ∙∙ refl ∙∙ (λ i → push (inl (inr x) , south) (~ i)))) i
+--   -- myMap n (push (push a i₁) i) = {!!}
 
-  pushoutMapₛ* : (n : ℕ) → (((A C (suc n)) ⊎ (A B n)) ⊎ (A D (suc n))) × (Susp (S⁻ n)) → pushoutA* (suc n)
-  pushoutMapₛ* n = pushoutMapₛ n
-
-
-  CardPush : (n : ℕ) → Type
-  CardPush zero = ((A C zero)) ⊎ (A D zero)
-  CardPush (suc n) = ((A C (suc n)) ⊎ (A B n)) ⊎ (A D (suc n))
-
-  S' : (n : ℕ) → Type
-  S' zero = ⊥
-  S' (suc n) = Susp (S⁻ n)
-
-  pushoutMapₛfull : (n : ℕ) → CardPush n × (S' n) → pushoutA* n
-  pushoutMapₛfull (suc n) = pushoutMapₛ n
-
-  
-  pushoutIsoₛ' : (n : ℕ) → Iso (strictPushout n) (Pushout (pushoutMapₛ* n) fst)
-  pushoutIsoₛ' n = iso (pushoutIsoₛ-fun n) (pushoutIsoₛ-inv n) (pushoutIsoₛ-rightInv n) (pushoutIsoₛ-leftInv n)
+--   pushoutMapₛ* : (n : ℕ) → (((A C (suc n)) ⊎ (A B n)) ⊎ (A D (suc n))) × (Susp (S⁻ n)) → pushoutA* (suc n)
+--   pushoutMapₛ* n = pushoutMapₛ n
 
 
-  mainIso : (n : ℕ) → Iso (pushoutA* (suc n)) (Pushout (pushoutMapₛfull n) fst)
-  mainIso zero = compIso {!Iso.inv (mainIso ?)!} {!Pushout⊎!} -- (PushoutEmptyFam (λ()) λ())
-  mainIso (suc n) = compIso (invIso (strictPushoutA*Iso' n)) (pushoutIsoₛ' n)
+--   CardPush : (n : ℕ) → Type
+--   CardPush zero = ((A C zero)) ⊎ (A D zero)
+--   CardPush (suc n) = ((A C (suc n)) ⊎ (A B n)) ⊎ (A D (suc n))
 
+--   S' : (n : ℕ) → Type
+--   S' zero = ⊥
+--   S' (suc n) = Susp (S⁻ n)
 
-  improveMainL : (n : ℕ) → pushoutA* n → pushoutA* (suc n)
-  improveMainL zero x = inl (inl (∣ f ∣ 0 x))
-  improveMainL (suc n) (inl x) = inl (inl x)
-  improveMainL (suc n) (inr x) = inr (inl (x))
-  improveMainL (suc n) (push a i) = push (inl a) i
-
-
-  improveMainR : (n : ℕ) → CardPush n → pushoutA* (suc n)
-  improveMainR zero (inl x) = inl (inr x)
-  improveMainR zero (inr x) = inr (inr x)
-  improveMainR (suc n) (inl (inl x)) = inl (inr x)
-  improveMainR (suc n) (inl (inr x)) = push (inr x) i0
-  improveMainR (suc n) (inr x) = inr (inr x)
-
-  improveMainFillerS : (n : ℕ) (x : _) (b : _) → (i j k : I) → pushoutA* (suc (suc (suc n)))
-  improveMainFillerS n x b i j k =
-    hfill (λ r → λ {(i = i0) → push (inl (α B (suc n) (b , x))) (~ j)
-                   ; (i = i1) → push (inr b) (~ j)
-                   ; (j = i0) → inr (inl (lUnit (cong (∣ g ∣ (suc (suc n)) ) (push (b , x))) r i))
-                   ; (j = i1) → inl (inl (∣ f ∣ (suc (suc n)) (push (b , x) i)))})
-                   (inS (push (push (b , x) i) (~ j))) k
-
-  improveMainFiller : (n : ℕ) (x : _) (b : _) → (i j k : I) → pushoutA* (suc (suc (suc n)))
-  improveMainFiller n x b i j k =
-    hfill (λ r → λ {(i = i0) → inl (inl (lUnit (cong (∣ f ∣ (suc (suc n)) ) (push (b , x))) (~ j) r))
-                   ; (i = i1) → improveMainFillerS n x b r j i1
-                   ; (j = i0) → improveMainL (suc (suc n))
-                                   (doubleCompPath-filler ((λ i → inl (strictMap {B} {C} f (suc (suc n)) (push (b , x) (~ i)))))
-                                   (push (α B (suc n) (b , x)))
-                                   (λ i → inr (strictMap {B} {D} g (suc (suc n)) (push (b , x) i))) r i)
-                   ; (j = i1) → inl (inl (∣ f ∣ (suc (suc n)) (push (b , x) r)))})
-                   (inS (push (inl (α B (suc n) (b , x))) (i ∧ ~ j))) k
-
-  improveMain : (n : ℕ) → Pushout (pushoutMapₛfull n) fst → pushoutA* (suc n)
-  improveMain n (inl x) = improveMainL n x
-  improveMain n (inr x) = improveMainR n x
-  improveMain (suc n) (push (inl (inl x) , s) i) = inl (push (x , Iso.inv (IsoSphereSusp n) s) i)
-  improveMain (suc n) (push (inl (inr x) , north) i) = push (inr x) i0
-  improveMain (suc n) (push (inl (inr x) , south) i) = push (inr x) (~ i)
-  improveMain (suc (suc n)) (push (inl (inr b) , merid x i) j) =
-    improveMainFiller n x b i j i1
-  improveMain (suc n) (push (inr x , s) i) = inr (push (x , Iso.inv (IsoSphereSusp n) s) i)
-
-  improveMain≡ : (n : ℕ) (x : _) → improveMain n x ≡ Iso.inv (mainIso n) x
-  improveMain≡ n x = {!!}
-
-
-  mainEquiv : (n : ℕ) → (Pushout (pushoutMapₛfull n) fst) ≃ (pushoutA* (suc n))
-  fst (mainEquiv n) = improveMain n
-  snd (mainEquiv n) = isE
-    where
-    isE : isEquiv (improveMain n)
-    isE = subst isEquiv (funExt (λ x → sym (improveMain≡ n x)))
-      (invEquiv (isoToEquiv (mainIso n)) .snd)
-
-
-  pushoutA*↑ : (n : ℕ) → pushoutA* n → pushoutA* (suc n)
-  pushoutA*↑ n x = fst (mainEquiv n) (inl x)
+--   pushoutMapₛfull : (n : ℕ) → CardPush n × (S' n) → pushoutA* n
+--   pushoutMapₛfull (suc n) = pushoutMapₛ n
 
   
-  -- isEquivImproveMain : ?
+--   pushoutIsoₛ' : (n : ℕ) → Iso (strictPushout n) (Pushout (pushoutMapₛ* n) fst)
+--   pushoutIsoₛ' n = iso (pushoutIsoₛ-fun n) (pushoutIsoₛ-inv n) (pushoutIsoₛ-rightInv n) (pushoutIsoₛ-leftInv n)
 
+
+--   mainIso : (n : ℕ) → Iso (pushoutA* (suc n)) (Pushout (pushoutMapₛfull n) fst)
+--   mainIso zero = compIso {!Iso.inv (mainIso ?)!} {!Pushout⊎!} -- (PushoutEmptyFam (λ()) λ())
+--   mainIso (suc n) = compIso (invIso (strictPushoutA*Iso' n)) (pushoutIsoₛ' n)
+
+
+--   improveMainL : (n : ℕ) → pushoutA* n → pushoutA* (suc n)
+--   improveMainL zero x = inl (inl (∣ f ∣ 0 x))
+--   improveMainL (suc n) (inl x) = inl (inl x)
+--   improveMainL (suc n) (inr x) = inr (inl (x))
+--   improveMainL (suc n) (push a i) = push (inl a) i
+
+
+--   improveMainR : (n : ℕ) → CardPush n → pushoutA* (suc n)
+--   improveMainR zero (inl x) = inl (inr x)
+--   improveMainR zero (inr x) = inr (inr x)
+--   improveMainR (suc n) (inl (inl x)) = inl (inr x)
+--   improveMainR (suc n) (inl (inr x)) = push (inr x) i0
+--   improveMainR (suc n) (inr x) = inr (inr x)
+
+--   improveMainFillerS : (n : ℕ) (x : _) (b : _) → (i j k : I) → pushoutA* (suc (suc (suc n)))
+--   improveMainFillerS n x b i j k =
+--     hfill (λ r → λ {(i = i0) → push (inl (α B (suc n) (b , x))) (~ j)
+--                    ; (i = i1) → push (inr b) (~ j)
+--                    ; (j = i0) → inr (inl (lUnit (cong (∣ g ∣ (suc (suc n)) ) (push (b , x))) r i))
+--                    ; (j = i1) → inl (inl (∣ f ∣ (suc (suc n)) (push (b , x) i)))})
+--                    (inS (push (push (b , x) i) (~ j))) k
+
+--   improveMainFiller : (n : ℕ) (x : _) (b : _) → (i j k : I) → pushoutA* (suc (suc (suc n)))
+--   improveMainFiller n x b i j k =
+--     hfill (λ r → λ {(i = i0) → inl (inl (lUnit (cong (∣ f ∣ (suc (suc n)) ) (push (b , x))) (~ j) r))
+--                    ; (i = i1) → improveMainFillerS n x b r j i1
+--                    ; (j = i0) → improveMainL (suc (suc n))
+--                                    (doubleCompPath-filler ((λ i → inl (strictMap {B} {C} f (suc (suc n)) (push (b , x) (~ i)))))
+--                                    (push (α B (suc n) (b , x)))
+--                                    (λ i → inr (strictMap {B} {D} g (suc (suc n)) (push (b , x) i))) r i)
+--                    ; (j = i1) → inl (inl (∣ f ∣ (suc (suc n)) (push (b , x) r)))})
+--                    (inS (push (inl (α B (suc n) (b , x))) (i ∧ ~ j))) k
+
+--   improveMain : (n : ℕ) → Pushout (pushoutMapₛfull n) fst → pushoutA* (suc n)
+--   improveMain n (inl x) = improveMainL n x
+--   improveMain n (inr x) = improveMainR n x
+--   improveMain (suc n) (push (inl (inl x) , s) i) = inl (push (x , Iso.inv (IsoSphereSusp n) s) i)
+--   improveMain (suc n) (push (inl (inr x) , north) i) = push (inr x) i0
+--   improveMain (suc n) (push (inl (inr x) , south) i) = push (inr x) (~ i)
+--   improveMain (suc (suc n)) (push (inl (inr b) , merid x i) j) =
+--     improveMainFiller n x b i j i1
+--   improveMain (suc n) (push (inr x , s) i) = inr (push (x , Iso.inv (IsoSphereSusp n) s) i)
+
+--   improveMain≡ : (n : ℕ) (x : _) → improveMain n x ≡ Iso.inv (mainIso n) x
+--   improveMain≡ n x = {!!}
+
+
+--   mainEquiv : (n : ℕ) → (Pushout (pushoutMapₛfull n) fst) ≃ (pushoutA* (suc n))
+--   fst (mainEquiv n) = improveMain n
+--   snd (mainEquiv n) = isE
+--     where
+--     isE : isEquiv (improveMain n)
+--     isE = subst isEquiv (funExt (λ x → sym (improveMain≡ n x)))
+--       (invEquiv (isoToEquiv (mainIso n)) .snd)
+
+
+--   pushoutA*↑ : (n : ℕ) → pushoutA* n → pushoutA* (suc n)
+--   pushoutA*↑ n x = fst (mainEquiv n) (inl x)
 
   
-  -- C
-  cofibCW∙ : (n : ℕ) (C : CWskel ℓ)  → Pointed _
-  cofibCW∙ n C = cofibCW n C , inl tt
-
-  -- non-strict quotiented by non-strict
-  -- Pₙ₊₁/Pₙ
-  cofibPush : (n : ℕ) → Type _
-  cofibPush n = cofib (pushoutA*↑ n)
-
-  -- strict quotiented by non-strict
-  -- Pₙ₊₁∼/Pₙ
-  cofibPush' : (n : ℕ) → Type _
-  cofibPush' n = cofib {A = pushoutA* n} {B = Pushout (pushoutMapₛfull n) fst} inl
-
-  -- These are equuivalent
-  cofibsIso : (n : ℕ) → cofibPush' n ≃ (cofibPush n)
-  cofibsIso n = pushoutEquiv _ _ _ _ (idEquiv _) (idEquiv _) (mainEquiv n) (λ _ _ → tt) λ i x → improveMain n (inl x)
-
-  ΣSphereBouquet' : (n : ℕ) → Type
-  ΣSphereBouquet' n = Susp (SphereBouquet' n ((Fin (card C (suc n)) ⊎ Fin (card B n)) ⊎ Fin (card D (suc n))))
-
-  data 𝟛 : Type where
-    𝕔 𝕕 𝕓 : 𝟛
-
-  BouquetDecompFam : (n : ℕ) → 𝟛 → Pointed _
-  BouquetDecompFam n 𝕔 = cofibCW∙ (suc n) C
-  BouquetDecompFam n 𝕕 = cofibCW∙ (suc n) D
-  BouquetDecompFam n 𝕓 = Susp∙ (cofibCW n B)
-
-  
-  -- Cₙ₊₁/Cₙ ∨ Dₙ₊₁ ∨ Σ Bₙ/Bₙ₋₁
-  BouquetDecomp : (n : ℕ) → Type ℓ
-  BouquetDecomp n = ⋁gen 𝟛 (BouquetDecompFam n)
-
- -- ΣSphereBouquet'→ : ?
-
-  ΣBouquetDecomp : (n : ℕ) → ΣSphereBouquet' n → BouquetDecomp n 
-  ΣBouquetDecomp n north = inl tt
-  ΣBouquetDecomp n south = inl tt
-  ΣBouquetDecomp n (merid (inl x) i) = {!!}
-  ΣBouquetDecomp n (merid (inr (inl (inl x) , y)) i) =
-    (push 𝕔
-    ∙∙ ((λ j → inr (𝕔 , push (α C (suc n) (x , Iso.inv (IsoSphereSusp n) y)) j))
-    ∙∙ (λ j → inr (𝕔 , inr ((push (x , Iso.inv (IsoSphereSusp n) y) ∙ push (x , ptSn n) ⁻¹) j)))
-    ∙∙ λ j → inr (𝕔 , push (α C (suc n) (x , ptSn n)) (~ j)))
-    ∙∙ (push 𝕔 ⁻¹)) i
-  ΣBouquetDecomp n (merid (inr (inl (inr x) , y)) i) =
-    (push 𝕓
-    ∙∙ (λ i → inr (𝕓 , toSusp (_ , inl tt) (inr {!suspFun (curry (α B n) x) y!}) i))
-    ∙∙ push 𝕓 ⁻¹) i
-  ΣBouquetDecomp n (merid (inr (inr x , y)) i) =
-     (push 𝕕
-    ∙∙ ((λ j → inr (𝕕 , push (α D (suc n) (x , Iso.inv (IsoSphereSusp n) y)) j))
-    ∙∙ (λ j → inr (𝕕 , inr ((push (x , Iso.inv (IsoSphereSusp n) y) ∙ push (x , ptSn n) ⁻¹) j)))
-    ∙∙ λ j → inr (𝕕 , push (α D (suc n) (x , ptSn n)) (~ j)))
-    ∙∙ (push 𝕕 ⁻¹)) i
-  ΣBouquetDecomp n (merid (push a i) j) = {!a!}
-
---   -- strict map to ΣBouquet Pₙ₊₁∼ → Σ⋁
---   cofib→sphereBouquet : (n : ℕ) → cofibPush' (suc n) → ΣSphereBouquet' n
---   cofib→sphereBouquet n (inl x) = north
---   cofib→sphereBouquet n (inr (inl x)) = north
---   cofib→sphereBouquet n (inr (inr x)) = south
---   cofib→sphereBouquet n (inr (push (w  , b) i)) = merid (inr (w , b)) i
---   cofib→sphereBouquet n (push a i) = north
-
---   private
---     cofib'→sphereBouquetFiller : (n : ℕ) (a : _) (s : _)
---       → (i j k : I) → ΣSphereBouquet' (suc n)
---     cofib'→sphereBouquetFiller n a s i j k =
---         hfill (λ k → λ {(i = i0) → north
---                      ; (i = i1) → merid (inr (inl (inr a) , merid (ptSn n) j)) (~ k)
---                      ; (j = i0) → merid (inr (inl (inr a) , north)) (i ∧ ~ k)
---                      ; (j = i1) → merid (inr (inl (inr a) , south)) (i ∧ ~ k)})
---             (inS (merid (inr ((inl (inr a)) , merid s j)) i)) k
-
---   -- non-strict to ΣBouquet  Pₙ₊₁ → Σ⋁
---   cofib'→sphereBouquet : (n : ℕ) → cofibPush (suc n) → ΣSphereBouquet' n
---   cofib'→sphereBouquet n (inl tt) = north
---   cofib'→sphereBouquet n (inr (inl (inl x))) = north
---   cofib'→sphereBouquet n (inr (inl (inr x))) = south
---   cofib'→sphereBouquet n (inr (inl (push (a , s) i))) =
---     merid (inr (inl (inl a) , Iso.fun (IsoSphereSusp n) s)) i
---   cofib'→sphereBouquet n (inr (inr (inl x))) = north
---   cofib'→sphereBouquet n (inr (inr (inr x))) = south
---   cofib'→sphereBouquet n (inr (inr (push (a , s) i))) =
---     merid (inr ((inr a) , (Iso.fun (IsoSphereSusp n) s))) i
---   cofib'→sphereBouquet n (inr (push (inl x) i)) = north
---   cofib'→sphereBouquet zero (inr (push (inr x) i)) =
---     (merid (inr (inl (inr x) , north)) ∙ sym (merid (inr (inl (inr x) , south)))) i
---   cofib'→sphereBouquet (suc n) (inr (push (inr x) i)) = north
---   cofib'→sphereBouquet (suc n) (inr (push (push (a , s) i) j)) =
---     cofib'→sphereBouquetFiller n a s i j i1
---   cofib'→sphereBouquet n (push (inl x) i) = north
---   cofib'→sphereBouquet n (push (inr x) i) = north
---   cofib'→sphereBouquet n (push (push a i₁) i) = north
-
-
---   -- proof that these maps are the same (modulo the their equivalence)
---   module AgreeOnΣSphereBoquet where
---     cofSphereInl : (n : ℕ) (x : _)
---       → cofib'→sphereBouquet n (fst (cofibsIso (suc n)) (inr (inl x))) ≡ cofib→sphereBouquet n (inr (inl x))
---     cofSphereInl n (inl x) = refl
---     cofSphereInl n (inr x) = refl
---     cofSphereInl n (push a i) = refl
-
---     cofSphereInr : (n : ℕ) (x : _) → cofib'→sphereBouquet n (fst (cofibsIso (suc n)) (inr (inr x))) ≡ cofib→sphereBouquet n (inr (inr x))
---     cofSphereInr n (inl (inl x)) = refl
---     cofSphereInr n (inl (inr x)) = merid (inl tt)
---     cofSphereInr n (inr x) = refl
-
---     sq1 : ∀ {ℓ} {A : Type ℓ} {x y : A} (p : x ≡ y) (q : x ≡ y) → p ≡ q → (i j k : I) → A
---     sq1 {x = x} p q r i j k =
---       hfill (λ k → λ {(i = i0) → x ; (i = i1) → r (~ k) j ; (j = i0) → x ; (j = i1) → q i})
---         (inS (q (i ∧ j))) k
-
---     sq2 : ∀ {ℓ} {A : Type ℓ} {x y : A} (p : x ≡ y) (q q' : x ≡ y) → p ≡ q → q ≡ q' → (i j k : I) → A
---     sq2 {x = x} p q q' r w i j k =
---       hfill (λ k → λ {(i = i0) → x ; (i = i1) → r (~ k) j ; (j = i0) → x ; (j = i1) → w k i})
---         (inS (q (i ∧ j))) k
-
---     -- main
---     cofSphere : (n : ℕ) (x : cofibPush' (suc n)) → cofib'→sphereBouquet n (fst (cofibsIso (suc n)) x) ≡ cofib→sphereBouquet n x
---     cofSphere n (inl x) = refl
---     cofSphere n (inr (inl x)) = cofSphereInl n x
---     cofSphere n (inr (inr x)) = cofSphereInr n x
---     cofSphere n (inr (push (inl (inl x) , s) i)) j = merid (inr (inl (inl x) , Iso.rightInv (IsoSphereSusp n) s j)) i
---     cofSphere n (inr (push (inl (inr x) , north) i)) j =
---       sq1 (merid (inl tt)) (merid (inr (inl (inr x) , north))) (cong merid (push (inl (inr x)))) i j i1
---     cofSphere zero (inr (push (inl (inr x) , south) i)) j =
---       hcomp (λ k → λ {(i = i0) → merid (inr (inl (inr x) , south)) (~ k)
---                      ; (i = i1) → merid (inl tt) j
---                      ; (j = i0) → compPath-filler (merid (inr (inl (inr x) , north))) (sym (merid (inr (inl (inr x) , south)))) k (~ i)
---                      ; (j = i1) → merid (inr (inl (inr x) , south)) (~ k ∨ i)})
---         (sq1 (sym (merid (inl tt))) (sym (merid (inr (inl (inr x) , north))))
---              (cong (sym ∘ merid) (push (inl (inr x)))) i (~ j)  i1)
---     cofSphere (suc n) (inr (push (inl (inr x) , south) i)) j =
---         sq2 (merid (inl tt)) (merid (inr (inl (inr x) , north)))
---           (merid (inr (inl (inr x) , south))) (cong merid (push (inl (inr x))))
---           (λ i → merid (inr (inl (inr x) , merid (ptSn n) i))) i j i1
---     cofSphere (suc n) (inr (push (inl (inr b) , merid x i) j)) k =
---       hcomp (λ r → λ {(j = i0) → cofSphereInl (suc n)
---                                     (doubleCompPath-filler (λ i → inl (strictMap {B} {C} f (suc (suc n)) (push (b , x) (~ i))))
---                                          (push (α B (suc n) (b , x)))
---                                          (λ i → inr (strictMap {B} {D} g (suc (suc n)) (push (b , x) i))) r i) k
---                      ; (j = i1) → merid (push (inl (inr b)) (~ r)) k
---                      ; (k = i0) → cofib'→sphereBouquet (suc n) (inr (improveMainFiller n x b i j r))
---                      ; (k = i1) → merid (inr (inl (inr b) , merid x (i ∧ r))) j
---                      ; (i = i0) → (i=i0 _ _  ( (merid (inr (inl (inr b) , north)))) ( (merid (inl tt)))
---                           (sym (cong (merid) (push (inl (inr b))))))  r j k
---                      ; (i = i1) → i=i1 r j k})
---             ( (merid (inr (inl (inr b) , north)) (k ∧ j)))
---       where -- r j k
---       i=i0 : ∀ {ℓ} {A : Type ℓ} (x y : A) (pn ps : x ≡ y) (mx : pn ≡ ps)
---            → Cube (λ j k → pn (k ∧ j))
---                    (λ j k → sq1 ps pn (sym mx) j k i1)
---                    (λ k r → x) (λ r k → mx r k)
---                    (λ r j → x)
---                   λ r j → pn j
---       i=i0 = λ x → J> (J> (rUnit refl))
---       i=i1 : Cube (λ j k → merid (inr (inl (inr b) , north)) (k ∧ j))
---                   ((λ j k → sq2 (merid (inl tt)) (merid (inr (inl (inr b) , north)))
---                                      (merid (inr (inl (inr b) , south))) (cong merid (push (inl (inr b))))
---                                      (λ i → merid (inr (inl (inr b) , merid (ptSn n) i))) j k i1))
---                  (λ _ _ → north) (λ r k → merid (push (inl (inr b)) (~ r)) k)
---                  (λ r j → cofib'→sphereBouquet (suc n) (inr (improveMainFiller n x b i1 j r)))
---                  λ r j →  merid (inr (inl (inr b) , merid x r)) j
---       i=i1 r j k =
---         hcomp (λ i → λ {(j = i0) → north -- north
---                      ; (j = i1) → merid (push (inl (inr b)) (~ r ∨ ~ i)) k
---                      ; (k = i0) → cofib'→sphereBouquet (suc n) (inr (improveMainFillerS n x b r j i))
---                      ; (k = i1) → compPath-filler (λ i → merid (inr (inl (inr b) , merid x i)))
---                                 (λ i → merid (inr (inl (inr b) , merid (ptSn n) (~ i)))) (~ i) r j
---                      ; (r = i0) → merid (inr (inl (inr b) , north)) (k ∧ j)
---                      ; (r = i1) → sq2 (merid (inl tt)) (merid (inr (inl (inr b) , north)))
---                                      (merid (inr (inl (inr b) , south))) (cong merid (push (inl (inr b))))
---                                      (λ i → merid (inr (inl (inr b) , merid (ptSn n) i))) j k i
---                      })
---          (help _ _ (merid (inr (inl (inr b) , north))) (merid (inr (inl (inr b) , south)))
---                    (λ i → merid (inr (inl (inr b) , merid (ptSn n) i)))
---                    (λ i → merid (inr (inl (inr b) , merid x i))) k j r)
---          where
---          help : ∀ {ℓ} {A : Type ℓ} (x y : A) (pn ps : x ≡ y) (mpt : pn ≡ ps) (mx : pn ≡ ps)
---            → Cube (λ j i → hcomp (λ k → λ {(i = i0) → x
---                                             ; (i = i1) → mpt (~ j) (~ k)
---                                             ; (~ j = i0) → pn (i ∧ ~ k)
---                                             ; (~ j = i1) → ps (i ∧ ~ k)})
---                                    (mx (~ j) i))
---                    (λ j r → (mx ∙ sym mpt) r j)
---                    (λ k r → x) (λ k r → pn k)
---                    (λ k j → pn (k ∧ j))
---                    (λ k j → pn (k ∧ j))
---          help x = J> (J> λ mx → (λ i j k →
---            hcomp (λ r → λ {(j = i0) → x 
---                      ; (j = i1) → x
---                      ; (i = i1) → mx k j
---                      ; (k = i0) → x
---                      ; (k = i1) → x}
---                      ) (sym≡flipSquare mx i j k)) ▷ λ i j r → rUnit (mx) i r j)
---     cofSphere n (inr (push (inr x , s) i)) j = merid (inr (inr x , Iso.rightInv (IsoSphereSusp n) s j)) i
---     cofSphere n (push a i) j = main j i
---       where
---       mm : (n : ℕ) (a : _) → Square (cong (cofib'→sphereBouquet n) (push a))
---                                       (cong (cofib→sphereBouquet n) (push a))
---                                       refl (cofSphereInl n a)
---       mm n (inl x) = refl
---       mm n (inr x) = refl
---       mm n (push a i) = refl
---       main : Square (cong (cofib'→sphereBouquet n) (cong (fst (cofibsIso (suc n))) (push a)))
---                     (cong (cofib→sphereBouquet n) (push a))
---                     refl (cofSphereInl n a)
---       main = (cong-∙∙ (cofib'→sphereBouquet n) _ _ _ ∙ sym (rUnit _)) ◁ mm n a
-
-
-
--- --   WedgeDecomp : (n : ℕ) → Type ℓ
--- --   WedgeDecomp n = ((cofibCW∙ (suc n) C) ⋁∙ᵣ (Susp' (cofibCW∙ n B) , 𝕤)) ⋁ cofibCW∙ (suc n) D
-
--- --   -- WedgeDecompS : (n : ℕ) → Type ℓ
--- --   -- WedgeDecompS n = (Susp∙ (cofibCW (suc n)) C ⋁∙ᵣ Susp∙ (Susp (cofibCW n B))) ⋁ cofibCW∙ (suc n) D
-
--- --   Bloop : (n : ℕ) → B .fst (suc n) → Path (WedgeDecomp n) (inl (inl (inl tt))) (inr (inl tt))
--- --   Bloop n x = (λ i → inl (push tt i)) ∙∙ (λ i → inl (inr (𝕝 (inr x) i))) ∙∙ push tt
-
--- --   pushoutA*→WedgeDecompF : (n : ℕ) (a :  B .fst (suc n)) → (i j : I) → WedgeDecomp n
--- --   pushoutA*→WedgeDecompF n a i j =
--- --     doubleCompPath-filler {_} {WedgeDecomp n}
--- --       (λ j → inl (((λ j → inl (push (strictMapFun f' (suc n) a) (~ j))) ∙ push tt) j))
--- --      (λ i → inl (inr (𝕝 (inr a) i)))
--- --      (((push tt ∙ λ j → inr (push (strictMapFun g' (suc n) a) j)))) j i
-  
--- --   pushoutA*→WedgeDecomp : (n : ℕ) → pushoutA* (suc (suc n)) → WedgeDecomp n
--- --   pushoutA*→WedgeDecomp n (inl x) = inl (inl (inr x))
--- --   pushoutA*→WedgeDecomp n (inr x) = inr (inr x)
--- --   pushoutA*→WedgeDecomp n (push a i) = pushoutA*→WedgeDecompF n a i i1
-
--- --   pushoutA*→WedgeDecomp' : {!!}
--- --   pushoutA*→WedgeDecomp' = {!!}
-
--- --   pushoutA*→WedgeDecompVanish'∙ : (n : ℕ) (x : pushoutA* (suc n)) → WedgeDecomp n
--- --   pushoutA*→WedgeDecompVanish'∙ n (inl x) = inl (inl  (inl tt)) -- inl (inl (inl tt))
--- --   pushoutA*→WedgeDecompVanish'∙ n (inr x) = inr (inl tt)
--- --   pushoutA*→WedgeDecompVanish'∙ n (push a i) = ((λ i → inl (push tt i)) ∙ push tt ) i 
-
--- --   pushoutA*→WedgeDecompVanish' : (n : ℕ) (x : _) → pushoutA*→WedgeDecompVanish'∙ n x ≡ pushoutA*→WedgeDecomp n (pushoutA*↑ (suc n) x)
--- --   pushoutA*→WedgeDecompVanish' n (inl x) i = inl (inl (push x i))
--- --   pushoutA*→WedgeDecompVanish' n (inr x) i = inr (push x i)
--- --   pushoutA*→WedgeDecompVanish' n (push a i) j = {!!}
-
--- --   pushoutA*→WedgeDecompVanish : (n : ℕ) (x : _) → inl (inr 𝕤) ≡ pushoutA*→WedgeDecomp n (pushoutA*↑ (suc n) x)
--- --   pushoutA*→WedgeDecompVanish n (inl x) i = inl (((λ j → inl (push x (~ j))) ∙ (push tt)) (~ i))
--- --   pushoutA*→WedgeDecompVanish n (inr x) = (push tt ∙ λ j → inr (push x j))
--- --   pushoutA*→WedgeDecompVanish n (push a i) j =
--- --     hcomp (λ k → λ {(i = i0) → pushoutA*→WedgeDecompF n (inl a) i0 j
--- --                    ; (i = i1) → pushoutA*→WedgeDecompF n (inl a) i1 j
--- --                    ; (j = i0) → inl (inr ((sym 𝕔 ∙ cong 𝕝 (push a)) (~ k) i))
--- --                    ; (j = i1) → pushoutA*→WedgeDecompF n (inl a) i i1})
--- --           (pushoutA*→WedgeDecompF n (inl a) i j)
-
--- --   toWedgeDecomp : (n : ℕ) → cofibPush (suc n) → WedgeDecomp n
--- --   toWedgeDecomp n (inl x) = (inl (inr 𝕤))
--- --   toWedgeDecomp n (inr x) = pushoutA*→WedgeDecomp n x
--- --   toWedgeDecomp n (push x i) = pushoutA*→WedgeDecompVanish n x i
-
--- --   WedegeDecompFunMid : {!!}
--- --   WedegeDecompFunMid = {!!}
-
--- --   -- precofibToSusp : (n : ℕ) → Pushout (pushoutMapₛfull (suc n)) fst → Susp (pushoutA* (suc n)) 
--- --   -- precofibToSusp n (inl x) = 𝕤
--- --   -- precofibToSusp n (inr x) = 𝕤
--- --   -- precofibToSusp n (push a i) = merid {!!} i
-
--- --   ↓P : (n : ℕ) → cofibPush (suc n) → Susp' (cofibPush n , inl tt)
--- --   ↓P n (inl x) = 𝕤
--- --   ↓P n (inr x) = 𝕤
--- --   ↓P n (push a i) = 𝕝 (inr a) i
-
--- --   functL : (n : ℕ) → cofibCW n B → cofibCW n C
--- --   functL n (inl x) = inl tt
--- --   functL n (inr x) = inr (∣ f ∣ (suc n) x)
--- --   functL n (push a i) = push (∣ f ∣ n a) i
-
--- --   functR : (n : ℕ) → cofibCW n B → cofibCW n D
--- --   functR n (inl x) = inl tt
--- --   functR n (inr x) = inr (∣ g ∣ (suc n) x)
--- --   functR n (push a i) = push (∣ g ∣ n a) i
-
--- --   Susp→Susp' : ∀ {ℓ} {A : Pointed ℓ} → Susp (typ A) → Susp' A
--- --   Susp→Susp' north = 𝕤
--- --   Susp→Susp' south = 𝕤
--- --   Susp→Susp' (merid a i) = 𝕝 a i
-
--- --   WedegeDecompFun : (n : ℕ) → WedgeDecomp (suc n) → Susp' (WedgeDecomp n , (inl (inr 𝕤)))
--- --   WedegeDecompFun n (inl (inl (inl x))) = 𝕤
--- --   WedegeDecompFun n (inl (inl (inr x))) = 𝕤
--- --   WedegeDecompFun n (inl (inl (push a i))) = 𝕝 (inl (inl (inr a))) i
--- --   WedegeDecompFun n (inl (inr 𝕤)) = 𝕤
--- --   WedegeDecompFun n (inl (inr (𝕝 a i))) = (𝕝 (inl (inl (functL (suc n) a)))
--- --                                       ∙∙ 𝕝 (inl (inr (Susp→Susp' ((suspFun inr ∘ δ-pre _) a)))) ⁻¹
--- --                                       ∙∙ 𝕝 (inr (functR (suc n) a)) ⁻¹) i
--- --   WedegeDecompFun n (inl (inr (𝕔 i j))) =
--- --     (cong₃ _∙∙_∙∙_ (cong 𝕝 (λ i → inl (push tt i))) (λ _ → 𝕝 (inl (inr 𝕤)) ⁻¹) (cong (sym ∘ 𝕝) (sym (push tt)))
--- --     ∙ cong₃ _∙∙_∙∙_ 𝕔 (cong sym 𝕔) (cong sym 𝕔)
--- --     ∙ sym (rUnit refl)) i j
--- --   WedegeDecompFun n (inl (push a i)) = 𝕤
--- --   WedegeDecompFun n (inr (inl x)) = 𝕤
--- --   WedegeDecompFun n (inr (inr x)) = 𝕤
--- --   WedegeDecompFun n (inr (push a i)) = 𝕝 (inr (inr a)) i
--- --   WedegeDecompFun n (push a i) = 𝕤
-
--- --   compWithProjB : (n : ℕ) → WedgeDecomp (suc n) → Susp' (Susp' (cofibCW∙ n B) , 𝕤)
--- --   compWithProjB n (inl (inl x)) = 𝕤
--- --   compWithProjB n (inl (inr 𝕤)) = 𝕤
--- --   compWithProjB n (inl (inr (𝕝 x i))) = 𝕝 ( (Susp→Susp' ((suspFun inr ∘ δ-pre _) x))) (~ i)
--- --   compWithProjB n (inl (inr (𝕔 i i₁))) = 𝕔 i (~ i₁)
--- --   compWithProjB n (inl (push a i)) = 𝕤
--- --   compWithProjB n (inr x) = 𝕤
--- --   compWithProjB n (push a i) = 𝕤
-
--- -- -- projOutB n (WedegeDecompFun
-
--- --   comms-sideF : (n : ℕ) (a : _) (i j k : I)  → Susp' (WedgeDecomp n , inl (inr 𝕤))
--- --   comms-sideF n a i j k =
--- --     hfill (λ k → λ {(i = i0) → WedegeDecompFun n
--- --                                   (inl (compPath-filler (λ j → inl (push (∣ f ∣ (suc (suc n)) a) (~ j))) (push tt) (~ j) (~ k)))
--- --                    ; (i = i1) → WedegeDecompFun n (compPath-filler' (push tt) (λ j → inr (push (∣ g ∣ (suc (suc n)) a) j)) (~ j) k)
--- --                    ; (j = i0) → WedegeDecompFun n (pushoutA*→WedgeDecompF (suc n) a i k)
--- --                    ; (j = i1) → doubleCompPath-filler (𝕝 (inl (inl (inr (∣ f ∣ (suc (suc n)) a))))) (sym refl) (𝕝 (inr (inr (∣ g ∣ (suc (suc n)) a))) ⁻¹) (~ k) i
--- --                    })
--- --           (inS (((𝕝 (inl (inl (inr (∣ f ∣ (suc (suc n)) a)))))
--- --            ∙∙ 𝕔 j  ⁻¹
--- --            ∙∙ (𝕝 (inr (inr (∣ g ∣ (suc (suc n)) a))) ⁻¹)) i)) k
-
--- --   comms-side : (n : ℕ) (x : _) → WedegeDecompFun n (pushoutA*→WedgeDecomp (suc n) x) ≡ 𝕤
--- --   comms-side n (inl x) = refl
--- --   comms-side n (inr x) = refl
--- --   comms-side n (push a i) j = comms-sideF n a i j i1
--- --   {-
--- --     WedegeDecompFun n (hcomp (λ k → λ {(i = i0) → pushoutA*→WedgeDecompF (suc n) a i0 j
--- --                    ; (i = i1) → pushoutA*→WedgeDecompF (suc n) a i1 j
--- --                    ; (j = i0) → ?
--- --                    ; (j = i1) → pushoutA*→WedgeDecompF (suc n) a i i1})
--- --           (pushoutA*→WedgeDecompF (suc n) a i j))
--- -- -}
+--   -- isEquivImproveMain : ?
 
 
   
+--   -- C
+--   cofibCW∙ : (n : ℕ) (C : CWskel ℓ)  → Pointed _
+--   cofibCW∙ n C = cofibCW n C , inl tt
 
--- --   suspFun' : ∀ {ℓ ℓ'} {A : Pointed ℓ} {B : Type ℓ'} → (f : fst A → B) → Susp' A → Susp' (B , f (pt A))
--- --   suspFun' f 𝕤 = 𝕤
--- --   suspFun' f (𝕝 x i) = 𝕝 (f x) i
--- --   suspFun' f (𝕔 i i₁) = 𝕔 i i₁
+--   -- non-strict quotiented by non-strict
+--   -- Pₙ₊₁/Pₙ
+--   cofibPush : (n : ℕ) → Type _
+--   cofibPush n = cofib (pushoutA*↑ n)
 
--- --   projOutB' :  (n : ℕ)  → WedgeDecomp n → (Susp' (cofibCW∙ n B))
--- --   projOutB' n (inl (inl x)) = 𝕤
--- --   projOutB' n (inl (inr x)) = x
--- --   projOutB' n (inl (push a i)) = 𝕤
--- --   projOutB' n (inr x) = 𝕤
--- --   projOutB' n (push a i) = 𝕤
+--   -- strict quotiented by non-strict
+--   -- Pₙ₊₁∼/Pₙ
+--   cofibPush' : (n : ℕ) → Type _
+--   cofibPush' n = cofib {A = pushoutA* n} {B = Pushout (pushoutMapₛfull n) fst} inl
 
--- --   projOutB : (n : ℕ) → Susp' (WedgeDecomp n , inl (inr 𝕤)) → Susp' (Susp' (cofibCW∙ n B) , 𝕤)
--- --   projOutB n 𝕤 = 𝕤
--- --   projOutB n  (𝕝 x₁ i) = 𝕝 (projOutB' n x₁) i
--- --   projOutB n  (𝕔 i i₁) = 𝕔 i i₁
+--   -- These are equuivalent
+--   cofibsIso : (n : ℕ) → cofibPush' n ≃ (cofibPush n)
+--   cofibsIso n = pushoutEquiv _ _ _ _ (idEquiv _) (idEquiv _) (mainEquiv n) (λ _ _ → tt) λ i x → improveMain n (inl x)
+
+--   ΣSphereBouquet' : (n : ℕ) → Type
+--   ΣSphereBouquet' n = Susp (SphereBouquet' n ((Fin (card C (suc n)) ⊎ Fin (card B n)) ⊎ Fin (card D (suc n))))
+
+--   data 𝟛 : Type where
+--     𝕔 𝕕 𝕓 : 𝟛
+
+--   BouquetDecompFam : (n : ℕ) → 𝟛 → Pointed _
+--   BouquetDecompFam n 𝕔 = cofibCW∙ (suc n) C
+--   BouquetDecompFam n 𝕕 = cofibCW∙ (suc n) D
+--   BouquetDecompFam n 𝕓 = Susp∙ (cofibCW n B)
+
+  
+--   -- Cₙ₊₁/Cₙ ∨ Dₙ₊₁ ∨ Σ Bₙ/Bₙ₋₁
+--   BouquetDecomp : (n : ℕ) → Type ℓ
+--   BouquetDecomp n = ⋁gen 𝟛 (BouquetDecompFam n)
+
+--  -- ΣSphereBouquet'→ : ?
+
+--   ΣBouquetDecomp : (n : ℕ) → ΣSphereBouquet' n → BouquetDecomp n 
+--   ΣBouquetDecomp n north = inl tt
+--   ΣBouquetDecomp n south = inl tt
+--   ΣBouquetDecomp n (merid (inl x) i) = {!!}
+--   ΣBouquetDecomp n (merid (inr (inl (inl x) , y)) i) =
+--     (push 𝕔
+--     ∙∙ ((λ j → inr (𝕔 , push (α C (suc n) (x , Iso.inv (IsoSphereSusp n) y)) j))
+--     ∙∙ (λ j → inr (𝕔 , inr ((push (x , Iso.inv (IsoSphereSusp n) y) ∙ push (x , ptSn n) ⁻¹) j)))
+--     ∙∙ λ j → inr (𝕔 , push (α C (suc n) (x , ptSn n)) (~ j)))
+--     ∙∙ (push 𝕔 ⁻¹)) i
+--   ΣBouquetDecomp n (merid (inr (inl (inr x) , y)) i) =
+--     (push 𝕓
+--     ∙∙ (λ i → inr (𝕓 , toSusp (_ , inl tt) (inr {!suspFun (curry (α B n) x) y!}) i))
+--     ∙∙ push 𝕓 ⁻¹) i
+--   ΣBouquetDecomp n (merid (inr (inr x , y)) i) =
+--      (push 𝕕
+--     ∙∙ ((λ j → inr (𝕕 , push (α D (suc n) (x , Iso.inv (IsoSphereSusp n) y)) j))
+--     ∙∙ (λ j → inr (𝕕 , inr ((push (x , Iso.inv (IsoSphereSusp n) y) ∙ push (x , ptSn n) ⁻¹) j)))
+--     ∙∙ λ j → inr (𝕕 , push (α D (suc n) (x , ptSn n)) (~ j)))
+--     ∙∙ (push 𝕕 ⁻¹)) i
+--   ΣBouquetDecomp n (merid (push a i) j) = {!a!}
+
+-- --   -- strict map to ΣBouquet Pₙ₊₁∼ → Σ⋁
+-- --   cofib→sphereBouquet : (n : ℕ) → cofibPush' (suc n) → ΣSphereBouquet' n
+-- --   cofib→sphereBouquet n (inl x) = north
+-- --   cofib→sphereBouquet n (inr (inl x)) = north
+-- --   cofib→sphereBouquet n (inr (inr x)) = south
+-- --   cofib→sphereBouquet n (inr (push (w  , b) i)) = merid (inr (w , b)) i
+-- --   cofib→sphereBouquet n (push a i) = north
+
+-- --   private
+-- --     cofib'→sphereBouquetFiller : (n : ℕ) (a : _) (s : _)
+-- --       → (i j k : I) → ΣSphereBouquet' (suc n)
+-- --     cofib'→sphereBouquetFiller n a s i j k =
+-- --         hfill (λ k → λ {(i = i0) → north
+-- --                      ; (i = i1) → merid (inr (inl (inr a) , merid (ptSn n) j)) (~ k)
+-- --                      ; (j = i0) → merid (inr (inl (inr a) , north)) (i ∧ ~ k)
+-- --                      ; (j = i1) → merid (inr (inl (inr a) , south)) (i ∧ ~ k)})
+-- --             (inS (merid (inr ((inl (inr a)) , merid s j)) i)) k
+
+-- --   -- non-strict to ΣBouquet  Pₙ₊₁ → Σ⋁
+-- --   cofib'→sphereBouquet : (n : ℕ) → cofibPush (suc n) → ΣSphereBouquet' n
+-- --   cofib'→sphereBouquet n (inl tt) = north
+-- --   cofib'→sphereBouquet n (inr (inl (inl x))) = north
+-- --   cofib'→sphereBouquet n (inr (inl (inr x))) = south
+-- --   cofib'→sphereBouquet n (inr (inl (push (a , s) i))) =
+-- --     merid (inr (inl (inl a) , Iso.fun (IsoSphereSusp n) s)) i
+-- --   cofib'→sphereBouquet n (inr (inr (inl x))) = north
+-- --   cofib'→sphereBouquet n (inr (inr (inr x))) = south
+-- --   cofib'→sphereBouquet n (inr (inr (push (a , s) i))) =
+-- --     merid (inr ((inr a) , (Iso.fun (IsoSphereSusp n) s))) i
+-- --   cofib'→sphereBouquet n (inr (push (inl x) i)) = north
+-- --   cofib'→sphereBouquet zero (inr (push (inr x) i)) =
+-- --     (merid (inr (inl (inr x) , north)) ∙ sym (merid (inr (inl (inr x) , south)))) i
+-- --   cofib'→sphereBouquet (suc n) (inr (push (inr x) i)) = north
+-- --   cofib'→sphereBouquet (suc n) (inr (push (push (a , s) i) j)) =
+-- --     cofib'→sphereBouquetFiller n a s i j i1
+-- --   cofib'→sphereBouquet n (push (inl x) i) = north
+-- --   cofib'→sphereBouquet n (push (inr x) i) = north
+-- --   cofib'→sphereBouquet n (push (push a i₁) i) = north
+
+
+-- --   -- proof that these maps are the same (modulo the their equivalence)
+-- --   module AgreeOnΣSphereBoquet where
+-- --     cofSphereInl : (n : ℕ) (x : _)
+-- --       → cofib'→sphereBouquet n (fst (cofibsIso (suc n)) (inr (inl x))) ≡ cofib→sphereBouquet n (inr (inl x))
+-- --     cofSphereInl n (inl x) = refl
+-- --     cofSphereInl n (inr x) = refl
+-- --     cofSphereInl n (push a i) = refl
+
+-- --     cofSphereInr : (n : ℕ) (x : _) → cofib'→sphereBouquet n (fst (cofibsIso (suc n)) (inr (inr x))) ≡ cofib→sphereBouquet n (inr (inr x))
+-- --     cofSphereInr n (inl (inl x)) = refl
+-- --     cofSphereInr n (inl (inr x)) = merid (inl tt)
+-- --     cofSphereInr n (inr x) = refl
+
+-- --     sq1 : ∀ {ℓ} {A : Type ℓ} {x y : A} (p : x ≡ y) (q : x ≡ y) → p ≡ q → (i j k : I) → A
+-- --     sq1 {x = x} p q r i j k =
+-- --       hfill (λ k → λ {(i = i0) → x ; (i = i1) → r (~ k) j ; (j = i0) → x ; (j = i1) → q i})
+-- --         (inS (q (i ∧ j))) k
+
+-- --     sq2 : ∀ {ℓ} {A : Type ℓ} {x y : A} (p : x ≡ y) (q q' : x ≡ y) → p ≡ q → q ≡ q' → (i j k : I) → A
+-- --     sq2 {x = x} p q q' r w i j k =
+-- --       hfill (λ k → λ {(i = i0) → x ; (i = i1) → r (~ k) j ; (j = i0) → x ; (j = i1) → w k i})
+-- --         (inS (q (i ∧ j))) k
+
+-- --     -- main
+-- --     cofSphere : (n : ℕ) (x : cofibPush' (suc n)) → cofib'→sphereBouquet n (fst (cofibsIso (suc n)) x) ≡ cofib→sphereBouquet n x
+-- --     cofSphere n (inl x) = refl
+-- --     cofSphere n (inr (inl x)) = cofSphereInl n x
+-- --     cofSphere n (inr (inr x)) = cofSphereInr n x
+-- --     cofSphere n (inr (push (inl (inl x) , s) i)) j = merid (inr (inl (inl x) , Iso.rightInv (IsoSphereSusp n) s j)) i
+-- --     cofSphere n (inr (push (inl (inr x) , north) i)) j =
+-- --       sq1 (merid (inl tt)) (merid (inr (inl (inr x) , north))) (cong merid (push (inl (inr x)))) i j i1
+-- --     cofSphere zero (inr (push (inl (inr x) , south) i)) j =
+-- --       hcomp (λ k → λ {(i = i0) → merid (inr (inl (inr x) , south)) (~ k)
+-- --                      ; (i = i1) → merid (inl tt) j
+-- --                      ; (j = i0) → compPath-filler (merid (inr (inl (inr x) , north))) (sym (merid (inr (inl (inr x) , south)))) k (~ i)
+-- --                      ; (j = i1) → merid (inr (inl (inr x) , south)) (~ k ∨ i)})
+-- --         (sq1 (sym (merid (inl tt))) (sym (merid (inr (inl (inr x) , north))))
+-- --              (cong (sym ∘ merid) (push (inl (inr x)))) i (~ j)  i1)
+-- --     cofSphere (suc n) (inr (push (inl (inr x) , south) i)) j =
+-- --         sq2 (merid (inl tt)) (merid (inr (inl (inr x) , north)))
+-- --           (merid (inr (inl (inr x) , south))) (cong merid (push (inl (inr x))))
+-- --           (λ i → merid (inr (inl (inr x) , merid (ptSn n) i))) i j i1
+-- --     cofSphere (suc n) (inr (push (inl (inr b) , merid x i) j)) k =
+-- --       hcomp (λ r → λ {(j = i0) → cofSphereInl (suc n)
+-- --                                     (doubleCompPath-filler (λ i → inl (strictMap {B} {C} f (suc (suc n)) (push (b , x) (~ i))))
+-- --                                          (push (α B (suc n) (b , x)))
+-- --                                          (λ i → inr (strictMap {B} {D} g (suc (suc n)) (push (b , x) i))) r i) k
+-- --                      ; (j = i1) → merid (push (inl (inr b)) (~ r)) k
+-- --                      ; (k = i0) → cofib'→sphereBouquet (suc n) (inr (improveMainFiller n x b i j r))
+-- --                      ; (k = i1) → merid (inr (inl (inr b) , merid x (i ∧ r))) j
+-- --                      ; (i = i0) → (i=i0 _ _  ( (merid (inr (inl (inr b) , north)))) ( (merid (inl tt)))
+-- --                           (sym (cong (merid) (push (inl (inr b))))))  r j k
+-- --                      ; (i = i1) → i=i1 r j k})
+-- --             ( (merid (inr (inl (inr b) , north)) (k ∧ j)))
+-- --       where -- r j k
+-- --       i=i0 : ∀ {ℓ} {A : Type ℓ} (x y : A) (pn ps : x ≡ y) (mx : pn ≡ ps)
+-- --            → Cube (λ j k → pn (k ∧ j))
+-- --                    (λ j k → sq1 ps pn (sym mx) j k i1)
+-- --                    (λ k r → x) (λ r k → mx r k)
+-- --                    (λ r j → x)
+-- --                   λ r j → pn j
+-- --       i=i0 = λ x → J> (J> (rUnit refl))
+-- --       i=i1 : Cube (λ j k → merid (inr (inl (inr b) , north)) (k ∧ j))
+-- --                   ((λ j k → sq2 (merid (inl tt)) (merid (inr (inl (inr b) , north)))
+-- --                                      (merid (inr (inl (inr b) , south))) (cong merid (push (inl (inr b))))
+-- --                                      (λ i → merid (inr (inl (inr b) , merid (ptSn n) i))) j k i1))
+-- --                  (λ _ _ → north) (λ r k → merid (push (inl (inr b)) (~ r)) k)
+-- --                  (λ r j → cofib'→sphereBouquet (suc n) (inr (improveMainFiller n x b i1 j r)))
+-- --                  λ r j →  merid (inr (inl (inr b) , merid x r)) j
+-- --       i=i1 r j k =
+-- --         hcomp (λ i → λ {(j = i0) → north -- north
+-- --                      ; (j = i1) → merid (push (inl (inr b)) (~ r ∨ ~ i)) k
+-- --                      ; (k = i0) → cofib'→sphereBouquet (suc n) (inr (improveMainFillerS n x b r j i))
+-- --                      ; (k = i1) → compPath-filler (λ i → merid (inr (inl (inr b) , merid x i)))
+-- --                                 (λ i → merid (inr (inl (inr b) , merid (ptSn n) (~ i)))) (~ i) r j
+-- --                      ; (r = i0) → merid (inr (inl (inr b) , north)) (k ∧ j)
+-- --                      ; (r = i1) → sq2 (merid (inl tt)) (merid (inr (inl (inr b) , north)))
+-- --                                      (merid (inr (inl (inr b) , south))) (cong merid (push (inl (inr b))))
+-- --                                      (λ i → merid (inr (inl (inr b) , merid (ptSn n) i))) j k i
+-- --                      })
+-- --          (help _ _ (merid (inr (inl (inr b) , north))) (merid (inr (inl (inr b) , south)))
+-- --                    (λ i → merid (inr (inl (inr b) , merid (ptSn n) i)))
+-- --                    (λ i → merid (inr (inl (inr b) , merid x i))) k j r)
+-- --          where
+-- --          help : ∀ {ℓ} {A : Type ℓ} (x y : A) (pn ps : x ≡ y) (mpt : pn ≡ ps) (mx : pn ≡ ps)
+-- --            → Cube (λ j i → hcomp (λ k → λ {(i = i0) → x
+-- --                                             ; (i = i1) → mpt (~ j) (~ k)
+-- --                                             ; (~ j = i0) → pn (i ∧ ~ k)
+-- --                                             ; (~ j = i1) → ps (i ∧ ~ k)})
+-- --                                    (mx (~ j) i))
+-- --                    (λ j r → (mx ∙ sym mpt) r j)
+-- --                    (λ k r → x) (λ k r → pn k)
+-- --                    (λ k j → pn (k ∧ j))
+-- --                    (λ k j → pn (k ∧ j))
+-- --          help x = J> (J> λ mx → (λ i j k →
+-- --            hcomp (λ r → λ {(j = i0) → x 
+-- --                      ; (j = i1) → x
+-- --                      ; (i = i1) → mx k j
+-- --                      ; (k = i0) → x
+-- --                      ; (k = i1) → x}
+-- --                      ) (sym≡flipSquare mx i j k)) ▷ λ i j r → rUnit (mx) i r j)
+-- --     cofSphere n (inr (push (inr x , s) i)) j = merid (inr (inr x , Iso.rightInv (IsoSphereSusp n) s j)) i
+-- --     cofSphere n (push a i) j = main j i
+-- --       where
+-- --       mm : (n : ℕ) (a : _) → Square (cong (cofib'→sphereBouquet n) (push a))
+-- --                                       (cong (cofib→sphereBouquet n) (push a))
+-- --                                       refl (cofSphereInl n a)
+-- --       mm n (inl x) = refl
+-- --       mm n (inr x) = refl
+-- --       mm n (push a i) = refl
+-- --       main : Square (cong (cofib'→sphereBouquet n) (cong (fst (cofibsIso (suc n))) (push a)))
+-- --                     (cong (cofib→sphereBouquet n) (push a))
+-- --                     refl (cofSphereInl n a)
+-- --       main = (cong-∙∙ (cofib'→sphereBouquet n) _ _ _ ∙ sym (rUnit _)) ◁ mm n a
 
 
 
--- --   comms? : (n : ℕ) (x : _) → compWithProjB n (toWedgeDecomp (suc n) x)
--- --                              ≡ projOutB n (suspFun' (toWedgeDecomp n) (↓P (suc n) x))
--- --   comms? n (inl x) = refl
--- --   comms? n (inr (inl x)) = refl
--- --   comms? n (inr (inr x)) = refl
--- --   comms? n (inr (push a i)) = {!!}
--- --   comms? n (push (inl x) i) j = {!!}
--- --   comms? n (push (inr x) i) j = {!!}
--- --   comms? n (push (push a j) k) w = {!!}
+-- -- --   WedgeDecomp : (n : ℕ) → Type ℓ
+-- -- --   WedgeDecomp n = ((cofibCW∙ (suc n) C) ⋁∙ᵣ (Susp' (cofibCW∙ n B) , 𝕤)) ⋁ cofibCW∙ (suc n) D
+
+-- -- --   -- WedgeDecompS : (n : ℕ) → Type ℓ
+-- -- --   -- WedgeDecompS n = (Susp∙ (cofibCW (suc n)) C ⋁∙ᵣ Susp∙ (Susp (cofibCW n B))) ⋁ cofibCW∙ (suc n) D
+
+-- -- --   Bloop : (n : ℕ) → B .fst (suc n) → Path (WedgeDecomp n) (inl (inl (inl tt))) (inr (inl tt))
+-- -- --   Bloop n x = (λ i → inl (push tt i)) ∙∙ (λ i → inl (inr (𝕝 (inr x) i))) ∙∙ push tt
+
+-- -- --   pushoutA*→WedgeDecompF : (n : ℕ) (a :  B .fst (suc n)) → (i j : I) → WedgeDecomp n
+-- -- --   pushoutA*→WedgeDecompF n a i j =
+-- -- --     doubleCompPath-filler {_} {WedgeDecomp n}
+-- -- --       (λ j → inl (((λ j → inl (push (strictMapFun f' (suc n) a) (~ j))) ∙ push tt) j))
+-- -- --      (λ i → inl (inr (𝕝 (inr a) i)))
+-- -- --      (((push tt ∙ λ j → inr (push (strictMapFun g' (suc n) a) j)))) j i
+  
+-- -- --   pushoutA*→WedgeDecomp : (n : ℕ) → pushoutA* (suc (suc n)) → WedgeDecomp n
+-- -- --   pushoutA*→WedgeDecomp n (inl x) = inl (inl (inr x))
+-- -- --   pushoutA*→WedgeDecomp n (inr x) = inr (inr x)
+-- -- --   pushoutA*→WedgeDecomp n (push a i) = pushoutA*→WedgeDecompF n a i i1
+
+-- -- --   pushoutA*→WedgeDecomp' : {!!}
+-- -- --   pushoutA*→WedgeDecomp' = {!!}
+
+-- -- --   pushoutA*→WedgeDecompVanish'∙ : (n : ℕ) (x : pushoutA* (suc n)) → WedgeDecomp n
+-- -- --   pushoutA*→WedgeDecompVanish'∙ n (inl x) = inl (inl  (inl tt)) -- inl (inl (inl tt))
+-- -- --   pushoutA*→WedgeDecompVanish'∙ n (inr x) = inr (inl tt)
+-- -- --   pushoutA*→WedgeDecompVanish'∙ n (push a i) = ((λ i → inl (push tt i)) ∙ push tt ) i 
+
+-- -- --   pushoutA*→WedgeDecompVanish' : (n : ℕ) (x : _) → pushoutA*→WedgeDecompVanish'∙ n x ≡ pushoutA*→WedgeDecomp n (pushoutA*↑ (suc n) x)
+-- -- --   pushoutA*→WedgeDecompVanish' n (inl x) i = inl (inl (push x i))
+-- -- --   pushoutA*→WedgeDecompVanish' n (inr x) i = inr (push x i)
+-- -- --   pushoutA*→WedgeDecompVanish' n (push a i) j = {!!}
+
+-- -- --   pushoutA*→WedgeDecompVanish : (n : ℕ) (x : _) → inl (inr 𝕤) ≡ pushoutA*→WedgeDecomp n (pushoutA*↑ (suc n) x)
+-- -- --   pushoutA*→WedgeDecompVanish n (inl x) i = inl (((λ j → inl (push x (~ j))) ∙ (push tt)) (~ i))
+-- -- --   pushoutA*→WedgeDecompVanish n (inr x) = (push tt ∙ λ j → inr (push x j))
+-- -- --   pushoutA*→WedgeDecompVanish n (push a i) j =
+-- -- --     hcomp (λ k → λ {(i = i0) → pushoutA*→WedgeDecompF n (inl a) i0 j
+-- -- --                    ; (i = i1) → pushoutA*→WedgeDecompF n (inl a) i1 j
+-- -- --                    ; (j = i0) → inl (inr ((sym 𝕔 ∙ cong 𝕝 (push a)) (~ k) i))
+-- -- --                    ; (j = i1) → pushoutA*→WedgeDecompF n (inl a) i i1})
+-- -- --           (pushoutA*→WedgeDecompF n (inl a) i j)
+
+-- -- --   toWedgeDecomp : (n : ℕ) → cofibPush (suc n) → WedgeDecomp n
+-- -- --   toWedgeDecomp n (inl x) = (inl (inr 𝕤))
+-- -- --   toWedgeDecomp n (inr x) = pushoutA*→WedgeDecomp n x
+-- -- --   toWedgeDecomp n (push x i) = pushoutA*→WedgeDecompVanish n x i
+
+-- -- --   WedegeDecompFunMid : {!!}
+-- -- --   WedegeDecompFunMid = {!!}
+
+-- -- --   -- precofibToSusp : (n : ℕ) → Pushout (pushoutMapₛfull (suc n)) fst → Susp (pushoutA* (suc n)) 
+-- -- --   -- precofibToSusp n (inl x) = 𝕤
+-- -- --   -- precofibToSusp n (inr x) = 𝕤
+-- -- --   -- precofibToSusp n (push a i) = merid {!!} i
+
+-- -- --   ↓P : (n : ℕ) → cofibPush (suc n) → Susp' (cofibPush n , inl tt)
+-- -- --   ↓P n (inl x) = 𝕤
+-- -- --   ↓P n (inr x) = 𝕤
+-- -- --   ↓P n (push a i) = 𝕝 (inr a) i
+
+-- -- --   functL : (n : ℕ) → cofibCW n B → cofibCW n C
+-- -- --   functL n (inl x) = inl tt
+-- -- --   functL n (inr x) = inr (∣ f ∣ (suc n) x)
+-- -- --   functL n (push a i) = push (∣ f ∣ n a) i
+
+-- -- --   functR : (n : ℕ) → cofibCW n B → cofibCW n D
+-- -- --   functR n (inl x) = inl tt
+-- -- --   functR n (inr x) = inr (∣ g ∣ (suc n) x)
+-- -- --   functR n (push a i) = push (∣ g ∣ n a) i
+
+-- -- --   Susp→Susp' : ∀ {ℓ} {A : Pointed ℓ} → Susp (typ A) → Susp' A
+-- -- --   Susp→Susp' north = 𝕤
+-- -- --   Susp→Susp' south = 𝕤
+-- -- --   Susp→Susp' (merid a i) = 𝕝 a i
+
+-- -- --   WedegeDecompFun : (n : ℕ) → WedgeDecomp (suc n) → Susp' (WedgeDecomp n , (inl (inr 𝕤)))
+-- -- --   WedegeDecompFun n (inl (inl (inl x))) = 𝕤
+-- -- --   WedegeDecompFun n (inl (inl (inr x))) = 𝕤
+-- -- --   WedegeDecompFun n (inl (inl (push a i))) = 𝕝 (inl (inl (inr a))) i
+-- -- --   WedegeDecompFun n (inl (inr 𝕤)) = 𝕤
+-- -- --   WedegeDecompFun n (inl (inr (𝕝 a i))) = (𝕝 (inl (inl (functL (suc n) a)))
+-- -- --                                       ∙∙ 𝕝 (inl (inr (Susp→Susp' ((suspFun inr ∘ δ-pre _) a)))) ⁻¹
+-- -- --                                       ∙∙ 𝕝 (inr (functR (suc n) a)) ⁻¹) i
+-- -- --   WedegeDecompFun n (inl (inr (𝕔 i j))) =
+-- -- --     (cong₃ _∙∙_∙∙_ (cong 𝕝 (λ i → inl (push tt i))) (λ _ → 𝕝 (inl (inr 𝕤)) ⁻¹) (cong (sym ∘ 𝕝) (sym (push tt)))
+-- -- --     ∙ cong₃ _∙∙_∙∙_ 𝕔 (cong sym 𝕔) (cong sym 𝕔)
+-- -- --     ∙ sym (rUnit refl)) i j
+-- -- --   WedegeDecompFun n (inl (push a i)) = 𝕤
+-- -- --   WedegeDecompFun n (inr (inl x)) = 𝕤
+-- -- --   WedegeDecompFun n (inr (inr x)) = 𝕤
+-- -- --   WedegeDecompFun n (inr (push a i)) = 𝕝 (inr (inr a)) i
+-- -- --   WedegeDecompFun n (push a i) = 𝕤
+
+-- -- --   compWithProjB : (n : ℕ) → WedgeDecomp (suc n) → Susp' (Susp' (cofibCW∙ n B) , 𝕤)
+-- -- --   compWithProjB n (inl (inl x)) = 𝕤
+-- -- --   compWithProjB n (inl (inr 𝕤)) = 𝕤
+-- -- --   compWithProjB n (inl (inr (𝕝 x i))) = 𝕝 ( (Susp→Susp' ((suspFun inr ∘ δ-pre _) x))) (~ i)
+-- -- --   compWithProjB n (inl (inr (𝕔 i i₁))) = 𝕔 i (~ i₁)
+-- -- --   compWithProjB n (inl (push a i)) = 𝕤
+-- -- --   compWithProjB n (inr x) = 𝕤
+-- -- --   compWithProjB n (push a i) = 𝕤
+
+-- -- -- -- projOutB n (WedegeDecompFun
+
+-- -- --   comms-sideF : (n : ℕ) (a : _) (i j k : I)  → Susp' (WedgeDecomp n , inl (inr 𝕤))
+-- -- --   comms-sideF n a i j k =
+-- -- --     hfill (λ k → λ {(i = i0) → WedegeDecompFun n
+-- -- --                                   (inl (compPath-filler (λ j → inl (push (∣ f ∣ (suc (suc n)) a) (~ j))) (push tt) (~ j) (~ k)))
+-- -- --                    ; (i = i1) → WedegeDecompFun n (compPath-filler' (push tt) (λ j → inr (push (∣ g ∣ (suc (suc n)) a) j)) (~ j) k)
+-- -- --                    ; (j = i0) → WedegeDecompFun n (pushoutA*→WedgeDecompF (suc n) a i k)
+-- -- --                    ; (j = i1) → doubleCompPath-filler (𝕝 (inl (inl (inr (∣ f ∣ (suc (suc n)) a))))) (sym refl) (𝕝 (inr (inr (∣ g ∣ (suc (suc n)) a))) ⁻¹) (~ k) i
+-- -- --                    })
+-- -- --           (inS (((𝕝 (inl (inl (inr (∣ f ∣ (suc (suc n)) a)))))
+-- -- --            ∙∙ 𝕔 j  ⁻¹
+-- -- --            ∙∙ (𝕝 (inr (inr (∣ g ∣ (suc (suc n)) a))) ⁻¹)) i)) k
+
+-- -- --   comms-side : (n : ℕ) (x : _) → WedegeDecompFun n (pushoutA*→WedgeDecomp (suc n) x) ≡ 𝕤
+-- -- --   comms-side n (inl x) = refl
+-- -- --   comms-side n (inr x) = refl
+-- -- --   comms-side n (push a i) j = comms-sideF n a i j i1
+-- -- --   {-
+-- -- --     WedegeDecompFun n (hcomp (λ k → λ {(i = i0) → pushoutA*→WedgeDecompF (suc n) a i0 j
+-- -- --                    ; (i = i1) → pushoutA*→WedgeDecompF (suc n) a i1 j
+-- -- --                    ; (j = i0) → ?
+-- -- --                    ; (j = i1) → pushoutA*→WedgeDecompF (suc n) a i i1})
+-- -- --           (pushoutA*→WedgeDecompF (suc n) a i j))
+-- -- -- -}
+
+
   
 
--- -- --   comms? : (n : ℕ) (x : _) → projOutB n (WedegeDecompFun n (toWedgeDecomp (suc n) x))
+-- -- --   suspFun' : ∀ {ℓ ℓ'} {A : Pointed ℓ} {B : Type ℓ'} → (f : fst A → B) → Susp' A → Susp' (B , f (pt A))
+-- -- --   suspFun' f 𝕤 = 𝕤
+-- -- --   suspFun' f (𝕝 x i) = 𝕝 (f x) i
+-- -- --   suspFun' f (𝕔 i i₁) = 𝕔 i i₁
+
+-- -- --   projOutB' :  (n : ℕ)  → WedgeDecomp n → (Susp' (cofibCW∙ n B))
+-- -- --   projOutB' n (inl (inl x)) = 𝕤
+-- -- --   projOutB' n (inl (inr x)) = x
+-- -- --   projOutB' n (inl (push a i)) = 𝕤
+-- -- --   projOutB' n (inr x) = 𝕤
+-- -- --   projOutB' n (push a i) = 𝕤
+
+-- -- --   projOutB : (n : ℕ) → Susp' (WedgeDecomp n , inl (inr 𝕤)) → Susp' (Susp' (cofibCW∙ n B) , 𝕤)
+-- -- --   projOutB n 𝕤 = 𝕤
+-- -- --   projOutB n  (𝕝 x₁ i) = 𝕝 (projOutB' n x₁) i
+-- -- --   projOutB n  (𝕔 i i₁) = 𝕔 i i₁
+
+
+
+-- -- --   comms? : (n : ℕ) (x : _) → compWithProjB n (toWedgeDecomp (suc n) x)
 -- -- --                              ≡ projOutB n (suspFun' (toWedgeDecomp n) (↓P (suc n) x))
 -- -- --   comms? n (inl x) = refl
 -- -- --   comms? n (inr (inl x)) = refl
 -- -- --   comms? n (inr (inr x)) = refl
--- -- --   comms? n (inr (push x i)) = {!!}
--- -- --     where
--- -- --     help : cong (λ x → projOutB n (WedegeDecompFun n (toWedgeDecomp (suc n) (inr x)))) (push x) -- (push x)
--- -- --          ≡ (λ i → projOutB n (suspFun' (toWedgeDecomp n) (↓P (suc n) (inr (push x i)))))
--- -- --     help = {!!} ∙ {!!}
--- -- --   comms? n (push (inl x) i) = {!!}
--- -- --   comms? n (push (inr x) i) = {!!}
--- -- --   comms? n (push (push a i₁) i) = {!!}
-
-
--- -- -- --   comms? n (inl x) = refl
--- -- -- --   comms? n (inr x) = comms-side n x
--- -- -- --   comms? n (push (inl x) i) j =
--- -- -- --     WedegeDecompFun n (inl (compPath-filler (λ j → inl (push x (~ j))) (push tt) (~ j) (~ i)))
--- -- -- --   comms? n (push (inr x) i) j =
--- -- -- --     WedegeDecompFun n (compPath-filler' (push tt) (λ j → inr (push x j)) (~ j) i)
--- -- -- --   comms? n (push (push a i) j) k =
--- -- -- --     hcomp (λ r → λ {(i = i0) → WedegeDecompFun n (inl
--- -- -- --                                  (compPath-filler (λ j → inl (push (inl (∣ f ∣ (suc n) a)) (~ j)))
--- -- -- --                                  (push tt) (~ k) (~ j ∨ ~ i1))) 
--- -- -- --                   ; (i = i1) → WedegeDecompFun n (compPath-filler' (push tt) (λ j → inr (push (inl (∣ g ∣ (suc n) a)) j)) (~ k) (j ∧ i1)) -- 
--- -- -- --                   ; (j = i0) → 𝕤
--- -- -- --                   ; (j = i1) → comms-sideF n (inl a) i k i1 -- comms-sideF n (inl a) i k r
--- -- -- --                   ; (k = i0) → rewrLeft (~ r) i j
--- -- -- --                   ; (k = i1) → rewrRight (~ r) i j}) -- 𝕝 (pushoutA*→WedgeDecompF n a i r) j})
--- -- -- --    (
--- -- -- --     hcomp (λ r → λ {(i = i0) → WedegeDecompFun n (inl (compPath-filler (λ j → inl (push (inl (∣ f ∣ (suc n) a)) (~ j))) (push tt) (~ k ) (~ j ∨ ~ r)))  -- 
--- -- -- --                   ; (i = i1) → WedegeDecompFun n (compPath-filler' (push tt) (λ j → inr (push (inl (∣ g ∣ (suc n) a)) j)) (~ k) (j ∧ r)) --  -- 
--- -- -- --                   ; (j = i0) → WedegeDecompFun n (inl (inr (𝕔 r i)))
--- -- -- --                   ; (j = i1) → comms-sideF n (inl a) i k r
--- -- -- --                   ; (k = i0) → k0 r i j
--- -- -- --                   ; (k = i1) → {! -- comms-sideF n (inl a) i k r!}
--- -- -- --                   }) -- comms-sideF n (inl a) i k r} -- comms-sideF n (inl a) i k r}) -- 𝕝 (pushoutA*→WedgeDecompF n a i r) j})
--- -- -- --           ((𝕝 (inl (inl (push (∣ f ∣ (suc n) a) j)))
--- -- -- --           ∙∙ sym (𝕔 (k ∧ j))
--- -- -- --           ∙∙ (𝕝 ( (inr (push (∣ g ∣ (suc n) a) j))) ⁻¹)) i))
--- -- -- --      where -- r i j
--- -- -- --      rewrLeft : Path (Square _ _ _ _) (λ i j → WedegeDecompFun n (toWedgeDecomp (suc n) (push (push a i) j)))
--- -- -- --                                       _
--- -- -- --      rewrLeft = cong-hcomp (WedegeDecompFun n) ∙ refl
-
--- -- -- --      rewrRight : Path (Square {A = (Susp' (_ , inl (inr 𝕤)))} _ _ _ _) (cong 𝕝 (λ j → pushoutA*→WedgeDecompF n a j i1)) _
--- -- -- --      rewrRight = cong-∙∙ 𝕝 _ _ _
-
--- -- -- --      k0 : Cube (λ i j → (𝕝 (inl (inl (push (∣ f ∣ (suc n) a) j)))
--- -- -- --           ∙∙ sym (𝕝 (inl (inr 𝕤)))
--- -- -- --           ∙∙ (𝕝 ( (inr (push (∣ g ∣ (suc n) a) j))) ⁻¹)) i)
--- -- -- --                (λ i j → rewrLeft i1 i j)
--- -- -- --                (λ r j → WedegeDecompFun n
--- -- -- --                         (inl
--- -- -- --                          (compPath-filler (λ j₁ → inl (push (inl (∣ f ∣ (suc n) a)) (~ j₁)))
--- -- -- --                           (push tt) (~ i0) (~ j ∨ ~ r))) )
--- -- -- --                (λ r j → WedegeDecompFun n
--- -- -- --                           (compPath-filler' (push tt)
--- -- -- --                            (λ j₂ → inr (push (inl (∣ g ∣ (suc n) a)) j₂)) (~ i0) (j ∧ r)))
--- -- -- --                (λ r i → WedegeDecompFun n (inl (inr (𝕔 r i))))
--- -- -- --                 (λ r i → comms-sideF n (inl a) i i0 r)
-               
--- -- -- --      k0 r i j = hcomp (λ k → λ {(i = i0) → {!!}
--- -- -- --                   ; (i = i1) → {!!}
--- -- -- --                   ; (j = i0) → {!!}
--- -- -- --                   ; (j = i1) → {!!}
--- -- -- --                   ; (r = i0) → {!!}})
--- -- -- --             {!rewrLeft i1 i i1!}
+-- -- --   comms? n (inr (push a i)) = {!!}
+-- -- --   comms? n (push (inl x) i) j = {!!}
+-- -- --   comms? n (push (inr x) i) j = {!!}
+-- -- --   comms? n (push (push a j) k) w = {!!}
   
 
--- -- -- --   {-
+-- -- -- --   comms? : (n : ℕ) (x : _) → projOutB n (WedegeDecompFun n (toWedgeDecomp (suc n) x))
+-- -- -- --                              ≡ projOutB n (suspFun' (toWedgeDecomp n) (↓P (suc n) x))
+-- -- -- --   comms? n (inl x) = refl
+-- -- -- --   comms? n (inr (inl x)) = refl
+-- -- -- --   comms? n (inr (inr x)) = refl
+-- -- -- --   comms? n (inr (push x i)) = {!!}
+-- -- -- --     where
+-- -- -- --     help : cong (λ x → projOutB n (WedegeDecompFun n (toWedgeDecomp (suc n) (inr x)))) (push x) -- (push x)
+-- -- -- --          ≡ (λ i → projOutB n (suspFun' (toWedgeDecomp n) (↓P (suc n) (inr (push x i)))))
+-- -- -- --     help = {!!} ∙ {!!}
+-- -- -- --   comms? n (push (inl x) i) = {!!}
+-- -- -- --   comms? n (push (inr x) i) = {!!}
+-- -- -- --   comms? n (push (push a i₁) i) = {!!}
 
--- -- -- -- {-
--- -- -- -- strictPushout
--- -- -- -- -}
 
--- -- -- --   strictPushoutIso : (n : ℕ) → Iso (strictPushout n) (pushoutA* (suc (suc n)))
--- -- -- --   Iso.fun (strictPushoutIso n) (inl (inl x)) = inl (inl x)
--- -- -- --   Iso.fun (strictPushoutIso n) (inl (inr x)) = inl (inr x)
--- -- -- --   Iso.fun (strictPushoutIso n) (inl (push (a , b) i)) = inl (push (a , Iso.inv (IsoSphereSusp n) b) i)
--- -- -- --   Iso.fun (strictPushoutIso n) (inr (inl x)) = inr (inl x)
--- -- -- --   Iso.fun (strictPushoutIso n) (inr (inr x)) = inr (inr x)
--- -- -- --   Iso.fun (strictPushoutIso n) (inr (push (a , b) i)) = inr (push ( (a , Iso.inv (IsoSphereSusp n) b)) i)
--- -- -- --   Iso.fun (strictPushoutIso n) (push (inl x) i) = push (inl x) i
--- -- -- --   Iso.fun (strictPushoutIso n) (push (inr x) i) = push (inr x) i
--- -- -- --   Iso.fun (strictPushoutIso n) (push (push (a , s) j) i) =
--- -- -- --     hcomp (λ k → λ {(i = i0) → {!inl (inl (strictMap f (suc n) (push (a , s) j)))!} ; (i = i1) → {!!} ; (j = i0) → {!!} ; (j = i1) → {!!}})
--- -- -- --       (push (push (a , s) j) i)
--- -- -- --   Iso.inv (strictPushoutIso n) x = {!!}
--- -- -- --   Iso.rightInv (strictPushoutIso n) = {!!}
--- -- -- --   Iso.leftInv (strictPushoutIso n) = {!!}
--- -- -- -- -}
+-- -- -- -- --   comms? n (inl x) = refl
+-- -- -- -- --   comms? n (inr x) = comms-side n x
+-- -- -- -- --   comms? n (push (inl x) i) j =
+-- -- -- -- --     WedegeDecompFun n (inl (compPath-filler (λ j → inl (push x (~ j))) (push tt) (~ j) (~ i)))
+-- -- -- -- --   comms? n (push (inr x) i) j =
+-- -- -- -- --     WedegeDecompFun n (compPath-filler' (push tt) (λ j → inr (push x j)) (~ j) i)
+-- -- -- -- --   comms? n (push (push a i) j) k =
+-- -- -- -- --     hcomp (λ r → λ {(i = i0) → WedegeDecompFun n (inl
+-- -- -- -- --                                  (compPath-filler (λ j → inl (push (inl (∣ f ∣ (suc n) a)) (~ j)))
+-- -- -- -- --                                  (push tt) (~ k) (~ j ∨ ~ i1))) 
+-- -- -- -- --                   ; (i = i1) → WedegeDecompFun n (compPath-filler' (push tt) (λ j → inr (push (inl (∣ g ∣ (suc n) a)) j)) (~ k) (j ∧ i1)) -- 
+-- -- -- -- --                   ; (j = i0) → 𝕤
+-- -- -- -- --                   ; (j = i1) → comms-sideF n (inl a) i k i1 -- comms-sideF n (inl a) i k r
+-- -- -- -- --                   ; (k = i0) → rewrLeft (~ r) i j
+-- -- -- -- --                   ; (k = i1) → rewrRight (~ r) i j}) -- 𝕝 (pushoutA*→WedgeDecompF n a i r) j})
+-- -- -- -- --    (
+-- -- -- -- --     hcomp (λ r → λ {(i = i0) → WedegeDecompFun n (inl (compPath-filler (λ j → inl (push (inl (∣ f ∣ (suc n) a)) (~ j))) (push tt) (~ k ) (~ j ∨ ~ r)))  -- 
+-- -- -- -- --                   ; (i = i1) → WedegeDecompFun n (compPath-filler' (push tt) (λ j → inr (push (inl (∣ g ∣ (suc n) a)) j)) (~ k) (j ∧ r)) --  -- 
+-- -- -- -- --                   ; (j = i0) → WedegeDecompFun n (inl (inr (𝕔 r i)))
+-- -- -- -- --                   ; (j = i1) → comms-sideF n (inl a) i k r
+-- -- -- -- --                   ; (k = i0) → k0 r i j
+-- -- -- -- --                   ; (k = i1) → {! -- comms-sideF n (inl a) i k r!}
+-- -- -- -- --                   }) -- comms-sideF n (inl a) i k r} -- comms-sideF n (inl a) i k r}) -- 𝕝 (pushoutA*→WedgeDecompF n a i r) j})
+-- -- -- -- --           ((𝕝 (inl (inl (push (∣ f ∣ (suc n) a) j)))
+-- -- -- -- --           ∙∙ sym (𝕔 (k ∧ j))
+-- -- -- -- --           ∙∙ (𝕝 ( (inr (push (∣ g ∣ (suc n) a) j))) ⁻¹)) i))
+-- -- -- -- --      where -- r i j
+-- -- -- -- --      rewrLeft : Path (Square _ _ _ _) (λ i j → WedegeDecompFun n (toWedgeDecomp (suc n) (push (push a i) j)))
+-- -- -- -- --                                       _
+-- -- -- -- --      rewrLeft = cong-hcomp (WedegeDecompFun n) ∙ refl
+
+-- -- -- -- --      rewrRight : Path (Square {A = (Susp' (_ , inl (inr 𝕤)))} _ _ _ _) (cong 𝕝 (λ j → pushoutA*→WedgeDecompF n a j i1)) _
+-- -- -- -- --      rewrRight = cong-∙∙ 𝕝 _ _ _
+
+-- -- -- -- --      k0 : Cube (λ i j → (𝕝 (inl (inl (push (∣ f ∣ (suc n) a) j)))
+-- -- -- -- --           ∙∙ sym (𝕝 (inl (inr 𝕤)))
+-- -- -- -- --           ∙∙ (𝕝 ( (inr (push (∣ g ∣ (suc n) a) j))) ⁻¹)) i)
+-- -- -- -- --                (λ i j → rewrLeft i1 i j)
+-- -- -- -- --                (λ r j → WedegeDecompFun n
+-- -- -- -- --                         (inl
+-- -- -- -- --                          (compPath-filler (λ j₁ → inl (push (inl (∣ f ∣ (suc n) a)) (~ j₁)))
+-- -- -- -- --                           (push tt) (~ i0) (~ j ∨ ~ r))) )
+-- -- -- -- --                (λ r j → WedegeDecompFun n
+-- -- -- -- --                           (compPath-filler' (push tt)
+-- -- -- -- --                            (λ j₂ → inr (push (inl (∣ g ∣ (suc n) a)) j₂)) (~ i0) (j ∧ r)))
+-- -- -- -- --                (λ r i → WedegeDecompFun n (inl (inr (𝕔 r i))))
+-- -- -- -- --                 (λ r i → comms-sideF n (inl a) i i0 r)
+               
+-- -- -- -- --      k0 r i j = hcomp (λ k → λ {(i = i0) → {!!}
+-- -- -- -- --                   ; (i = i1) → {!!}
+-- -- -- -- --                   ; (j = i0) → {!!}
+-- -- -- -- --                   ; (j = i1) → {!!}
+-- -- -- -- --                   ; (r = i0) → {!!}})
+-- -- -- -- --             {!rewrLeft i1 i i1!}
+  
+
+-- -- -- -- --   {-
+
+-- -- -- -- -- {-
+-- -- -- -- -- strictPushout
+-- -- -- -- -- -}
+
+-- -- -- -- --   strictPushoutIso : (n : ℕ) → Iso (strictPushout n) (pushoutA* (suc (suc n)))
+-- -- -- -- --   Iso.fun (strictPushoutIso n) (inl (inl x)) = inl (inl x)
+-- -- -- -- --   Iso.fun (strictPushoutIso n) (inl (inr x)) = inl (inr x)
+-- -- -- -- --   Iso.fun (strictPushoutIso n) (inl (push (a , b) i)) = inl (push (a , Iso.inv (IsoSphereSusp n) b) i)
+-- -- -- -- --   Iso.fun (strictPushoutIso n) (inr (inl x)) = inr (inl x)
+-- -- -- -- --   Iso.fun (strictPushoutIso n) (inr (inr x)) = inr (inr x)
+-- -- -- -- --   Iso.fun (strictPushoutIso n) (inr (push (a , b) i)) = inr (push ( (a , Iso.inv (IsoSphereSusp n) b)) i)
+-- -- -- -- --   Iso.fun (strictPushoutIso n) (push (inl x) i) = push (inl x) i
+-- -- -- -- --   Iso.fun (strictPushoutIso n) (push (inr x) i) = push (inr x) i
+-- -- -- -- --   Iso.fun (strictPushoutIso n) (push (push (a , s) j) i) =
+-- -- -- -- --     hcomp (λ k → λ {(i = i0) → {!inl (inl (strictMap f (suc n) (push (a , s) j)))!} ; (i = i1) → {!!} ; (j = i0) → {!!} ; (j = i1) → {!!}})
+-- -- -- -- --       (push (push (a , s) j) i)
+-- -- -- -- --   Iso.inv (strictPushoutIso n) x = {!!}
+-- -- -- -- --   Iso.rightInv (strictPushoutIso n) = {!!}
+-- -- -- -- --   Iso.leftInv (strictPushoutIso n) = {!!}
+-- -- -- -- -- -}

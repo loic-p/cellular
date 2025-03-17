@@ -89,4 +89,6 @@ module _ (ℓ : Level) (C D : CWskel ℓ) (c₀ : Fin (CWskel-fields.card C 0)) 
     (compGroupHom (ℤFin-compwise (card C (suc (suc n))) (card C (suc n)) (card D (suc (suc n))) (card D (suc n))
                                  (chainC .bdry (suc (suc n))) (chainD .bdry (suc (suc n))))
                   (ℤFinProd-inv (card C (suc n)) (card D (suc n))))
-  chainC⋁D .bdry²=0 = {!!}
+  chainC⋁D .bdry²=0 zero = {!!}
+  chainC⋁D .bdry²=0 (suc n) = {!!}
+   -- Σ≡Prop {!!} (funExt {!!})
