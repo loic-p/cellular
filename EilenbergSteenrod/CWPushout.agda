@@ -116,6 +116,33 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
   pushoutMap (suc n) (a , x) = pushoutMapₛ n (finSplit3 (card C (suc n)) (card B n) (card D (suc n)) .fst a
                                                    , invEq (EquivSphereSusp n) x)
 
+  pushoutSpanₛ : (n : ℕ) → 3-span
+  pushoutSpanₛ n = record { A0 = pushoutA (suc n)
+                          ; A2 = (((A C (suc n)) ⊎ (A B n)) ⊎ (A D (suc n))) × (Susp (S⁻ n))
+                          ; A4 = (((A C (suc n)) ⊎ (A B n)) ⊎ (A D (suc n)))
+                          ; f1 = pushoutMapₛ n
+                          ; f3 = fst }
+
+  pushoutSpan : (n : ℕ) → 3-span
+  pushoutSpan n = record { A0 = pushoutA (suc n)
+                         ; A2 = (Fin (pushoutCells (suc n))) × (S⁻ (suc n))
+                         ; A4 = (Fin (pushoutCells (suc n)))
+                         ; f1 = pushoutMap (suc n)
+                         ; f3 = fst }
+
+  pushoutSpanEquiv : (n : ℕ) → 3-span-equiv (pushoutSpan n) (pushoutSpanₛ n)
+  pushoutSpanEquiv n = record { e0 = idEquiv (pushoutA (suc n))
+                              ; e2 = ≃-× (finSplit3 (card C (suc n)) (card B n) (card D (suc n))) (isoToEquiv (IsoSphereSusp n))
+                              ; e4 = finSplit3 (card C (suc n)) (card B n) (card D (suc n))
+                              ; H1 = λ x → refl
+                              ; H3 = λ x → refl }
+
+  pushoutₛIso : (n : ℕ) → Iso (spanPushout (pushoutSpan n)) (spanPushout (pushoutSpanₛ n))
+  pushoutₛIso n = transp (λ i → Iso (spanPushout (pushoutSpan n)) (p i)) i0 idIso
+    where
+      p : (spanPushout (pushoutSpan n)) ≡ (spanPushout (pushoutSpanₛ n))
+      p = spanEquivToPushoutPath (pushoutSpanEquiv n)
+
   pushoutIso₀-fun : pushoutA (suc zero) → Pushout pushoutMap₀ fst
   pushoutIso₀-fun (inl x) = inr (Iso.fun (Iso-Fin⊎Fin-Fin+ {card C zero} {card D zero}) (inl (CW₁-discrete C .fst x)))
   pushoutIso₀-fun (inr x) = inr (Iso.fun (Iso-Fin⊎Fin-Fin+ {card C zero} {card D zero}) (inr (CW₁-discrete D .fst x)))
@@ -409,7 +436,7 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
 
   pushoutIsoₜ : (n : ℕ) → Iso (pushoutA (suc n)) (Pushout (pushoutMap n) fst)
   pushoutIsoₜ zero = pushoutIso₀
-  pushoutIsoₜ (suc n) = compIso (IsoModifiedPushout n) (compIso (pushoutIsoₛ n) {!!})
+  pushoutIsoₜ (suc n) = compIso (IsoModifiedPushout n) (compIso (pushoutIsoₛ n) (invIso (pushoutₛIso n)))
 
   pushoutSkel : CWskel ℓ
   pushoutSkel = pushoutA , (pushoutCells , pushoutMap , (B .snd .snd .snd .fst) , λ n → isoToEquiv (pushoutIsoₜ n))
