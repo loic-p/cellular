@@ -146,7 +146,8 @@ module Pushoutz (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
   --    refl
 
   pushoutₛIso : (n : ℕ) → Iso (spanPushout (pushoutSpan n)) (spanPushout (pushoutSpanₛ n))
-  pushoutₛIso n = pushoutIso _ _ _ _ (Σ-cong-equiv (isoToEquiv (IsoFinSplit3 (card C (suc n)) (card B n) (card D (suc n))))
+  pushoutₛIso n = pushoutIso _ _ _ _
+    (Σ-cong-equiv (isoToEquiv (IsoFinSplit3 (card C (suc n)) (card B n) (card D (suc n))))
       λ _ → isoToEquiv (IsoSphereSusp n)) (idEquiv _)
      (isoToEquiv (IsoFinSplit3 (card C (suc n)) (card B n) (card D (suc n))))
      refl
