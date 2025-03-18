@@ -304,122 +304,196 @@ module _ (ℓ : Level) (C D : CWskel ℓ) (c₀ : Fin (CWskel-fields.card C 0)) 
 
   C∨D' : (n : ℕ)
     → chainC⋁DBdry n ≡ bdry (CW-AugChainComplex C∨D) n
-  C∨D' zero = {!ChainHomotopy!}
-  C∨D' (suc n) = {!!}
+  C∨D' zero = sym (augmentation.ϵ-alt _)
+  C∨D' (suc n) = agreeOnℤFinGenerator→≡'
+    λ t → {!!}
+    ∙ funExt λ s → isGeneratorℤFinGenerator' _ t
+  -- C∨D' (suc ) = {!!}
 
 
-  H⋁→ₗ : cellMap C C∨D
-  SequenceMap.map H⋁→ₗ zero s = s
-  SequenceMap.map H⋁→ₗ (suc m) s = inl s
-  SequenceMap.comm H⋁→ₗ zero s = ⊥.rec (snd C .snd .snd .fst s)
-  SequenceMap.comm H⋁→ₗ (suc m) s = refl
+--   H⋁→ₗ : cellMap C C∨D
+--   SequenceMap.map H⋁→ₗ zero s = s
+--   SequenceMap.map H⋁→ₗ (suc m) s = inl s
+--   SequenceMap.comm H⋁→ₗ zero s = ⊥.rec (snd C .snd .snd .fst s)
+--   SequenceMap.comm H⋁→ₗ (suc m) s = refl
 
-  H⋁→ᵣ : cellMap D C∨D
-  SequenceMap.map H⋁→ᵣ zero s = ⊥.rec (snd D .snd .snd .fst s)
-  SequenceMap.map H⋁→ᵣ (suc m) s = inr s
-  SequenceMap.comm H⋁→ᵣ zero s = ⊥.rec (snd D .snd .snd .fst s)
-  SequenceMap.comm H⋁→ᵣ (suc m) s = refl
+--   H⋁→ᵣ : cellMap D C∨D
+--   SequenceMap.map H⋁→ᵣ zero s = ⊥.rec (snd D .snd .snd .fst s)
+--   SequenceMap.map H⋁→ᵣ (suc m) s = inr s
+--   SequenceMap.comm H⋁→ᵣ zero s = ⊥.rec (snd D .snd .snd .fst s)
+--   SequenceMap.comm H⋁→ᵣ (suc m) s = refl
 
-  open import Cubical.HITs.SetQuotients as SQ
-  HAb̃ˢᵏᵉˡ : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ) → AbGroup ℓ-zero 
-  HAb̃ˢᵏᵉˡ C n = Group→AbGroup (H̃ˢᵏᵉˡ C n)
-    (SQ.elimProp2 (λ _ _ → GroupStr.is-set ((H̃ˢᵏᵉˡ C n) .snd) _ _)
-      λ f g → cong [_] (Σ≡Prop (λ _ → AbGroupStr.is-set (snd (chain (CW-AugChainComplex C) n)) _ _)
-        (funExt λ _ → +Comm _ _)))
+--   open import Cubical.HITs.SetQuotients as SQ
+--   HAb̃ˢᵏᵉˡ : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ) → AbGroup ℓ-zero 
+--   HAb̃ˢᵏᵉˡ C n = Group→AbGroup (H̃ˢᵏᵉˡ C n)
+--     (SQ.elimProp2 (λ _ _ → GroupStr.is-set ((H̃ˢᵏᵉˡ C n) .snd) _ _)
+--       λ f g → cong [_] (Σ≡Prop (λ _ → AbGroupStr.is-set (snd (chain (CW-AugChainComplex C) n)) _ _)
+--         (funExt λ _ → +Comm _ _)))
 
-  H⋁→ : (n : ℕ) → AbGroupHom (AbDirProd (HAb̃ˢᵏᵉˡ C n) (HAb̃ˢᵏᵉˡ D n)) (HAb̃ˢᵏᵉˡ C∨D n)
-  H⋁→ n = subtrGroupHom _ _
-    (compGroupHom dirProdFst (finCellMap→HomologyMap n (cellMap→finCellMap (suc (suc (suc n))) H⋁→ₗ)))
-    (compGroupHom dirProdSnd (finCellMap→HomologyMap n (cellMap→finCellMap (suc (suc (suc n))) H⋁→ᵣ)))
+--   H⋁→ : (n : ℕ) → AbGroupHom (AbDirProd (HAb̃ˢᵏᵉˡ C n) (HAb̃ˢᵏᵉˡ D n)) (HAb̃ˢᵏᵉˡ C∨D n)
+--   H⋁→ n = subtrGroupHom _ _
+--     (compGroupHom dirProdFst (finCellMap→HomologyMap n (cellMap→finCellMap (suc (suc (suc n))) H⋁→ₗ)))
+--     (compGroupHom dirProdSnd (finCellMap→HomologyMap n (cellMap→finCellMap (suc (suc (suc n))) H⋁→ᵣ)))
 
-  H⋁←Map : (n : ℕ) → fst (ℤ[A C∨D ] n) → fst (ℤ[A C ] n) × fst (ℤ[A D ] n)
-  H⋁←Map zero f = ℤFinProd-fun _ _ .fst f .fst
-                 , ℤFinFunct (skipFin d₀) .fst (ℤFinProd-fun (card C 0) (predℕ (card D 0)) .fst f .snd)
-  H⋁←Map (suc n) = ℤFinProd-fun _ _ .fst
+--   H⋁←Map : (n : ℕ) → fst (ℤ[A C∨D ] n) → fst (ℤ[A C ] n) × fst (ℤ[A D ] n)
+--   H⋁←Map zero f = ℤFinProd-fun _ _ .fst f .fst
+--                  , ℤFinFunct (skipFin d₀) .fst (ℤFinProd-fun (card C 0) (predℕ (card D 0)) .fst f .snd)
+--   H⋁←Map (suc n) f = ℤFinProd-fun _ _ .fst f --  .fst , AbGroupStr.-_ ((ℤ[A D ] (suc n)) .snd) (ℤFinProd-fun _ _ .fst f .snd)
 
-  H⋁←MapKer : (n : ℕ) (x : fst (ℤ[A C∨D ] n))
-    → (bdry (CW-AugChainComplex C∨D) n .fst x ≡ AbGroupStr.0g (snd (chain (CW-AugChainComplex C∨D) n)))
-    → dirProdHom (bdry (CW-AugChainComplex C) n) (bdry (CW-AugChainComplex D) n) .fst (H⋁←Map n x)
-    ≡ ((AbGroupStr.0g (snd (chain (CW-AugChainComplex C) n))) , ((AbGroupStr.0g (snd (chain (CW-AugChainComplex D) n)))))
-  H⋁←MapKer zero f = {!!}
-  {- -- refl
-   -- ∙ help (F .fst) (F .snd) (cong (augmentation.ϵ C∨D .fst)
-      elimPropℤFin _ _ {!λ _ → !}
-        (λ p → {!!})
-        (λ p q → {!!})
-        (λ f g p q r → {!q!})
-        {!!} -- (Iso.leftInv (ℤFinProductIso (snd C .fst zero) (predℕ (card D zero))) f) ∙ p)
-    where
-    -}
-    {-
-    F = ℤFinProd-fun (snd C .fst zero) (predℕ (card D zero)) .fst f
-    help : (x : _) (y : _) → augmentation.ϵ C∨D .fst
-           (ℤFinProd-inv (snd C .fst zero) (predℕ (card D zero)) .fst (x , y))
-         ≡ AbGroupStr.0g (snd ℤ[Fin 1 ])
-        → (x , ℤFinFunctFun (skipFin d₀) y) ≡ ((λ _ → 0) , λ _ → 0)
-    help x y q = ΣPathP ({!l!} , {!funExt⁻ l fzero!})
-      where
-      l : fst (sumCoefficients (snd C∨D .fst 0))
-            (ℤFinProd-inv (snd C .fst zero) (predℕ (card D zero)) .fst (x , y))
-            ≡ AbGroupStr.0g (snd ℤ[Fin 1 ])
-      l = sym (funExt⁻ (cong fst (augmentation.ϵ-alt C∨D)) (ℤFinProd-inv (snd C .fst zero) (predℕ (card D zero)) .fst (x , y))) ∙ q
-      -}
-  H⋁←MapKer (suc n) f p = {!!}
-  {-
-    cong (∂ C n .fst) {!Iso.leftInv (ℤFinProductIso (snd C .fst (suc n)) (snd D .fst (suc n))) f!}
-    ∙ {!p!}
--}
-  open import Cubical.HITs.PropositionalTruncation as PT
-  H⋁← : (n : ℕ) → HAb̃ˢᵏᵉˡ C∨D n .fst → HAb̃ˢᵏᵉˡ C n .fst × (HAb̃ˢᵏᵉˡ D n .fst)
-  H⋁← n =
-    SQ.rec (isSet× (AbGroupStr.is-set (HAb̃ˢᵏᵉˡ C n .snd)) (AbGroupStr.is-set (HAb̃ˢᵏᵉˡ D n .snd)))
-      (λ f → [ (H⋁←Map n (fst f) .fst) , cong fst (H⋁←MapKer n (fst f) (snd f)) ]
-            , [ (H⋁←Map n (fst f) .snd) , cong snd (H⋁←MapKer n (fst f) (snd f)) ])
-      λ f g → PT.rec {!!}
-        (λ p → ΣPathP (cong [_] (Σ≡Prop (λ _ → isPropIsInKer _ _) (funExt {!!})) , {!!}))
-{-
-  HAb̃ˢᵏᵉˡ C∨D n
-  -}
+--   H⋁←MapKer : (n : ℕ) (x : fst (ℤ[A C∨D ] n))
+--     → (bdry (CW-AugChainComplex C∨D) n .fst x ≡ AbGroupStr.0g (snd (chain (CW-AugChainComplex C∨D) n)))
+--     → dirProdHom (bdry (CW-AugChainComplex C) n) (bdry (CW-AugChainComplex D) n) .fst (H⋁←Map n x)
+--     ≡ ((AbGroupStr.0g (snd (chain (CW-AugChainComplex C) n))) , ((AbGroupStr.0g (snd (chain (CW-AugChainComplex D) n)))))
+--   H⋁←MapKer zero f q = ΣPathP ({!!} , {!!})
+--   {- -- refl
+--    -- ∙ help (F .fst) (F .snd) (cong (augmentation.ϵ C∨D .fst)
+--       elimPropℤFin _ _ {!λ _ → !}
+--         (λ p → {!!})
+--         (λ p q → {!!})
+--         (λ f g p q r → {!q!})
+--         {!!} -- (Iso.leftInv (ℤFinProductIso (snd C .fst zero) (predℕ (card D zero))) f) ∙ p)
+--     where
+--     -}
+--     {-
+--     F = ℤFinProd-fun (snd C .fst zero) (predℕ (card D zero)) .fst f
+--     help : (x : _) (y : _) → augmentation.ϵ C∨D .fst
+--            (ℤFinProd-inv (snd C .fst zero) (predℕ (card D zero)) .fst (x , y))
+--          ≡ AbGroupStr.0g (snd ℤ[Fin 1 ])
+--         → (x , ℤFinFunctFun (skipFin d₀) y) ≡ ((λ _ → 0) , λ _ → 0)
+--     help x y q = ΣPathP ({!l!} , {!funExt⁻ l fzero!})
+--       where
+--       l : fst (sumCoefficients (snd C∨D .fst 0))
+--             (ℤFinProd-inv (snd C .fst zero) (predℕ (card D zero)) .fst (x , y))
+--             ≡ AbGroupStr.0g (snd ℤ[Fin 1 ])
+--       l = sym (funExt⁻ (cong fst (augmentation.ϵ-alt C∨D)) (ℤFinProd-inv (snd C .fst zero) (predℕ (card D zero)) .fst (x , y))) ∙ q
+--       -}
+--   H⋁←MapKer (suc zero) f p = {!!}
+--   H⋁←MapKer (suc (suc n)) f p =
+--     sym ((sym (IsGroupHom.pres1 (ℤFinProd-fun (snd C .fst (suc n)) (card D (suc n)) .snd))
+--     ∙ sym (cong (ℤFinProd-fun (snd C .fst (suc n)) (card D (suc n)) .fst) p))
+--     ∙ cong (ℤFinProd-fun (snd C .fst (suc n)) (card D (suc n)) .fst)
+--            ( (funExt⁻ (cong fst hom1≡hom2) f))
+--     ∙ Iso.rightInv (fst (ℤFinProduct (snd C .fst (suc n)) (card D (suc n)))) _)
+--     where
+--     hom1 hom2 : AbGroupHom (ℤ[A C∨D ] (suc (suc n)))
+--                            (ℤ[A C∨D ] (suc n))
+--     hom1 = ∂ C∨D (suc n)
+--     hom2 = compGroupHom (ℤFinProd-fun (snd C .fst (suc (suc n))) (card D (suc (suc n))))
+--                         (compGroupHom (dirProdHom (∂ C (suc n)) (∂ D (suc n)))
+--                         (ℤFinProd-inv (snd C .fst (suc n)) (card D (suc n))))
 
-{-
-  H⋁→ : (n : ℕ) → H̃ˢᵏᵉˡ C n .fst × H̃ˢᵏᵉˡ D n .fst → H̃ˢᵏᵉˡ C∨D n .fst
-  H⋁→ n (f , g) =
-    GroupStr._·_ (H̃ˢᵏᵉˡ C∨D n .snd) {!!}
-      (GroupStr.inv (H̃ˢᵏᵉˡ C∨D n .snd) (finCellMap→HomologyMap n (cellMap→finCellMap (suc (suc (suc n))) H⋁→ᵣ) .fst g))
-        -- finCellMap→HomologyMap n (cellMap→finCellMap (suc (suc (suc n))) {!!}) .fst f , {!!}
--}
+--     open import Cubical.HITs.Sn.Degree
+--     open import Cubical.HITs.SphereBouquet
+--     open import Cubical.HITs.SphereBouquet.Degree
 
-  chainC⋁D : ChainComplex ℓ-zero
-  chainC⋁D .chain = chainC⋁DChain
-  chainC⋁D .bdry = chainC⋁DBdry
-  chainC⋁D .bdry²=0 zero = {!!}
-  chainC⋁D .bdry²=0 (suc n) = agreeOnℤFinGenerator→≡' main -- Σ≡Prop {!!} (funExt λ x → {!!})
-    where
-    M1 = chainC⋁DBdry (suc n) .fst
-    M2 = fst (ℤFinProd-inv (card C (suc n)) (card D (suc n)))
-    M3 = fst (ℤFin-compwise (card C (suc (suc n))) (card C (suc n))
-                  (card D (suc (suc n))) (card D (suc n))
-                  (chainC .bdry (suc (suc n))) (chainD .bdry (suc (suc n))))
-    M4 = fst (ℤFinProd-fun (card C (suc (suc n))) (card D (suc (suc n))))
+--     hom1≡hom2 : hom1 ≡ hom2
+--     hom1≡hom2 = agreeOnℤFinGenerator→≡'
+--       λ t → ⊎.rec
+--             (λ {(t' , q) → funExt (λ x → sym (isGeneratorℤFinGenerator' (λ a → degree (suc (suc n)) _) t))
+--             {- cong (fst hom1)
+--               (sym (Iso.leftInv (ℤFinProductIso (card C (suc (suc n))) (card D (suc (suc n))))
+--                     (ℤFinGenerator t))
+--                   ∙ cong (fst (ℤFinProd-inv (snd C .fst (suc (suc n))) (card D (suc (suc n))))) q)
+--              ∙ refl
+--              -}
+--              ∙ funExt (λ s → lem1 t t' q s)
+--              ∙ cong (fst (ℤFinProd-inv (snd C .fst (suc n)) (card D (suc n))))
+--                     (ΣPathP (funExt (λ x →
+--                       (isGeneratorℤFinGenerator' (λ a → degree (suc (suc n)) _) t')) , refl))
+--              ∙ cong (fst (ℤFinProd-inv (snd C .fst (suc n)) (card D (suc n))))
+--                     (ΣPathP (refl , sym (IsGroupHom.pres1 (∂ D (suc n) .snd))) ∙ cong (fst (dirProdHom (∂ C (suc n)) (∂ D (suc n))))
+--                       (sym (Iso.rightInv (ℤFinProductIso (card C (suc (suc n))) (card D (suc (suc n)))) ((ℤFinGenerator t') , (λ _ → 0)))))
+--              ∙ cong (fst hom2) (sym (sym (Iso.leftInv (ℤFinProductIso (card C (suc (suc n))) (card D (suc (suc n))))
+--                     (ℤFinGenerator t))
+--                   ∙ cong (fst (ℤFinProd-inv (snd C .fst (suc (suc n))) (card D (suc (suc n))))) q))})
+--             {!!}
+--         (ℤFinProductGenerator {n = card C (suc (suc n))} {card D (suc (suc n))} t)
+--         where
+--         lem1 : (t : Fin _) (t' : _) (q : _) (s : _)
+--           → degree (suc (suc n)) (λ x → pickPetal s (preboundary.pre∂ C∨D (suc n) (inr (t , x))))
+--           ≡ _
+--         lem1 t t' q s with (fst s ≟ᵗ snd C .fst (suc n))
+--         ... | lt x = {!!}
+--         ... | eq x = {!!}
+--         ... | gt x = {!!} ∙ {!fst (ℤFinProd-inv (snd C .fst (suc n)) (card D (suc n))) ?
+--       s!}
+--     help : (t : fst (ℤ[Fin snd C .fst (suc n) ]) × fst (ℤ[Fin card D (suc n) ]))
+--          → ∂ C∨D n .fst (ℤFinProd-inv (snd C .fst (suc n)) (card D (suc n)) .fst t) ≡ (λ _ → 0)
+--         → fst (∂ C n) (fst t) ≡ AbGroupStr.0g (snd (ℤ[A C ] n))
+--     help (t , s) l = {!!}
+--       where
 
-    main' : (x : _) → chainC⋁DBdry (suc n) .fst
-          (fst (ℤFinProd-inv (card C (suc n)) (card D (suc n)))
-            (fst (ℤFin-compwise (card C (suc (suc n))) (card C (suc n))
-                  (card D (suc (suc n))) (card D (suc n))
-                  (chainC .bdry (suc (suc n))) (chainD .bdry (suc (suc n))))
-                  x)) ≡ snd (chainC⋁DChain (suc n)) .AbGroupStr.0g
-    main' (x , y) = cong (chainC⋁DBdry (suc n) .fst ∘ fst (ℤFinProd-inv (card C (suc n)) (card D (suc n))))
-                         (ΣPathP ((λ _ → chainC .bdry (suc (suc n)) .fst x) , (λ _ → chainD .bdry (suc (suc n)) .fst y)))
-                 ∙ {!!}
-                 ∙ {!!}
+  
 
-    main : (x : Fin (card C (suc (suc n)) +ℕ card D (suc (suc n))))
-      → M1 (M2 (M3 (M4 (ℤFinGenerator x))))
-        ≡ snd (chainC⋁DChain (suc n)) .AbGroupStr.0g
-    main x with (ℤFinProductGenerator x)
-    ... | inl k = cong M1 (cong M2 (cong M3 (k .snd)))
-                ∙ (λ i → M1 (M2 ((chainC .bdry (suc (suc n)) .fst (ℤFinGenerator (fst k)))
-                , (IsGroupHom.pres1 (snd (chainD .bdry (suc (suc n)))) i))))
-                ∙ {!chainC .bdry (suc (suc n)) .fst (ℤFinGenerator (fst k))!}
-    ... | inr r = {!!}
-   -- Σ≡Prop {!!} (funExt {!!})
+--       help2 : snd (ℤ[A C∨D ] n) .AbGroupStr._+_
+--                (fst (∂ C∨D n)
+--                  (ℤFinProd-inv (snd C .fst (suc n)) (card D (suc n)) .fst (t , (λ _ → 0))))
+--                (fst (∂ C∨D n)
+--                  (ℤFinProd-inv (snd C .fst (suc n)) (card D (suc n)) .fst ((λ _ → 0) , s)))
+--              ≡ λ _ → 0
+--       help2 = sym (IsGroupHom.pres· (∂ C∨D n .snd)
+--                (ℤFinProd-inv (snd C .fst (suc n)) (card D (suc n)) .fst (t , (λ _ → 0)))
+--                (ℤFinProd-inv (snd C .fst (suc n)) (card D (suc n)) .fst ((λ _ → 0) , s)))
+--         ∙ (cong (∂ C∨D n .fst))
+--           (sym (IsGroupHom.pres· (ℤFinProd-inv (snd C .fst (suc n)) (card D (suc n)) .snd)
+--                              (t , (λ _ → 0)) ((λ _ → 0) , s))
+--           ∙ cong (ℤFinProd-inv (snd C .fst (suc n)) (card D (suc n)) .fst)
+--                  (ΣPathP (refl , (funExt (λ x → +Comm 0 (s x))))))
+--           ∙ l
+--   {-
+--     cong (∂ C n .fst) {!Iso.leftInv (ℤFinProductIso (snd C .fst (suc n)) (snd D .fst (suc n))) f!}
+--     ∙ {!p!}
+-- -}
+--   open import Cubical.HITs.PropositionalTruncation as PT
+--   H⋁← : (n : ℕ) → HAb̃ˢᵏᵉˡ C∨D n .fst → HAb̃ˢᵏᵉˡ C n .fst × (HAb̃ˢᵏᵉˡ D n .fst)
+--   H⋁← n =
+--     SQ.rec (isSet× (AbGroupStr.is-set (HAb̃ˢᵏᵉˡ C n .snd)) (AbGroupStr.is-set (HAb̃ˢᵏᵉˡ D n .snd)))
+--       (λ f → [ (H⋁←Map n (fst f) .fst) , cong fst (H⋁←MapKer n (fst f) (snd f)) ]
+--             , [ (H⋁←Map n (fst f) .snd) , cong snd (H⋁←MapKer n (fst f) (snd f)) ])
+--       λ f g → PT.rec {!!}
+--         (λ p → ΣPathP (cong [_] (Σ≡Prop (λ _ → isPropIsInKer _ _) (funExt {!!})) , {!!}))
+-- {-
+--   HAb̃ˢᵏᵉˡ C∨D n
+--   -}
+
+
+--   -- H⋁→ : (n : ℕ) → H̃ˢᵏᵉˡ C n .fst × H̃ˢᵏᵉˡ D n .fst → H̃ˢᵏᵉˡ C∨D n .fst
+--   -- H⋁→ n (f , g) =
+--   --   GroupStr._·_ (H̃ˢᵏᵉˡ C∨D n .snd) {!!}
+--   --     (GroupStr.inv (H̃ˢᵏᵉˡ C∨D n .snd) (finCellMap→HomologyMap n (cellMap→finCellMap (suc (suc (suc n))) H⋁→ᵣ) .fst g))
+--   --       -- finCellMap→HomologyMap n (cellMap→finCellMap (suc (suc (suc n))) {!!}) .fst f , {!!}
+
+--   chainC⋁D : ChainComplex ℓ-zero
+--   chainC⋁D .chain = chainC⋁DChain
+--   chainC⋁D .bdry = chainC⋁DBdry
+--   chainC⋁D .bdry²=0 zero = {!!}
+--   chainC⋁D .bdry²=0 (suc n) = agreeOnℤFinGenerator→≡' main -- Σ≡Prop {!!} (funExt λ x → {!!})
+--     where
+--     M1 = chainC⋁DBdry (suc n) .fst
+--     M2 = fst (ℤFinProd-inv (card C (suc n)) (card D (suc n)))
+--     M3 = fst (ℤFin-compwise (card C (suc (suc n))) (card C (suc n))
+--                   (card D (suc (suc n))) (card D (suc n))
+--                   (chainC .bdry (suc (suc n))) (chainD .bdry (suc (suc n))))
+--     M4 = fst (ℤFinProd-fun (card C (suc (suc n))) (card D (suc (suc n))))
+
+--     main' : (x : _) → chainC⋁DBdry (suc n) .fst
+--           (fst (ℤFinProd-inv (card C (suc n)) (card D (suc n)))
+--             (fst (ℤFin-compwise (card C (suc (suc n))) (card C (suc n))
+--                   (card D (suc (suc n))) (card D (suc n))
+--                   (chainC .bdry (suc (suc n))) (chainD .bdry (suc (suc n))))
+--                   x)) ≡ snd (chainC⋁DChain (suc n)) .AbGroupStr.0g
+--     main' (x , y) = cong (chainC⋁DBdry (suc n) .fst ∘ fst (ℤFinProd-inv (card C (suc n)) (card D (suc n))))
+--                          (ΣPathP ((λ _ → chainC .bdry (suc (suc n)) .fst x) , (λ _ → chainD .bdry (suc (suc n)) .fst y)))
+--                  ∙ {!!}
+--                  ∙ {!!}
+
+--     main : (x : Fin (card C (suc (suc n)) +ℕ card D (suc (suc n))))
+--       → M1 (M2 (M3 (M4 (ℤFinGenerator x))))
+--         ≡ snd (chainC⋁DChain (suc n)) .AbGroupStr.0g
+--     main x with (ℤFinProductGenerator x)
+--     ... | inl k = cong M1 (cong M2 (cong M3 (k .snd)))
+--                 ∙ (λ i → M1 (M2 ((chainC .bdry (suc (suc n)) .fst (ℤFinGenerator (fst k)))
+--                 , (IsGroupHom.pres1 (snd (chainD .bdry (suc (suc n)))) i))))
+--                 ∙ {!chainC .bdry (suc (suc n)) .fst (ℤFinGenerator (fst k))!}
+--     ... | inr r = {!!}
+--    -- Σ≡Prop {!!} (funExt {!!})

@@ -186,3 +186,4 @@ module _ {ℓ ℓ'} {C : CWskel ℓ} {D : CWskel ℓ'} (f : cellMap (strictCWske
   ∣_∣ (strictCwMap≡ i) n x = strictMapComm n x i
   comm (strictCwMap≡ i) n x j =
    compPath-filler ((λ i₁ → inl (strictMapComm n x i₁))) (comm f n x) j i
+ 

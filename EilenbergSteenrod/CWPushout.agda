@@ -137,11 +137,24 @@ module Pushoutz (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
                               ; H1 = λ x → refl
                               ; H3 = λ x → refl }
 
+  -- spanPushoutIso : (n : ℕ) → Iso (spanPushout (pushoutSpan n)) (spanPushout (pushoutSpanₛ n))
+  -- spanPushoutIso n =
+  --   pushoutIso _ _ _ _ (Σ-cong-equiv (isoToEquiv (IsoFinSplit3 (card C (suc n)) (card B n) (card D (suc n))))
+  --     λ _ → isoToEquiv (IsoSphereSusp n)) (idEquiv _)
+  --    (isoToEquiv (IsoFinSplit3 (card C (suc n)) (card B n) (card D (suc n))))
+  --    refl
+  --    refl
+
   pushoutₛIso : (n : ℕ) → Iso (spanPushout (pushoutSpan n)) (spanPushout (pushoutSpanₛ n))
-  pushoutₛIso n = transp (λ i → Iso (spanPushout (pushoutSpan n)) (p i)) i0 idIso
-    where
-      p : (spanPushout (pushoutSpan n)) ≡ (spanPushout (pushoutSpanₛ n))
-      p = spanEquivToPushoutPath (pushoutSpanEquiv n)
+  pushoutₛIso n = pushoutIso _ _ _ _ (Σ-cong-equiv (isoToEquiv (IsoFinSplit3 (card C (suc n)) (card B n) (card D (suc n))))
+      λ _ → isoToEquiv (IsoSphereSusp n)) (idEquiv _)
+     (isoToEquiv (IsoFinSplit3 (card C (suc n)) (card B n) (card D (suc n))))
+     refl
+     refl
+  -- transp (λ i → Iso (spanPushout (pushoutSpan n)) (p i)) i0 idIso
+  --   where
+  --     p : (spanPushout (pushoutSpan n)) ≡ (spanPushout (pushoutSpanₛ n))
+  --     p = spanEquivToPushoutPath (pushoutSpanEquiv n)
 
   pushoutIso₀-fun : pushoutA (suc zero) → Pushout pushoutMap₀ fst
   pushoutIso₀-fun (inl x) = inr (Iso.fun (Iso-Fin⊎Fin-Fin+ {card C zero} {card D zero}) (inl (CW₁-discrete C .fst x)))
