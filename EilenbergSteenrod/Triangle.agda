@@ -94,16 +94,24 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
                     ∙∙ (λ i → inr (push (w , a) i))
                     ∙∙ {!!}) i) j)
 
+
+  makeLoop : ∀ {ℓ} (D : CWskel ℓ) (n : ℕ) (s : S₊ n) (s : Fin (card (str D) (suc n)))
+    → Path (QuotCW (str D) (suc n)) (inl tt) (inl tt)
+  makeLoop D n s w = ((push (α (str D) (suc n) (w , s)) ∙ λ i → inr (push (w , s) i))
+                    ∙ sym ((push (α (str D) (suc n) (w , ptSn n)) ∙ λ i → inr (push (w , ptSn n) i))))
+
   Strict→BobΩ : (n : ℕ) (a : (Fin (card C (suc n)) ⊎ Fin (card B n)) ⊎ Fin (card D (suc n)))
               → S₊ n → Path (Bob n) (inm north) (inm north)
   Strict→BobΩ n (inl (inl s)) x = sym pushₗ
-            ∙∙ (λ i → inl (((push (α C (suc n) (s , x)) ∙ (λ i → inr (push (s , x) i)))
-                         ∙ {!!}) i))
+            ∙∙ (λ i → inl (makeLoop Cʷ n x s i))
             ∙∙ pushₗ
   Strict→BobΩ zero (inl (inr s)) x = {!!}
   Strict→BobΩ (suc n) (inl (inr s)) x = cong inm (Strict→BobΩinm n s x)
   -- (λ i → inm (toSusp (QuotCW∙ B n) (inr (α B (suc n) ({!s!} , x))) i)) 
-  Strict→BobΩ n (inr x) = {!!}
+  Strict→BobΩ n (inr s) x =
+    sym pushᵣ
+    ∙∙ (λ i → inr {!makeLoop Bʷ n s i i!})
+    ∙∙ pushᵣ
   -- {!!} ∙∙ (λ i → inm (toSusp (QuotCW∙ B n) (inr (α B (suc n) ({!x₁!} , x))) i)) ∙∙ {!!}
 
   Strict→Bob : (n : ℕ) → Pushout (pushoutMap (suc n)) fst → Bob n
