@@ -76,7 +76,7 @@ invSides-hfill2 {x = x} p q i j =
 -- This module defines a CW structure when B, C, D are strict CW skeleta
 -- The non-strict version can be derived from there using the fact that every
 -- CW skeleton is isomorphic to a strict one
-module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
+module Pushoutz (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
   (fʷ : cellMap (str Bʷ) (str Cʷ))
   (gʷ : cellMap (str Bʷ) (str Dʷ)) where
 
