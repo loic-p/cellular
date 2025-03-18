@@ -12,6 +12,7 @@ open import Cubical.Foundations.Path
 open import Cubical.CW.Base
 open import Cubical.CW.Properties
 open import Cubical.CW.Map
+open import Cubical.CW.ChainComplex
 
 open import Cubical.Data.Empty
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
@@ -45,20 +46,47 @@ IsoSphereSuspInv∙ zero = refl
 IsoSphereSuspInv∙ (suc zero) = refl
 IsoSphereSuspInv∙ (suc (suc n)) = refl
 
+cellMap→finCellMap : ∀ {ℓ ℓ'} (m : ℕ) {C : CWskel ℓ} {D : CWskel ℓ'} (ϕ : cellMap C D) → finCellMap m C D
+FinSequenceMap.fmap (cellMap→finCellMap m ϕ) (x , p) = SequenceMap.map ϕ x
+FinSequenceMap.fcomm (cellMap→finCellMap m ϕ) (x , p) = SequenceMap.comm ϕ x
 
-QuotCW : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ) → Type ℓ 
+QuotCW : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ) → Type ℓ
 QuotCW C n = cofib (CW↪ C n)
 
-QuotCW∙ : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ) → Pointed ℓ 
+QuotCW∙ : ∀ {ℓ} (C : CWskel ℓ) (n : ℕ) → Pointed ℓ
 QuotCW∙ C n = QuotCW C n , inl tt
 
 data 3⋁ {ℓ ℓ' ℓ''} (A : Pointed ℓ) (B : Pointed ℓ') (C : Pointed ℓ'') : Type (ℓ-max ℓ (ℓ-max ℓ' ℓ'')) where
-  inl : fst A → 3⋁ A B C 
+  inl : fst A → 3⋁ A B C
   inm : fst B → 3⋁ A B C
   inr : fst C → 3⋁ A B C
 
   pushₗ : inl (pt A) ≡ inm (pt B)
   pushᵣ : inr (pt C) ≡ inm (pt B)
+
+3⋁Susp-inl : ∀ {ℓ ℓ' ℓ''} (A : Pointed ℓ) (B : Pointed ℓ') (C : Pointed ℓ'') → Susp (A .fst) → Susp (3⋁ A B C)
+3⋁Susp-inl A B C north = north
+3⋁Susp-inl A B C south = south
+3⋁Susp-inl A B C (merid a i) = merid (inl a) i
+
+3⋁Susp-inm : ∀ {ℓ ℓ' ℓ''} (A : Pointed ℓ) (B : Pointed ℓ') (C : Pointed ℓ'') → Susp (B .fst) → Susp (3⋁ A B C)
+3⋁Susp-inm A B C north = north
+3⋁Susp-inm A B C south = south
+3⋁Susp-inm A B C (merid b i) = merid (inm b) i
+
+3⋁Susp-inr : ∀ {ℓ ℓ' ℓ''} (A : Pointed ℓ) (B : Pointed ℓ') (C : Pointed ℓ'') → Susp (C .fst) → Susp (3⋁ A B C)
+3⋁Susp-inr A B C north = north
+3⋁Susp-inr A B C south = south
+3⋁Susp-inr A B C (merid c i) = merid (inr c) i
+
+3⋁Susp-Susp3⋁ : ∀ {ℓ ℓ' ℓ''} (A : Pointed ℓ) (B : Pointed ℓ') (C : Pointed ℓ'')
+                → 3⋁ (Susp∙ (A .fst)) (Susp∙ (B .fst)) (Susp∙ (C .fst))
+                → Susp (3⋁ A B C)
+3⋁Susp-Susp3⋁ A B C (inl x) = 3⋁Susp-inl A B C x
+3⋁Susp-Susp3⋁ A B C (inm x) = 3⋁Susp-inm A B C x
+3⋁Susp-Susp3⋁ A B C (inr x) = 3⋁Susp-inr A B C x
+3⋁Susp-Susp3⋁ A B C (pushₗ i) = north
+3⋁Susp-Susp3⋁ A B C (pushᵣ i) = north
 
 module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
   (fʷ : cellMap (str Bʷ) (str Cʷ))
@@ -75,19 +103,41 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
     (sym (sym pushₗ ∙ λ i → inl (push (seqMap f (suc n) a) i))
     ∙∙ (λ i → inm (toSusp (QuotCW∙ B n) (inr a) i))
     ∙∙ (sym pushᵣ ∙ (λ i → inr (push (seqMap g (suc n) a) i)))) i
-    --   ((λ i → inl (push (seqMap f (suc n) a) (~ i)))
-    -- ∙∙ pushₗ
-    -- ∙∙ (λ i → inm (toSusp (QuotCW∙ B n) (inr a) i))
-    -- ∙∙ sym pushᵣ
-    -- ∙∙ λ i → inr (push (seqMap g (suc n) a) i)) i
-    {-
-    (sym (sym pushₗ ∙ λ i → inl (push (seqMap f (suc n) a) i))
-    ∙∙ (λ i → inm (toSusp (QuotCW∙ B n) (inr a) i))
-    ∙∙ (sym pushᵣ ∙ (λ i → inr (push (seqMap g (suc n) a) i)))) i
--}
+
+  -- inl (f a) ---- push a i ---- inr (g a)
+
+  -- inl (inr (f a))                                          inr (inr (g a))
+  --        |                                                        |
+  --   inl north                                                 inr north
+  --        |                                                        |
+  -- inm north -- inm (merid (inr a)) -- inm (sym (merid base)) -- inm north
+
   open CWskel-fields
   open import Cubical.HITs.Wedge.Properties
 
+  subpushout→Bob : (n : ℕ) → (x : pushoutA (suc n)) → pushoutA→Bob n (CW↪ pushoutSkel (suc n) x) ≡ inm north
+  subpushout→Bob n (inl x) i = (sym pushₗ ∙ (λ i → inl (push x i))) (~ i)
+  subpushout→Bob n (inr x) i = (sym pushᵣ ∙ (λ i → inr (push x i))) (~ i)
+  subpushout→Bob n (push a i) j =
+    hcomp (λ k → λ { (i = i0) → (sym pushₗ ∙ (λ i → inl (push (inl (seqMap f n a)) i))) (k ∧ (~ j))
+                   ; (i = i1) → (sym pushᵣ ∙ (λ i → inr (push (inl (seqMap g n a)) i))) (k ∧ (~ j))
+                   ; (j = i0) → doubleCompPath-filler (sym (sym pushₗ ∙ λ i → inl (push (inl (seqMap f n a)) i)))
+                                                      (λ i → inm (toSusp (QuotCW∙ B n) (inr (inl a)) i))
+                                                      (sym pushᵣ ∙ (λ i → inr (push (inl (seqMap g n a)) i))) k i
+                   ; (j = i1) → inm north })
+          (inm (hcomp (λ k → λ { (i = i0) → north
+                               ; (i = i1) → merid (inl tt) (~ k)
+                               ; (j = i0) → doubleCompPath-filler refl (merid (inr (inl a))) (sym (merid (inl tt))) k i
+                               ; (j = i1) → merid (inl tt) (i ∧ (~ k)) })
+                       (merid (push a (~ j)) i)))
+
+  Pn+1/Pn→Bob : (n : ℕ) → QuotCW pushoutSkel (suc n) → Bob n
+  Pn+1/Pn→Bob n (inl x) = inm north
+  Pn+1/Pn→Bob n (inr x) = pushoutA→Bob n x
+  Pn+1/Pn→Bob n (push a i) = subpushout→Bob n a (~ i)
+
+  open CWskel-fields
+  open import Cubical.HITs.Wedge.Properties
 
   makePath : ∀ {ℓ} (D : CWskel ℓ) (n : ℕ) (s : S₊ n) (s : Fin (card (str D) (suc n)))
     → Path (QuotCW (str D) (suc n)) (inl tt) (inr (inr s))
@@ -102,7 +152,7 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
   Strict→BobΩinm' n w north = inl tt
   Strict→BobΩinm' n w south = inl tt
   Strict→BobΩinm' (suc n) w (merid a i) = makeLoop Bʷ n a w i
-  -- 
+  --
 
   Strict→BobΩinm : (n : ℕ) (w : Fin (card B (suc n))) (s : Susp (S₊ n))
     → QuotCW B (suc n)
@@ -138,8 +188,8 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
   TriangleL n (push a i) = {!!}
 
   Triangle-inl : (n : ℕ) (x : _) → inm north ≡ pushoutA→Bob n (Iso.inv (pushoutIsoₜ (suc n)) (inl x))
-  Triangle-inl n (inl x) = sym pushₗ ∙ λ i → inl (push x i) 
-  Triangle-inl n (inr x) = sym pushᵣ ∙ λ i → inr (push x i) 
+  Triangle-inl n (inl x) = sym pushₗ ∙ λ i → inl (push x i)
+  Triangle-inl n (inr x) = sym pushᵣ ∙ λ i → inr (push x i)
   Triangle-inl n (push a i) j =
     hcomp (λ k → λ {(i = i0) → (sym (sym pushₗ ∙ λ i → inl (push (inl (seqMap f n a)) i))) (~ j ∨ ~ k)
                    ; (i = i1) → (sym pushᵣ ∙ λ i → inr (push (inl (seqMap g n a)) i)) (j ∧ k)
@@ -205,7 +255,7 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
                      ; (i = i1) → pₗ k
                     ; (j = i0) → pₗ (i ∧ k)
                     ; (j = i1) → pₗ (i ∧ k)})
-                    (inS (inm north)) k 
+                    (inS (inm north)) k
       mainS i j k =
         hfill (λ k → λ {(i = i0) → inm (rCancel (merid (inl tt)) (~ k) j)
                        ; (i = i1) → doubleCompPath-filler
@@ -249,3 +299,31 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
                                  ; (j = i1) → makePath Dʷ n (ptSn n) x (~ k ∨ i)})
                         (compPath-filler' (push (e D n .fst (α D (suc n) (x , EquivSphereSusp n .fst b))))
                                          (λ j → inr (push (x , EquivSphereSusp n .fst b) j)) (~ i) j)))
+
+  fn+1/fn : (n : ℕ) → QuotCW B n → QuotCW C n
+  fn+1/fn n = prefunctoriality.fn+1/fn {C = B} {D = C} (suc n) (cellMap→finCellMap (suc n) {B} {C} f) flast
+
+  gn+1/gn : (n : ℕ) → QuotCW B n → QuotCW D n
+  gn+1/gn n = prefunctoriality.fn+1/fn {C = B} {D = D} (suc n) (cellMap→finCellMap (suc n) {B} {D} g) flast
+
+  ∂middle : (n : ℕ) → Susp (QuotCW B (suc n)) → 3⋁ (Susp∙ (QuotCW C (suc n))) (Susp∙ (Susp (QuotCW B n))) (Susp∙ (QuotCW D (suc n)))
+  ∂middle n north = inm north
+  ∂middle n south = inm north
+  ∂middle n (merid b i) =
+    (((sym pushₗ) ∙∙ ((λ i → inl (merid (fn+1/fn (suc n) b) i)) ∙ (λ i → inl (merid (inl tt) (~ i)))) ∙∙ pushₗ)
+    ∙∙ ((λ i → inm (merid north i)) ∙ (λ i → inm (merid (suspFun (to_cofibCW n B) (δ (suc n) B b)) (~ i))))
+    ∙∙ ((sym pushᵣ) ∙∙ ((λ i → inr (merid (inl tt) i)) ∙ (λ i → inr (merid (gn+1/gn (suc n) b) (~ i)))) ∙∙ pushᵣ)) i
+
+  ∂BobΣ : (n : ℕ) → Bob (suc n) → 3⋁ (Susp∙ (QuotCW C (suc n))) (Susp∙ (Susp (QuotCW B n))) (Susp∙ (QuotCW D (suc n)))
+  ∂BobΣ n (inl x) = inl (suspFun (to_cofibCW (suc n) C) (δ (suc (suc n)) C x))
+  ∂BobΣ n (inm x) = ∂middle n x
+  ∂BobΣ n (inr x) = inr (suspFun (to_cofibCW (suc n) D) (δ (suc (suc n)) D x))
+  ∂BobΣ n (pushₗ i) = pushₗ i
+  ∂BobΣ n (pushᵣ i) = pushᵣ i
+
+  ∂Bob : (n : ℕ) → Bob (suc n) → Susp (Bob n)
+  ∂Bob n x = 3⋁Susp-Susp3⋁ _ _ _ (∂BobΣ n x)
+
+  easyHomotopy : (n : ℕ) → (x : QuotCW pushoutSkel (suc (suc n)))
+    → ∂Bob n (Pn+1/Pn→Bob (suc n) x) ≡ (suspFun (Pn+1/Pn→Bob n) ∘ suspFun (to_cofibCW (suc n) pushoutSkel) ∘ δ (suc (suc n)) pushoutSkel) x
+  easyHomotopy n x = {!!}
