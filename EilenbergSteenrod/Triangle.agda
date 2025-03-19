@@ -38,7 +38,44 @@ open import Cubical.Foundations.Pointed
 
 open SequenceMap renaming (map to seqMap)
 
+silly : ∀ {ℓ ℓ'} {A : Type ℓ} {B : Type ℓ'} (b : B) (x : A)
+  → cong-∙∙ (λ (x : A) → b) (refl {x = x}) refl refl ≡ rUnit refl 
+silly {A = A} b x i j k =
+  hcomp (λ r → λ {(i = i0) → cong-∙∙-filler (λ (x : A) → b) (refl {x = x}) refl refl r j k
+                 ; (i = i1) → rUnit (refl {x = b}) j k -- rUnit (refl {x = b}) j k
+                 ; (j = i0) → b
+                 ; (j = i1) → rUnit (refl {x = b}) (i ∨ r) k
+                 ; (k = i0) → b
+                 ; (k = i1) → b})
+        (rUnit (λ _ → b) (i ∧ j) k)
+
 module Bob (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ) where
+
+module _ {ℓ ℓ'} {A : Type ℓ}  {B : Type ℓ'} (f g : A → B) (P : (x : _) → f x  ≡ g x)  {x y z w : A}
+  (p : x ≡ y) (q : y ≡ z) (r : z ≡ w) where
+  compAltFill : (i j k : I) → B
+  compAltFill i j k =
+    hfill (λ k → λ {(i = i0) → P (p (~ k)) j
+                               ; (i = i1) → P (r k) j
+                               ; (j = i0) → doubleCompPath-filler (cong f p) (cong f q) (cong f r) k i
+                               ; (j = i1) → doubleCompPath-filler (cong g p) (cong g q) (cong g r) k i})
+                      (inS (P (q i) j)) k
+
+  compAlt : PathP (λ i → (cong f p ∙∙ cong f q ∙∙ cong f r) i
+                        ≡ (cong g p ∙∙ cong g q ∙∙ cong g r) i)
+                  (P x) (P w)
+  compAlt i j = compAltFill i j i1
+
+  cong-∙∙≡ : SquareP (λ i j → cong-∙∙ f p q r i j ≡ cong-∙∙ g p q r i j)
+                     (cong P (p ∙∙ q ∙∙ r)) (compAlt) refl refl
+  cong-∙∙≡ i j k =
+    hcomp (λ w → λ {(i = i0) → P (doubleCompPath-filler p q r w j) k
+                    ; (i = i1) → compAltFill j k w
+                    ; (j = i0) → P (p (~ w)) k
+                    ; (j = i1) → P (r w) k
+                    ; (k = i0) → cong-∙∙-filler f p q r w i j
+                    ; (k = i1) → cong-∙∙-filler g p q r w i j})
+           (P (q j) k)
 
 IsoSphereSuspInv∙ : (n : ℕ) → Iso.inv (IsoSphereSusp n) north ≡ ptSn n
 IsoSphereSuspInv∙ zero = refl
@@ -130,14 +167,7 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
   Strict→Bob n (push (a , b) i) =
     Strict→BobΩ n (Iso.fun (IsoFinSplit3 (card C (suc n)) (card B n) (card D (suc n))) a) b i
 
-  TriangleL : (n : ℕ) (x : _) → pushoutA→Bob n x ≡ Strict→Bob n (Iso.fun (pushoutIsoₜ (suc n)) x)
-  TriangleL n (inl (inl x)) = {!push!} ∙ {!!}
-  TriangleL n (inl (inr x)) = {!!}
-  TriangleL n (inl (push a i)) = {!!}
-  TriangleL n (inr x) = {!!}
-  TriangleL n (push a i) = {!!}
-
-  Triangle-inl : (n : ℕ) (x : _) → inm north ≡ pushoutA→Bob n (Iso.inv (pushoutIsoₜ (suc n)) (inl x))
+  Triangle-inl : (n : ℕ) (x : pushoutA (suc n)) → inm north ≡ pushoutA→Bob n (Iso.inv (pushoutIsoₜ (suc n)) (inl x))
   Triangle-inl n (inl x) = sym pushₗ ∙ λ i → inl (push x i) 
   Triangle-inl n (inr x) = sym pushᵣ ∙ λ i → inr (push x i) 
   Triangle-inl n (push a i) j =
@@ -149,7 +179,7 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
                                                        (sym pushᵣ ∙ λ i → inr (push (inl (seqMap g n a)) i)) k i})
           (inm (toSusp (QuotCW∙ B n) (push a j) i))
 
-  Triangle-inr : (n : ℕ)  (x : _) → inm north ≡ pushoutA→Bob n (modifiedPushout→Pushout n (pushoutIsoₛ-inv n (inr x)))
+  Triangle-inr : (n : ℕ) (x : _) → inm north ≡ pushoutA→Bob n (modifiedPushout→Pushout n (pushoutIsoₛ-inv n (inr x)))
   Triangle-inr n (inl (inl x)) = sym pushₗ ∙ (λ i → inl ((push (α C (suc n) (x , ptSn n)) ∙ λ i → inr (push (x , ptSn n) i)) i))
   Triangle-inr n (inl (inr x)) = sym pushₗ ∙ λ i → inl (push (seqMap f (suc n) (inr x)) i)
   Triangle-inr n (inr x) = sym pushᵣ ∙ (λ i → inr ((push (α D (suc n) (x , ptSn n)) ∙ λ i → inr (push (x , ptSn n) i)) i))
@@ -195,25 +225,181 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
             (inm (toSusp (QuotCW∙ B zero) (inr (inr x)) (~ j)))
     help (suc n) (inl (inr x)) b =
       cong (cong inm ∘ toSusp (QuotCW∙ B (suc n)))
-        (cong (Strict→BobΩinm n x) (Iso.rightInv (IsoSphereSusp (suc n)) b)) ◁ main b
+        (cong (Strict→BobΩinm n x) (Iso.rightInv (IsoSphereSusp (suc n)) b)) ◁ {!!} -- main b
       where
-      pₗ = sym pushₗ ∙ λ i₂ → inl (push (seqMap f (suc (suc n)) (inr x)) i₂)
-      pᵣ = sym pushᵣ ∙ (λ i₃ → inr (push (seqMap g (suc (suc n)) (inr x)) i₃))
+      pₗG : (a : S₊ n) (w : I) → Path (Bob (suc n)) _ _
+      pₗG a w = sym pushₗ ∙ λ i₂ → inl (push (seqMap f (suc (suc n)) (push (x , a) w)) i₂)
 
-      mainN mainS : (i j k : I) → Bob (suc n)
-      mainN i j k = hfill (λ k → λ {(i = i0) → inm (rCancel (merid (inl tt)) (~ k) j)
-                     ; (i = i1) → pₗ k
-                    ; (j = i0) → pₗ (i ∧ k)
+      pᵣG : (a : S₊ n) (w : I) → Path (Bob (suc n)) _ _
+      pᵣG a w = sym pushᵣ ∙ λ i₂ → inr (push (seqMap g (suc (suc n)) (push (x , a) w)) i₂)
+
+      pₗ = sym pushₗ ∙ λ i₂ → inl (push (seqMap f (suc (suc n)) (inr x)) i₂)
+      pᵣ = pᵣG (ptSn n) i1
+      -- pᵣ = sym pushᵣ ∙ (λ i₃ → inr (push (seqMap g (suc (suc n)) (inr x)) i₃))
+
+      mainNG mainSG : (a : S₊ n) (i j w k : I) → Bob (suc n)
+      mainNG a i j w k =
+        hfill (λ k → λ {(i = i0) → inm (rCancel (merid (inl tt)) (~ k) j)
+                     ; (i = i1) → pₗG a (w ∨ j) k
+                    ; (j = i0) → pₗG a w (i ∧ k) -- ({!!} ∙ {!!}) (i ∧ k) -- pₗ (i ∧ k)
                     ; (j = i1) → pₗ (i ∧ k)})
                     (inS (inm north)) k 
-      mainS i j k =
+      mainSG a i j w k =
         hfill (λ k → λ {(i = i0) → inm (rCancel (merid (inl tt)) (~ k) j)
-                       ; (i = i1) → doubleCompPath-filler
-                                      (sym pᵣ) (λ i → inm (toSusp (QuotCW∙ B (suc n)) (inr (inr x)) (~ i))) pₗ k j
-                       ; (j = i0) → pᵣ (k ∧ i)
-                       ; (j = i1) → pₗ (k ∧ i)})
-                (inS (inm (((sym (rCancel (merid (inl tt))))
-                     ∙ cong (toSusp (QuotCW∙ B (suc n))) (makePath Bʷ n (ptSn n) x)) i (~ j)))) k
+                     ; (i = i1) → doubleCompPath-filler
+                                      (sym (pᵣG a (w ∨ j))) (λ i → inm (toSusp (QuotCW∙ B (suc n)) (inr (inr x)) (~ i))) pₗ k j
+                    ; (j = i0) → pᵣG a w (i ∧ k) -- ({!!} ∙ {!!}) (i ∧ k) -- pₗ (i ∧ k)
+                    ; (j = i1) → pₗ (i ∧ k)})
+                    (inS (inm (((sym (rCancel (merid (inl tt))))
+                     ∙ cong (toSusp (QuotCW∙ B (suc n))) (makePath Bʷ n (ptSn n) x)) i (~ j)))) k 
+
+      mainN mainS : (i j k : I) → Bob (suc n)
+      mainN i j k = mainNG (ptSn n) i j k i1 
+      mainS i j k = mainSG (ptSn n) i j k i1 
+
+      term : (a : S₊ n) (i j k : I) → Bob (suc n)
+      term a j k r = pushoutA→Bob (suc n) (Iso.inv (IsoModifiedPushout (suc n))
+                                       (pushoutIsoₛ-filler2 (suc n) x a j k r))
+
+      mainCube1 mainCube2  : (a : S₊ n)
+        → Square (λ k → term a i0 k i1) (λ k → term a i1 k i1)
+                (λ j → term a j i0 i1) (λ j → term a j i1 i1)
+      mainCube1 a j k = term a j k i1
+      mainCube2 a j k =
+        hcomp (λ r → λ {(j = i0) → pushoutA→Bob (suc n) (Iso.inv (IsoModifiedPushout (suc n))
+                                      (pushoutIsoₛ-inv↪ (suc n) (pushoutIsoₛ-filler0 (suc n) x a r k)))
+                       ; (j = i1) → pushoutA→Bob (suc n) (push (inr x) (~ r ∧ k))
+                       ; (k = i0) → pushoutA→Bob (suc n)
+                                       (Iso.inv (IsoModifiedPushout (suc n))
+                                         (invSides-hfill1 (λ i → inl (inl (seqMap f (suc (suc n)) (push (x , a) (~ i)))))
+                                                     (λ _ → push (inr x) i0) j (~ r) i1))
+                       ; (k = i1) → pushoutA→Bob (suc n)
+                                       (Iso.inv (IsoModifiedPushout (suc n))
+                                         (invSides-hfill1 (λ i → inr (inl (seqMap g (suc (suc n)) (push (x , a) (~ i)))))
+                                                (λ i → push (inr x) (~ i)) j (~ r) i1))})
+              (pushoutA→Bob (suc n) (push (push (x , a) j) k))
+
+      cube3 : (a : S₊ n) (i j k : I) → Bob (suc n)
+      cube3 a j k i =
+        hfill (λ r → λ {(j = i0) →
+          doubleCompPath-filler (λ i → inl (inr (inl (seqMap f (suc (suc n)) (push (x , a) (~ i))))))
+                                (cong (pushoutA→Bob (suc n)) (push (inl (α B (suc n) (x , a)))))
+                                (λ i → inr (inr (inl (seqMap g (suc (suc n)) (push (x , a) i)))))
+                                r k
+                       ; (j = i1) → pushoutA→Bob (suc n) (push (inr x) (~ r ∧ k))
+                       ; (k = i0) → invSides-hfill1 (λ i → inl (inr (inl (seqMap f (suc (suc n)) (push (x , a) (~ i))))))
+                                       refl j (~ r) i1
+                       ; (k = i1) → invSides-hfill1 (λ i → inr (inr (inl (seqMap g (suc (suc n)) (push (x , a) (~ i))))))
+                                       (sym (cong (pushoutA→Bob (suc n)) (push (inr x)))) j (~ r) i1})
+              (inS (pushoutA→Bob (suc n) (push (push (x , a) j) k))) i
+
+      lem2 : (a : S₊ n) → Cube (mainCube2 a) (λ j k → cube3 a j k i1)
+                                (cong-∙∙ (pushoutA→Bob (suc n) ∘ Iso.inv (IsoModifiedPushout (suc n)) ∘ pushoutIsoₛ-inv↪ (suc n))
+                                         (λ i → inl (seqMap f (suc (suc n)) (push (x , a) (~ i))))
+                                         (push (α B (suc n) (x , a)))
+                                         ((λ i → inr (seqMap g (suc (suc n)) (push (x , a) i)))))
+                                (λ _ k → cube3 a i1 k i1)
+                                (λ j i → term a i i0 i1)
+                                (λ j i → term a i i1 i1)
+      lem2 a = {!cong-∙∙-filler f p q r i1 j i!}
+
+      mainCubeEq : (a : _) → mainCube1 a ≡ mainCube2 a
+      mainCubeEq a r j k =
+        hcomp (λ w → λ {(j = i0) → pushoutA→Bob (suc n) (Iso.inv (IsoModifiedPushout (suc n))
+                                      (pushoutIsoₛ-inv↪ (suc n) (pushoutIsoₛ-filler0 (suc n) x a w k)))
+                       ; (r = i0) → pushoutA→Bob (suc n) (Iso.inv (IsoModifiedPushout (suc n))
+                                       (pushoutIsoₛ-filler2 (suc n) x a j k w))
+                       ; (j = i1) → pushoutA→Bob (suc n) (push (inr x) (~ w ∧ k))
+                       ; (k = i0) → pushoutA→Bob (suc n)
+                                       (Iso.inv (IsoModifiedPushout (suc n))
+                                         (invSides-hfill1 (λ i → inl (inl (seqMap f (suc (suc n)) (push (x , a) (~ i)))))
+                                                     (λ _ → push (inr x) i0) j (~ w) i1))
+                       ; (k = i1) → pushoutA→Bob (suc n)
+                                       (Iso.inv (IsoModifiedPushout (suc n))
+                                         (invSides-hfill1 (λ i → inr (inl (seqMap g (suc (suc n)) (push (x , a) (~ i)))))
+                                                (λ i → push (inr x) (~ i)) j (~ w) i1))})
+              (pushoutA→Bob (suc n) (push (push (x , a) j) k))
+
+      mainCubeEq' : (a : _) → Cube (mainCube1 a) (λ j k → cube3 a j k i1)
+                                (cong-∙∙ (pushoutA→Bob (suc n) ∘ Iso.inv (IsoModifiedPushout (suc n)) ∘ pushoutIsoₛ-inv↪ (suc n))
+                                         (λ i → inl (seqMap f (suc (suc n)) (push (x , a) (~ i))))
+                                         (push (α B (suc n) (x , a)))
+                                         ((λ i → inr (seqMap g (suc (suc n)) (push (x , a) i)))))
+                                (λ _ k → cube3 a i1 k i1)
+                                (λ j i → term a i i0 i1)
+                                (λ j i → term a i i1 i1)
+      mainCubeEq' a = (mainCubeEq a) ◁ lem2 a
+
+      -- MLB : (a : S₊ n)
+      --   → (i j k : I) → Bob (suc n)
+      -- MLB a i j k =
+      --   hfill (λ k → λ { (i = i0) → inm (toSusp (QuotCW∙ B (suc n)) (makeLoop Bʷ n a x j) (~ k))
+      --                  ; (i = i1) → cube3 a (~ k) j i1
+      --                  ; (j = i0) → mainN i (~ k) i1
+      --                  ; (j = i1) → mainS i (~ k) i1
+      --                  })
+      --         (inS (mainS i i1 i1))
+      --         k
+
+
+      -- mm :  (a : _)
+      --   → Square (λ k → inm north) (λ k → cube3 a i0 k i1)
+      --             (λ i₁ → mainN i₁ i0 i1) (λ i₁ → mainS i₁ i0 i1)
+      -- mm a i j = hcomp (λ k → λ { (i = i0) → {!!}
+      --                            ; (i = i1) → {!cube3 a i0 k i1!}
+      --                            ; (j = i0) → {!!}
+      --                            ; (j = i1) → {!!}
+      --                  })
+      --             {!!}
+
+      -- ML : (a : _) → Cube (λ i j → MLB a i j i1) -- (λ i j → MLB a i j i1)
+      --                      (λ i k → Triangle-inl (suc n) (pushoutMapₛ (suc n) (inl (inr x) , merid a k)) i)
+      --                      (λ r k → inm north) (λ r k → mainCubeEq' a (~ r) i0 k) 
+      --                      (λ r i → mainN i i0 i1) (λ r i → mainS i i0 i1)
+      -- ML a r i j =
+      --   hcomp (λ k → λ {(i = i0) → {!!} -- inm north
+      --                  ; (i = i1) → {!!} -- cong-∙∙-filler (pushoutA→Bob (suc n) ∘ Iso.inv (IsoModifiedPushout (suc n)) ∘ pushoutIsoₛ-inv↪ (suc n))
+      --                               --      (λ i → inl (seqMap f (suc (suc n)) (push (x , a) (~ i))))
+      --                               --      (push (α B (suc n) (x , a)))
+      --                               --      ((λ i → inr (seqMap g (suc (suc n)) (push (x , a) i)))) k (~ r) j
+      --                                    {- cong-∙∙-filler (pushoutA→Bob (suc n) ∘ Iso.inv (IsoModifiedPushout (suc n)) ∘ pushoutIsoₛ-inv↪ (suc n))
+      --                                    (λ i → inl (seqMap f (suc (suc n)) (push (x , a) (~ i))))
+      --                                    (push (α B (suc n) (x , a)))
+      --                                    ((λ i → inr (seqMap g (suc (suc n)) (push (x , a) i)))) k (~ r) j -}
+      --                  ; (j = i0) → {!cong-∙∙-filler
+      --    (λ x₂ →
+      --       pushoutA→Bob (suc n)
+      --       (Iso.inv (IsoModifiedPushout (suc n))
+      --        (pushoutIsoₛ-inv↪ (suc n) x₂)))
+      --    (λ i₂ → inl (seqMap f (suc (suc n)) (push (x , a) (~ i₂))))
+      --    (push (α B (suc n) (x , a)))
+      --    (λ i₂ → inr (seqMap g (suc (suc n)) (push (x , a) i₂))) k (~ r) i0!}
+      --                  ; (j = i1) → {!!}
+      --                  ; (r = i0) → {!!} -- MLB a i j k
+      --                  ; (r = i1) → Triangle-inl (suc n)
+      --                                  (doubleCompPath-filler (λ i → inl (seqMap f (suc (suc n)) (push (x , a) (~ i))))
+      --                                                         (push (α B (suc n) (x , a)))
+      --                                                         (λ i → inr (seqMap g (suc (suc n)) (push (x , a) i))) k j) i})
+      --          {!!}
+      --   where -- r k i
+      --   alem : Cube {A = Bob (suc n)}
+      --               {!!} (λ k i → (sym pushₗ ∙ (λ i₁ → inl (push (seqMap f (suc (suc n)) (push (x , a) k)) i₁))) i)
+      --               {!λ i j → pₗ (i ∧ j)!} (λ r i → (sym pushₗ ∙ (λ i₃ → inl (push (seqMap f (suc (suc n)) (inr x)) i₃))) i)
+      --               {!!} (λ r k → inl (inr (inl (seqMap f (suc (suc n)) (push (x , a) k)))))
+      --   alem = {!!}
+      --   -- lem3 : ∀ {ℓ} {A : Type ℓ} {x y z : A} (p : x ≡ y) (q r : y ≡ z) (s : q ≡ r)
+      --   --   → Cube ?  (λ k i → (p ∙ s k) i) ? (λ s i → (p ∙ r) i) {!!} {!λ r k → q r!}
+      --   -- lem3 = {!!}
+      --   lem1 :
+      --     Cube {A = Bob (suc n)}
+      --       (λ j i → compPath-filler (λ k → inl (inr (inl (seqMap f (suc (suc n)) (push (x , a) k))))) (sym pₗ) (~ i) j)
+      --       (λ k i → (sym pushₗ
+      --                ∙ (λ i₂ → inl (push (seqMap f (suc (suc n))
+      --                                (push (x , a) k)) i₂))) i)
+      --       {!λ j i → pₗ (~ j ∧ i)!} (λ k i → pₗ i)
+      --       (λ i j → {!!})
+      --       (λ r k → inl (inr (inl (seqMap f (suc (suc n)) (push (x , a) k)))))
+      --   lem1 = {!!}
 
       main : (b : Susp (S₊ n))
         → Square (λ i₁ → inm (toSusp (QuotCW∙ B (suc n))
@@ -222,17 +408,88 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
                            (Iso.inv (IsoModifiedPushout (suc n))
                              (Iso.inv (pushoutIsoₛ (suc n)) (push (inl (inr x) , b) i₁))))
                   (Triangle-inl (suc n) (pushoutMapₛ (suc n) (inl (inr x) , b)))
-                  (sym pushₗ ∙ λ i₂ → inl (push (seqMap f (suc (suc n)) (inr x)) i₂))
+                  pₗ
       main north i j = mainN i j i1
       main south i j = mainS i j i1
       main (merid a k) i j =
-        hcomp (λ r → λ {(i = i0) → {!!}
-                       ; (i = i1) → pushoutA→Bob (suc n) (Iso.inv (IsoModifiedPushout (suc n))
-                                       (pushoutIsoₛ-filler2 (suc n) x a j k r))
-                       ; (j = i0) → {!!}
-                       ; (j = i1) → {!!}
-                       ; (k = i0) → {!mainN i j i1!}
-                       ; (k = i1) → {!mainS i j i1!}}) {!!}
+        hcomp (λ r → λ {(i = i0) → i=i0 {A = Bob (suc n) } _ (λ k j → inm (toSusp (QuotCW∙ B (suc n)) (makeLoop Bʷ n a x k) j))
+                                      (sym (cong-∙∙ {A = pushoutA (suc (suc n))} (λ _ → inm north)
+                                        (λ i₁ → inl (seqMap f (suc (suc n)) (push (x , a) (~ i₁))))
+                                         (push (α B (suc n) (x , a)))
+                                         (λ i₁ → inr (seqMap g (suc (suc n)) (push (x , a) i₁)))))
+                                      (cong sym (sym (silly {A = pushoutA (suc (suc n))} (inm north) (inl (seqMap f (suc (suc n)) (inr x))))))
+                                      r j k
+                       ; (i = i1) → mainCubeEq' a (~ r) j k -- mainCubeEq' a (~ i1) j k
+                       ; (j = i0) → cong-∙∙≡ _ _ (Triangle-inl (suc n)) (λ i → inl (seqMap f (suc (suc n)) (push (x , a) (~ i))))
+                                                              (push (α B (suc n) (x , a)))
+                                                              (λ i → inr (seqMap g (suc (suc n)) (push (x , a) i))) (~ r) k i
+                       ; (j = i1) → pₗ i
+                       ; (k = i0) → mainN i j i1
+                       ; (k = i1) → mainS i j i1})
+          (hcomp (λ r → λ {(i = i0) → {!!}
+          {- doubleWhiskFiller
+                  {A = λ i → Path (Bob (suc n)) (inm (toSusp (QuotCW∙ B (suc n)) (inl tt) i)) (inm (toSusp (QuotCW∙ B (suc n)) (inl tt) i))}
+                                          (sym (rUnit {_} {Bob (suc n)} (refl {x = inm north})))
+                                          (λ j₂ k₁ → inm (toSusp (QuotCW∙ B (suc n)) (makeLoop Bʷ n a x k₁) j₂))
+                                          refl r j k
+                                          -}
+                       ; (i = i1) → cube3 a j k r
+                       ; (j = i0) → compAltFill _ _ (Triangle-inl (suc n)) (λ i → inl (seqMap f (suc (suc n)) (push (x , a) (~ i))))
+                                                              (push (α B (suc n) (x , a)))
+                                                              (λ i → inr (seqMap g (suc (suc n)) (push (x , a) i))) k i r
+                       ; (j = i1) → doubleCompPath-filler (sym pₗ) (λ i → inm (toSusp (QuotCW∙ B (suc n)) (inr (inr x)) i)) pᵣ i (~ r ∧ k)
+                       ; (k = i0) → k=i0 r i j
+                       ; (k = i1) → k=i1 r i j})
+                  {!!})
+        where
+        i=i02 : Cube (λ j k → {!!})
+                    (λ j k → {!!})
+                    (λ r k → {!!})
+                    (λ r k → {!!})
+                    (λ r j → {!!})
+                    (λ r j → {!!}) -- r j k 
+        i=i02 = {!!} 
+        -- r i j
+        k=i0 : Cube (λ i j → (sym pushₗ ∙ λ w → inl (push (seqMap f (suc (suc n)) (push (x , a) j)) w)) i)
+                    (λ i j → mainN i j i1)
+                    (λ r j → inm (rCancel (merid (inl tt)) (~ r) j))
+                    (λ r j → invSides-hfill1 (λ i → inl (inr (inl (seqMap f (suc (suc n)) (push (x , a) (~ i))))))
+                                          refl j (~ r) i1)
+                    (λ r i → (sym pushₗ ∙ (λ i₂ → inl (push (seqMap f (suc (suc n)) (push (x , a) r)) i₂))) i)
+                    (λ r i → pₗ i)
+        k=i0 r i j =
+          hcomp (λ w → λ {(i = i0) → {!!}
+                         ; (i = i1) → {!!}
+                         ; (j = i0) → {!!}
+                         ; (j = i1) → {!compPath-filler {_} {Bob (suc n)} (sym pushₗ) (λ i₃ → inl (inr (inl (seqMap f (suc (suc n)) (push (x , a) (~ i₃)))))) w i!}
+                         ; (r = i0) → {!invSides-hfill1 {A = Bob (suc n)} (λ i → inl (inr (inl (seqMap f (suc (suc n)) (push (x , a) (~ i))))))
+                                          refl j (~ r) w!}
+                         ; (r = i1) → {!mainNG ai j (~ w)  i1!}})
+                         {!!}
+
+        k=i1 : Cube (λ i j → (sym pushᵣ ∙ λ w → inr (push (seqMap g (suc (suc n)) (push (x , a) j)) w)) i)
+                    (λ i j → mainS i j i1)
+                    (flipSquare (cong (cong inm) (cong sym (sym (rCancel (merid (inl tt))))
+                    ∙ cong (sym ∘ toSusp (QuotCW∙ B (suc n))) (makePath Bʷ n a x)))
+                    ▷ (λ i j → inm (rCancel (merid (inl tt)) (~ i) j)))
+                    (λ r j → cube3 a j i1 r)
+                    (λ r i → (sym pushᵣ ∙ (λ i₂ → inr (push (seqMap g (suc (suc n)) (push (x , a) r)) i₂))) i)
+                    λ r i → doubleCompPath-filler (λ i₂ → pₗ (~ i₂))
+                               (λ i₂ → inm (toSusp (QuotCW∙ B (suc n)) (inr (inr x)) i₂))
+                               pᵣ i (~ r) -- (λ r i → pₗ i)
+        k=i1 = {!!}
+
+
+        i=i0 : ∀ {ℓ} {A : Type ℓ}  {x : A} (p : x ≡ x) (Q : p ≡ p)
+             (s : refl ∙ refl {x = x} ≡ refl) (t : sym (rUnit refl) ≡ s)
+          → Cube (sym (rUnit refl) ◁ (λ j k → (Q k j)))
+                   (λ j k → (Q k j))
+                  (λ r k → s r k) -- ( λ r k → s r k)
+                  (λ _ _ → x) -- (λ _ _ → inm* x)
+                  (λ _ i →  (p i)) -- (λ _ i → inm* (p i))
+                  λ _ i →  (p i) -- λ _ i → inm* (p i) -- 
+        i=i0 {x = x} p Q s t = cong₂ _◁_ t refl
+          ◁ symP (doubleWhiskFiller s (λ j k → (Q k j)) (λ _ _ → x))
     help n (inr x) b i j =
       hcomp (λ k → λ {(i = i1) → inr (inr (push (x , EquivSphereSusp n .fst b) j))
                      ; (j = i0) → compPath-filler' (sym (pushᵣ))
