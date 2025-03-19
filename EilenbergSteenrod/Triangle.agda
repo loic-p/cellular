@@ -169,9 +169,6 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
   Pn+1/Pn→Bob n (inr x) = pushoutA→Bob n x
   Pn+1/Pn→Bob n (push a i) = subpushout→Bob n a (~ i)
 
-  Pˢn+1/Pn→Bob : (n : ℕ) → pushoutA (suc n) → Bob n
-  Pˢn+1/Pn→Bob n = {!!}
-
   open CWskel-fields
   open import Cubical.HITs.Wedge.Properties
 
@@ -218,16 +215,7 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
 
 
   Triangle-inl : (n : ℕ) (x : pushoutA (suc n)) → inm north ≡ pushoutA→Bob n (Iso.inv (pushoutIsoₜ (suc n)) (inl x))
-  Triangle-inl n (inl x) = sym pushₗ ∙ λ i → inl (push x i)
-  Triangle-inl n (inr x) = sym pushᵣ ∙ λ i → inr (push x i)
-  Triangle-inl n (push a i) j =
-    hcomp (λ k → λ {(i = i0) → (sym (sym pushₗ ∙ λ i → inl (push (inl (seqMap f n a)) i))) (~ j ∨ ~ k)
-                   ; (i = i1) → (sym pushᵣ ∙ λ i → inr (push (inl (seqMap g n a)) i)) (j ∧ k)
-                   ; (j = i0) → inm (rCancel (merid (inl tt)) k i)
-                   ; (j = i1) → doubleCompPath-filler (sym (sym pushₗ ∙ λ i → inl (push (inl (seqMap f n a)) i)))
-                                                       (λ i → inm (toSusp (QuotCW∙ B n) (inr (inl a)) i))
-                                                       (sym pushᵣ ∙ λ i → inr (push (inl (seqMap g n a)) i)) k i})
-          (inm (toSusp (QuotCW∙ B n) (push a j) i))
+  Triangle-inl n x = sym (subpushout→Bob n x)
 
   Triangle-inr : (n : ℕ) (x : _) → inm north ≡ pushoutA→Bob n (modifiedPushout→Pushout n (pushoutIsoₛ-inv n (inr x)))
   Triangle-inr n (inl (inl x)) = sym pushₗ ∙ (λ i → inl ((push (α C (suc n) (x , ptSn n)) ∙ λ i → inr (push (x , ptSn n) i)) i))
@@ -556,6 +544,21 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
                                  ; (j = i1) → makePath Dʷ n (ptSn n) x (~ k ∨ i)})
                         (compPath-filler' (push (e D n .fst (α D (suc n) (x , EquivSphereSusp n .fst b))))
                                          (λ j → inr (push (x , EquivSphereSusp n .fst b) j)) (~ i) j)))
+
+  Pˢn+1/Pn→Bob : (n : ℕ) → cofib {B = Pushout (pushoutMap (suc n)) fst} inl → Bob n
+  Pˢn+1/Pn→Bob n (inl x) = inm north
+  Pˢn+1/Pn→Bob n (inr x) = Strict→Bob n x
+  Pˢn+1/Pn→Bob n (push a i) = inm north
+
+  Pˢn+1/Pn→Pn+1/Pn : (n : ℕ) → cofib {B = Pushout (pushoutMap (suc n)) fst} inl → QuotCW pushoutSkel (suc n)
+  Pˢn+1/Pn→Pn+1/Pn n (inl x) = inl x
+  Pˢn+1/Pn→Pn+1/Pn n (inr x) = inr (Iso.inv (pushoutIsoₜ (suc n)) x)
+  Pˢn+1/Pn→Pn+1/Pn n (push a i) = push a i
+
+  Pn+1/Pn→Bob≡Pˢn+1/Pn→Bob : (n : ℕ) (x : _) → Pˢn+1/Pn→Bob n x ≡ Pn+1/Pn→Bob n (Pˢn+1/Pn→Pn+1/Pn n x)
+  Pn+1/Pn→Bob≡Pˢn+1/Pn→Bob n (inl x) = refl
+  Pn+1/Pn→Bob≡Pˢn+1/Pn→Bob n (inr x) = Triangle n x
+  Pn+1/Pn→Bob≡Pˢn+1/Pn→Bob n (push a i) j = subpushout→Bob n a (~ i ∨ ~ j)
 
   fn+1/fn : (n : ℕ) → QuotCW B n → QuotCW C n
   fn+1/fn n = prefunctoriality.fn+1/fn {C = B} {D = C} (suc n) (cellMap→finCellMap (suc n) {B} {C} f) flast
