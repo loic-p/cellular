@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical #-}
+{-# OPTIONS --cubical --allow-unsolved-metas #-}
 module EilenbergSteenrod.Triangle where
 
 open import Cubical.Foundations.Prelude
@@ -8,6 +8,8 @@ open import Cubical.Foundations.Equiv.Properties
 open import Cubical.Foundations.Function
 open import Cubical.Foundations.Isomorphism
 open import Cubical.Foundations.Path
+
+open import Cubical.Homotopy.Loopspace
 
 open import Cubical.CW.Base
 open import Cubical.CW.Properties
@@ -40,7 +42,7 @@ open import Cubical.Foundations.Pointed
 open SequenceMap renaming (map to seqMap)
 
 silly : ∀ {ℓ ℓ'} {A : Type ℓ} {B : Type ℓ'} (b : B) (x : A)
-  → cong-∙∙ (λ (x : A) → b) (refl {x = x}) refl refl ≡ rUnit refl 
+  → cong-∙∙ (λ (x : A) → b) (refl {x = x}) refl refl ≡ rUnit refl
 silly {A = A} b x i j k =
   hcomp (λ r → λ {(i = i0) → cong-∙∙-filler (λ (x : A) → b) (refl {x = x}) refl refl r j k
                  ; (i = i1) → rUnit (refl {x = b}) j k -- rUnit (refl {x = b}) j k
@@ -125,13 +127,22 @@ data 3⋁ {ℓ ℓ' ℓ''} (A : Pointed ℓ) (B : Pointed ℓ') (C : Pointed ℓ
 3⋁Susp-Susp3⋁ A B C (pushₗ i) = north
 3⋁Susp-Susp3⋁ A B C (pushᵣ i) = north
 
-module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
+module Trianglez (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
   (fʷ : cellMap (str Bʷ) (str Cʷ))
   (gʷ : cellMap (str Bʷ) (str Dʷ)) where
   open Pushoutz ℓ Bʷ Cʷ Dʷ fʷ gʷ
 
   Bob : (n : ℕ) → Type ℓ
   Bob n = 3⋁ (QuotCW∙ C (suc n)) (Susp∙ (QuotCW B n)) (QuotCW∙ D (suc n))
+
+  Bob∙ : (n : ℕ) → Pointed ℓ
+  Bob∙ n = (Bob n , inm north)
+
+  toBob_l : (n : ℕ) → (QuotCW C (suc n)) → Bob n
+  toBob_l n x = inl x
+
+  toBob_r : (n : ℕ) → (QuotCW D (suc n)) → Bob n
+  toBob_r n x = inr x
 
   pushoutA→Bob : (n : ℕ) → pushoutA (suc (suc n)) → Bob n
   pushoutA→Bob n (inl x) = inl (inr x)
@@ -213,7 +224,6 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
   Strict→Bob n (push (a , b) i) =
     Strict→BobΩ n (Iso.fun (IsoFinSplit3 (card C (suc n)) (card B n) (card D (suc n))) a) b i
 
-
   Triangle-inl : (n : ℕ) (x : pushoutA (suc n)) → inm north ≡ pushoutA→Bob n (Iso.inv (pushoutIsoₜ (suc n)) (inl x))
   Triangle-inl n x = sym (subpushout→Bob n x)
 
@@ -231,7 +241,6 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
     ▷ cong (cong (λ w → pushoutA→Bob n (Iso.inv (compIso (IsoModifiedPushout n) (pushoutIsoₛ n)) w)))
            (rUnit (push (Iso.fun (IsoFinSplit3 (card C (suc n)) (card B n) (card D (suc n))) a , Iso.fun (IsoSphereSusp n) b)))) j i
     where
-
     help : (n : ℕ) (a : _) (b : Susp (S⁻ n))
       → Square (Strict→BobΩ n a (Iso.inv (IsoSphereSusp n) b))
                 (λ i → pushoutA→Bob n (Iso.inv (compIso (IsoModifiedPushout n) (pushoutIsoₛ n)) (push (a , b) i)))
@@ -281,7 +290,7 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
                      ; (i = i1) → pₗG a (w ∨ j) k
                     ; (j = i0) → pₗG a w (i ∧ k) -- ({!!} ∙ {!!}) (i ∧ k) -- pₗ (i ∧ k)
                     ; (j = i1) → pₗ (i ∧ k)})
-                    (inS (inm north)) k 
+                    (inS (inm north)) k
       mainSG a i j w k =
         hfill (λ k → λ {(i = i0) → inm (rCancel (merid (inl tt)) (~ k) j)
                      ; (i = i1) → doubleCompPath-filler
@@ -289,11 +298,11 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
                     ; (j = i0) → pᵣG a w (i ∧ k) -- ({!!} ∙ {!!}) (i ∧ k) -- pₗ (i ∧ k)
                     ; (j = i1) → pₗ (i ∧ k)})
                     (inS (inm (((sym (rCancel (merid (inl tt))))
-                     ∙ cong (toSusp (QuotCW∙ B (suc n))) (makePath Bʷ n (ptSn n) x)) i (~ j)))) k 
+                     ∙ cong (toSusp (QuotCW∙ B (suc n))) (makePath Bʷ n (ptSn n) x)) i (~ j)))) k
 
       mainN mainS : (i j k : I) → Bob (suc n)
-      mainN i j k = mainNG (ptSn n) i j k i1 
-      mainS i j k = mainSG (ptSn n) i j k i1 
+      mainN i j k = mainNG (ptSn n) i j k i1
+      mainS i j k = mainSG (ptSn n) i j k i1
 
       term : (a : S₊ n) (i j k : I) → Bob (suc n)
       term a j k r = pushoutA→Bob (suc n) (Iso.inv (IsoModifiedPushout (suc n))
@@ -392,7 +401,7 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
 
       -- ML : (a : _) → Cube (λ i j → MLB a i j i1) -- (λ i j → MLB a i j i1)
       --                      (λ i k → Triangle-inl (suc n) (pushoutMapₛ (suc n) (inl (inr x) , merid a k)) i)
-      --                      (λ r k → inm north) (λ r k → mainCubeEq' a (~ r) i0 k) 
+      --                      (λ r k → inm north) (λ r k → mainCubeEq' a (~ r) i0 k)
       --                      (λ r i → mainN i i0 i1) (λ r i → mainS i i0 i1)
       -- ML a r i j =
       --   hcomp (λ k → λ {(i = i0) → {!!} -- inm north
@@ -485,8 +494,8 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
                     (λ r k → {!!})
                     (λ r k → {!!})
                     (λ r j → {!!})
-                    (λ r j → {!!}) -- r j k 
-        i=i02 = {!!} 
+                    (λ r j → {!!}) -- r j k
+        i=i02 = {!!}
         -- r i j
         k=i0 : Cube (λ i j → (sym pushₗ ∙ λ w → inl (push (seqMap f (suc (suc n)) (push (x , a) j)) w)) i)
                     (λ i j → mainN i j i1)
@@ -525,7 +534,7 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
                   (λ r k → s r k) -- ( λ r k → s r k)
                   (λ _ _ → x) -- (λ _ _ → inm* x)
                   (λ _ i →  (p i)) -- (λ _ i → inm* (p i))
-                  λ _ i →  (p i) -- λ _ i → inm* (p i) -- 
+                  λ _ i →  (p i) -- λ _ i → inm* (p i) --
         i=i0 {x = x} p Q s t = cong₂ _◁_ t refl
           ◁ symP (doubleWhiskFiller s (λ j k → (Q k j)) (λ _ _ → x))
     help n (inr x) b i j =
@@ -559,31 +568,3 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
   Pn+1/Pn→Bob≡Pˢn+1/Pn→Bob n (inl x) = refl
   Pn+1/Pn→Bob≡Pˢn+1/Pn→Bob n (inr x) = Triangle n x
   Pn+1/Pn→Bob≡Pˢn+1/Pn→Bob n (push a i) j = subpushout→Bob n a (~ i ∨ ~ j)
-
-  fn+1/fn : (n : ℕ) → QuotCW B n → QuotCW C n
-  fn+1/fn n = prefunctoriality.fn+1/fn {C = B} {D = C} (suc n) (cellMap→finCellMap (suc n) {B} {C} f) flast
-
-  gn+1/gn : (n : ℕ) → QuotCW B n → QuotCW D n
-  gn+1/gn n = prefunctoriality.fn+1/fn {C = B} {D = D} (suc n) (cellMap→finCellMap (suc n) {B} {D} g) flast
-
-  ∂middle : (n : ℕ) → Susp (QuotCW B (suc n)) → 3⋁ (Susp∙ (QuotCW C (suc n))) (Susp∙ (Susp (QuotCW B n))) (Susp∙ (QuotCW D (suc n)))
-  ∂middle n north = inm north
-  ∂middle n south = inm north
-  ∂middle n (merid b i) =
-    (((sym pushₗ) ∙∙ ((λ i → inl (merid (fn+1/fn (suc n) b) i)) ∙ (λ i → inl (merid (inl tt) (~ i)))) ∙∙ pushₗ)
-    ∙∙ ((λ i → inm (merid north i)) ∙ (λ i → inm (merid (suspFun (to_cofibCW n B) (δ (suc n) B b)) (~ i))))
-    ∙∙ ((sym pushᵣ) ∙∙ ((λ i → inr (merid (inl tt) i)) ∙ (λ i → inr (merid (gn+1/gn (suc n) b) (~ i)))) ∙∙ pushᵣ)) i
-
-  ∂BobΣ : (n : ℕ) → Bob (suc n) → 3⋁ (Susp∙ (QuotCW C (suc n))) (Susp∙ (Susp (QuotCW B n))) (Susp∙ (QuotCW D (suc n)))
-  ∂BobΣ n (inl x) = inl (suspFun (to_cofibCW (suc n) C) (δ (suc (suc n)) C x))
-  ∂BobΣ n (inm x) = ∂middle n x
-  ∂BobΣ n (inr x) = inr (suspFun (to_cofibCW (suc n) D) (δ (suc (suc n)) D x))
-  ∂BobΣ n (pushₗ i) = pushₗ i
-  ∂BobΣ n (pushᵣ i) = pushᵣ i
-
-  ∂Bob : (n : ℕ) → Bob (suc n) → Susp (Bob n)
-  ∂Bob n x = 3⋁Susp-Susp3⋁ _ _ _ (∂BobΣ n x)
-
-  easyHomotopy : (n : ℕ) → (x : QuotCW pushoutSkel (suc (suc n)))
-    → ∂Bob n (Pn+1/Pn→Bob (suc n) x) ≡ (suspFun (Pn+1/Pn→Bob n) ∘ suspFun (to_cofibCW (suc n) pushoutSkel) ∘ δ (suc (suc n)) pushoutSkel) x
-  easyHomotopy n x = {!!}
