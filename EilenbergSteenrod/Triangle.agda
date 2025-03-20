@@ -442,14 +442,14 @@ module Trianglez (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
                                          (λ i₁ → inr (seqMap g (suc (suc n)) (push (x , a) i₁)))))
                                       (cong sym (sym (silly {A = pushoutA (suc (suc n))} (inm north) (inl (seqMap f (suc (suc n)) (inr x))))))
                                       r j k
-                       ; (i = i1) → mainCubeEq' a (~ r) j k -- mainCubeEq' a (~ i1) j k
+                       ; (i = i1) → mainCubeEq' a (~ r) j k
                        ; (j = i0) → cong-∙∙≡ _ _ (Triangle-inl (suc n)) (λ i → inl (seqMap f (suc (suc n)) (push (x , a) (~ i))))
                                                               (push (α B (suc n) (x , a)))
                                                               (λ i → inr (seqMap g (suc (suc n)) (push (x , a) i))) (~ r) k i
                        ; (j = i1) → pₗ i
                        ; (k = i0) → mainN i j i1
                        ; (k = i1) → mainS i j i1})
-          (hcomp (λ r → λ {(i = i0) → i=i0' r j k -- i=i0' r j k
+          (hcomp (λ r → λ {(i = i0) → i=i0' r j k
                        ; (i = i1) → cube3 a j k r
                        ; (j = i0) → compAltFill _ _ (Triangle-inl (suc n)) (λ i → inl (seqMap f (suc (suc n)) (push (x , a) (~ i))))
                                                               (push (α B (suc n) (x , a)))
@@ -502,7 +502,7 @@ module Trianglez (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
                          ; (i = i1) → (R ∙ R) k
                          ; (j = i0) → (R ∙ R) (i ∧ k)
                          ; (j = i1) → (R ∙ R) (i ∧ k)
-                         ; (r = i0) → (R ∙ R) (i ∧ k) -- 
+                         ; (r = i0) → (R ∙ R) (i ∧ k)
                          ; (r = i1) → mainNGen R R R refl i j k})
                    x)))))
              where
@@ -525,30 +525,29 @@ module Trianglez (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
           (sq : Square inr-push-inr inr-push-inr' refl corrz)
           → Cube (λ i j → (pushᵣ* ∙ (λ w → sq (~ j) w)) i)
                     (λ i j → mainSGen {A = A} pushₗ* inl-push-inr σ⋆ rC pushᵣ* inr-push-inr σ⋆' q i j i1)
-                    (flipSquare (cong sym rC ∙ cong sym q) ▷ (λ i j → rC i j)) -- (flipSquare {!? ∙ ?!} ◁ {!!}) --  ∙ (λ r j → {!λ !})
+                    (flipSquare (cong sym rC ∙ cong sym q) ▷ (λ i j → rC i j))
                     (λ r j → invSides-hfill1  corrz ((sym (pushᵣ* ∙ inr-push-inr) ∙∙ sym σ⋆' ∙∙ (pushₗ* ∙ inl-push-inr))) j (~ r) i1)
                     (λ r i → (pushᵣ* ∙ (λ w → sq (~ r) w)) i)
                     (λ r i → doubleCompPath-filler (sym (pushₗ* ∙ inl-push-inr)) σ⋆' (pushᵣ* ∙ inr-push-inr) i (~ r))
         k=i1Gen {x = x} = J> (J> (J> (J> (J> (J> (J> (J> c)))))))
-         where -- r i j
+         where
          R = refl {x = x}
 
-         -- Very stupid hole... just refls everywhere...
+         -- Typecheckinng is pretty slow...
          c : Cube (λ i j → (R ∙ R) i) (λ i j → mainSGen R R refl refl R refl refl refl i j i1)
                   (flipSquare (refl {x = R} ∙ refl) ▷ refl)
                   (λ r j → invSides-hfill1 R (sym (R ∙ R) ∙∙ R ∙∙ (R ∙ R)) j (~ r) i1)
                   (λ r i → (R ∙ R) i) λ r i → doubleCompPath-filler (sym (R ∙ R)) R (R ∙ R) i (~ r)
-         c r i j = {!!}
-         {- hcomp (λ k
-            → λ {(i = i0) → {!mainSGen R R (λ _ → x) (λ _ → refl) R (λ _ → x) (λ _ → x)
-         (λ _ _ → x) i i0 k!}
-                ; (i = i1) → {!k!} -- invSides-hfill1 R (sym (R ∙ R) ∙∙ R ∙∙ (R ∙ R)) j (~ r) k -- invSides-hfill1 refl (sym (R ∙ refl) ∙∙ sym refl ∙∙ (refl ∙ refl)) j (~ r) i1
-                ; (j = i0) → (R ∙ R) (i ∧ k) -- (R ∙ R) i
-                ; (j = i1) → {!(R ∙ R) i!} -- (R ∙ R) i
-                ; (r = i0) → mainSGen R R (λ _ → x) (λ _ → refl) R (λ _ → x) (λ _ → x) (λ _ _ → x) i i0 k -- (R ∙ R) i -- (R ∙ R) i
-                ; (r = i1) → mainSGen R R refl refl R refl refl refl i j k -- mainSGen R R refl refl R refl refl refl i j k
-                }) {!!}
-                -}
+         c r i j = hcomp (λ k →  λ {(i = i0) → help3 (~ k) j r
+                ; (i = i1) → invSides-hfill1 (λ i → (R ∙ R) k) (doubleCompPath-filler (sym (R ∙ R)) R (R ∙ R) k) j (~ r) i1
+                ; (j = i0) → (R ∙ R) (i ∧ k)
+                ; (j = i1) → doubleCompPath-filler (sym (R ∙ R)) R (R ∙ R) (i ∧ k) (~ r)
+                ; (r = i0) → mainSGen R R (λ _ → x) (λ _ → refl) R (λ _ → x) (λ _ → x) (λ _ _ → x) i i0 k
+                ; (r = i1) → mainSGen R R refl refl R refl refl refl i j k
+                }) (invSides-hfill1 (λ i₂ → x) R j (~ r ∨ ~ i) i1)
+                where
+                help3 : (flipSquare (refl {x = R} ∙ refl)  ▷ refl {x = R}) ≡ λ _ _ → x
+                help3 = sym (rUnit _) ∙ cong flipSquare (sym (rUnit (refl {x = R})))
 
         k=i1 : Cube (λ i j → (sym pushᵣ ∙ λ w → inr (push (seqMap g (suc (suc n)) (push (x , a) j)) w)) i)
                     (λ i j → mainS i j i1)
@@ -569,12 +568,12 @@ module Trianglez (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
           (LOOP : σ⋆ ≡ σ⋆)
           (q' : σ⋆ ≡ σ⋆')
           (pp : Square LOOP q' refl q)
-          → Cube (rC ∙ q') -- (sym LOOP) ∙ q)
-                  (sym (rUnit refl) ◁ flipSquare (sym LOOP)) -- (rC ◁ {!λ i j → qX i j!})
+          → Cube (rC ∙ q')
+                  (sym (rUnit refl) ◁ flipSquare (sym LOOP))
                   (rUnit (refl {x = x}))
-                  (λ r k → σ⋆' (~ r ∧ k)) -- (
-                  rC -- rC
-                  ((flipSquare (cong sym rC ∙ cong sym q) ▷ (λ i j → rC i j))) -- 
+                  (λ r k → σ⋆' (~ r ∧ k))
+                  rC
+                  ((flipSquare (cong sym rC ∙ cong sym q) ▷ (λ i j → rC i j)))
         i=i0Gen {x = x} = J> (J> λ p
           → J> (sym (lUnit p) ◁ (cubePermute-ijk↦kji (cubePermute-ijk↦kji
                      (doubleCompPath-filler (sym (rUnit refl)) p refl)
