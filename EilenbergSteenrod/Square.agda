@@ -235,15 +235,19 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
     → Square {A = Susp (Bob n)} (λ i → north) (λ i → ∂middle' n (toSusp (QuotCW∙ B (suc n)) (inr (inl a)) i)) (λ i → north) (λ i → north)
   ∂filler0 n a i j = ∂Bob' n (inm (filler0 (suc n) a i j))
 
-  filler2 : (n : ℕ) → Square (λ i → ∂middle' n (merid (inl tt) i)) refl refl refl
-  filler2 n i j =
-    hcomp (λ k → λ { (i = i0) → doubleCompPath-filler (merid (inl (inl tt)))
+  prefiller2 : (n : ℕ) → I → I → I → Susp (Bob n)
+  prefiller2 n i j =
+    hfill (λ k → λ { (i = i0) → doubleCompPath-filler (merid (inl (inl tt)))
                                                       ((sym (merid (inm north))) ∙ (merid (inm north)))
                                                       (sym (merid (inr (inl tt)))) k j
                    ; (i = i1) → merid (inm north) (~ k)
                    ; (j = i0) → merid (pushₗ i) (~ k)
                    ; (j = i1) → merid (pushᵣ i) (~ k) })
-          (rCancel (sym (merid (inm north))) i j)
+          (inS (rCancel (sym (merid (inm north))) i j))
+
+  filler2 : (n : ℕ) → Square (λ i → ∂middle' n (merid (inl tt) i)) refl refl refl
+  filler2 n i j = prefiller2 n i j i1
+
 
   pre∂filler0' : (n : ℕ) (a : B .fst (suc n)) → I → I → I → Susp (Bob n)
   pre∂filler0' n a i j =
@@ -362,96 +366,292 @@ module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
                    ; (k = i1) → step1-filler n a i j l })
           (filler4 n a k j i)
 
-  -- further simplifying step1...
-  -- step2-cod : (n : ℕ) → (fst pushoutSkel (suc (suc (suc n)))) → Susp (Bob n)
-  -- step2-cod n (inl x) = south
-  -- step2-cod n (inr x) = south
-  -- step2-cod n (push a i) =
-  --   (refl
-  --   ∙∙ sym (merid (inm (suspFun (to_cofibCW n B) (δ (suc n) B (inr a)))))
-  --   ∙∙ merid (inm north)) i
+  -- further simplifying step1
+  prefiller11 : (n : ℕ) → I → I → I → Susp (Bob n)
+  prefiller11 n j k =
+    hfill (λ i → λ { (k = i0) → (sym (merid (inm north)) ∙ merid (inm north)) j
+                   ; (k = i1) → merid (inm north) (~ i)
+                   ; (j = i0) → merid (inm north) (~ k ∨ (~ i))
+                   ; (j = i1) → merid (inm north) (~ k ∨ (~ i)) })
+          (inS (rCancel (sym (merid (inm north))) (k) j))
 
-  -- step2-filler : (n : ℕ) → (a : B .fst (suc n)) → I → I → I → Susp (Bob n)
-  -- step2-filler n a i j =
-  --   hfill (λ k → λ { (i = i0) → ? --merid (inl (inr (inl (seqMap f (suc n) a)))) (k ∧ j)
-  --                  ; (i = i1) → ? --merid (inr (inr (inl (seqMap g (suc n) a)))) (k ∧ j)
+  prefiller10 : (n : ℕ) (a : B .fst (suc n)) → I → I → I → Susp (Bob n)
+  prefiller10 n a i j =
+    hfill (λ k → λ { (i = i0) → prefiller11 n j k i1
+                   ; (i = i1) → doubleCompPath-filler (merid (inl (inr (inl (seqMap f (suc n) a)))))
+                                                      (sym (merid (inm south)) ∙ merid (inm north))
+                                                      (sym (merid (inr (inr (inl (seqMap g (suc n) a)))))) k j
+                   ; (j = i0) → merid (((sym pushₗ) ∙ (λ i → inl (push (seqMap f (suc n) a) i))) i) (~ k)
+                   ; (j = i1) → merid (((sym pushᵣ) ∙ (λ i → inr (push (seqMap g (suc n) a) i))) i) (~ k) })
+          (inS ((sym (merid (inm (merid (inr a) i))) ∙ merid (inm north)) j))
+
+  filler10 : (n : ℕ) (a : B .fst (suc n)) → Square {A = Susp (Bob n)} (λ _ → north) (∂middle-aux' n (inr (inl a))) (λ _ → north) (λ _ → north)
+  filler10 n a i j = prefiller10 n a i j i1
+
+  step2-filler : (n : ℕ) (a : B .fst (suc n)) → I → I → I → Susp (Bob n)
+  step2-filler n a i j =
+    hfill (λ k → λ { (i = i0) → merid (inl (inr (inl (seqMap f (suc n) a)))) (j ∧ k)
+                   ; (i = i1) → merid (inr (inr (inl (seqMap g (suc n) a)))) (j ∧ k)
+                   ; (j = i0) → north
+                   ; (j = i1) → doubleCompPath-filler (sym (merid (inl (inr (inl (seqMap f (suc n) a))))))
+                                                      (∂middle-aux' n (inr (inl a)))
+                                                      (merid (inr (inr (inl (seqMap g (suc n) a))))) k i })
+          (inS (filler10 n a j i))
+
+  step2 : (n : ℕ) → (x : QuotCW pushoutSkel (suc (suc n))) → Susp (Bob n)
+  step2 n (inl x) = north
+  step2 n (inr x) = step1-cod n x
+  step2 n (push (inl c) i) = merid (inl (inr c)) i
+  step2 n (push (inr d) i) = merid (inr (inr d)) i
+  step2 n (push (push a i) j) = step2-filler n a i j i1
+
+  -- proving that step1 ≡ step2
+  aux-filler-0 : {ℓ : Level} {A : Type ℓ} {n s : A} (p q : n ≡ s) (h : p ≡ q)
+                 → Square (λ _ → n) (sym q) p (λ _ → n)
+  aux-filler-0 p q h k l =
+    hcomp (λ j → λ { (k = i0) → p (~ j) ; (k = i1) → q (~ l ∨ ~ j) ; (l = i0) → p (k ∨ ~ j) ; (l = i1) →  h k (~ j) }) (p i1)
+
+  aux-filler-1 : {ℓ : Level} {A : Type ℓ} {n s : A} (p q : n ≡ s) (h : p ≡ q)
+                 → Square (λ _ → n) (sym q) p (λ _ → n)
+  aux-filler-1 p q h k l =
+    hcomp (λ j → λ { (k = i0) → h l (~ j) ; (k = i1) → q (~ l ∨ ~ j) ; (l = i0) → p (k ∨ ~ j) ; (l = i1) → q (~ j) }) (p i1)
+
+  aux-filler-2 : {ℓ : Level} {A : Type ℓ} {n s : A} (p q : n ≡ s) (h : p ≡ q)
+                 → Square (λ _ → n) (sym q) p (λ _ → n)
+  aux-filler-2 p q h k l =
+    hcomp (λ j → λ { (k = i0) → p i0 ; (k = i1) → q (~ l ∨ ~ j) ; (l = i0) → p k ; (l = i1) → q (k ∧ ~ j) }) (h l k)
+
+  aux-filler-3 : {ℓ : Level} {A : Type ℓ} {n s : A} (p q : n ≡ s) (h : p ≡ q)
+                 → Square (λ _ → n) (sym q) p (λ _ → n)
+  aux-filler-3 p q h k l =
+    hcomp (λ j → λ { (k = i0) → p i0 ; (k = i1) → q (~ l ∨ ~ j) ; (l = i0) → h (~ j) k ; (l = i1) → q (k ∧ ~ j) }) (q k)
+
+  aux-filler-4 : {ℓ : Level} {A : Type ℓ} {n s : A} (p q : n ≡ s) (h : p ≡ q)
+                 → Square (λ _ → n) (sym q) p (λ _ → n)
+  aux-filler-4 p q h k l =
+    hcomp (λ j → λ { (k = i0) → p i0 ; (k = i1) → q (~ l) ; (l = i0) → h (~ j) k ; (l = i1) → p i0 }) (q (k ∧ ~ l))
+
+  aux-filler-0-1 : {ℓ : Level} {A : Type ℓ} {n s : A} (p q : n ≡ s) (h : p ≡ q) → aux-filler-0 p q h ≡ aux-filler-1 p q h
+  aux-filler-0-1 p q h j k l =
+    hcomp (λ i → λ { (k = i0) → h (j ∧ l) (~ i)
+                   ; (k = i1) → q (~ l ∨ ~ i)
+                   ; (l = i0) → p (k ∨ ~ i)
+                   ; (l = i1) → h (k ∨ j) (~ i) }) (p i1)
+
+  aux-filler-1-2 : {ℓ : Level} {A : Type ℓ} {n s : A} (p q : n ≡ s) (h : p ≡ q) → aux-filler-1 p q h ≡ aux-filler-2 p q h
+  aux-filler-1-2 p q h j k l =
+    hcomp (λ i → λ { (k = i0) → h l (~ j ∧ ~ i)
+                   ; (k = i1) → q (~ l ∨ ~ i)
+                   ; (l = i0) → p (k ∨ (~ j ∧ ~ i))
+                   ; (l = i1) → q (~ i ∧ (k ∨ ~ j)) }) (h l (k ∨ ~ j))
+
+  aux-filler-2-3 : {ℓ : Level} {A : Type ℓ} {n s : A} (p q : n ≡ s) (h : p ≡ q) → aux-filler-2 p q h ≡ aux-filler-3 p q h
+  aux-filler-2-3 p q h j k l =
+    hcomp (λ i → λ { (k = i0) → p i0
+                   ; (k = i1) → q (~ l ∨ ~ i)
+                   ; (l = i0) → h (j ∧ ~ i) k
+                   ; (l = i1) → q (k ∧ ~ i) }) (h (l ∨ j) k)
+
+  aux-filler-3-4 : {ℓ : Level} {A : Type ℓ} {n s : A} (p q : n ≡ s) (h : p ≡ q) → aux-filler-3 p q h ≡ aux-filler-4 p q h
+  aux-filler-3-4 p q h j k l =
+    hcomp (λ i → λ { (k = i0) → p i0
+                   ; (k = i1) → q (~ l ∨ ~ (i ∨ j))
+                   ; (l = i0) → h (~ i) k
+                   ; (l = i1) → q (k ∧ ~ (i ∨ j)) }) (q (k ∧ ~ (l ∧ j)))
+
+  aux-filler-0-4 : {ℓ : Level} {A : Type ℓ} {n s : A} (p q : n ≡ s) (h : p ≡ q) → aux-filler-0 p q h ≡ aux-filler-4 p q h
+  aux-filler-0-4 p q h = (aux-filler-0-1 p q h ∙ aux-filler-1-2 p q h) ∙∙ aux-filler-2-3 p q h ∙∙ aux-filler-3-4 p q h
+
+  aux-filler-tot : {ℓ : Level} {A : Type ℓ} {n s : A} (p q : n ≡ s) (h : p ≡ q) → I → I → I → A
+  aux-filler-tot p q h j k l =
+    hcomp (λ i → λ { (j = i0) → p i1
+                   ; (j = i1) → aux-filler-0-4 p q h i k l
+                   ; (k = i0) → p (~ j)
+                   ; (k = i1) → q (~ l ∨ ~ j)
+                   ; (l = i0) → p (k ∨ ~ j)
+                   ; (l = i1) → h k (~ j) })
+          (hfill (λ j → λ { (k = i0) → p (~ j) ; (k = i1) → q (~ l ∨ ~ j) ; (l = i0) → p (k ∨ ~ j) ; (l = i1) → h k (~ j) }) (inS (p i1)) j)
+
+  step2-eq : (n : ℕ) → (x : QuotCW pushoutSkel (suc (suc n))) → step1 n x ≡ step2 n x
+  step2-eq n (inl x) = refl
+  step2-eq n (inr x) = refl
+  step2-eq n (push (inl x) i) = refl
+  step2-eq n (push (inr x) i) = refl
+  step2-eq n (push (push a i) j) k =
+    hcomp (λ l → λ { (i = i0) → merid (inl (inr (inl (seqMap f (suc n) a)))) (j ∧ l)
+                   ; (i = i1) → merid (inr (inr (inl (seqMap g (suc n) a)))) (j ∧ l)
+                   ; (j = i0) → north
+                   ; (j = i1) → doubleCompPath-filler (sym (merid (inl (inr (inl (seqMap f (suc n) a))))))
+                                                      (∂middle-aux' n (inr (inl a)))
+                                                      (merid (inr (inr (inl (seqMap g (suc n) a))))) l i
+                   ; (k = i1) → step2-filler n a i j l
+                   ; (k = i0) → step1-filler n a i j l })
+          (hcomp (λ l → λ { (i = i0) → hcomp (λ i → λ { (j = i0) → hfill (λ j → λ { (l = i0) → merid (inl (inl tt)) k ; (l = i1) → north ; (k = i0) → north ; (k = i1) → merid (pushₗ j) (~ l) }) (inS (merid (inl (inl tt)) (k ∧ ~ l))) i
+                                                      ; (j = i1) → merid (inl (inr (inl (seqMap f (suc n) a)))) (k ∧ ~ l)
+                                                      ; (k = i0) → north
+                                                      ; (k = i1) → merid (compPath-filler' (sym pushₗ)
+                                                                         (λ i → inl (push (seqMap f (suc n) a) i)) i j) (~ l)
+                                                      ; (l = i0) → merid (inl (doubleCompPath-filler refl
+                                                                                (λ i → push (seqMap f (suc n) a) i) refl i j)) k
+                                                      ; (l = i1) → north })
+                                             (merid (inl (push (seqMap f (suc n) a) j)) (k ∧ (~ l)))
+                          ; (i = i1) → hcomp (λ i → λ { (j = i0) → hfill (λ j → λ { (l = i0) → merid (inr (inl tt)) k ; (l = i1) → north ; (k = i0) → north ; (k = i1) → merid (pushᵣ j) (~ l) }) (inS (merid (inr (inl tt)) (k ∧ ~ l))) i
+                                                      ; (j = i1) → merid (inr (inr (inl (seqMap g (suc n) a)))) (k ∧ ~ l)
+                                                      ; (k = i0) → north
+                                                      ; (k = i1) → merid (compPath-filler' (sym pushᵣ)
+                                                                         (λ i → inr (push (seqMap g (suc n) a) i)) i j) (~ l)
+                                                      ; (l = i0) → merid (inr (doubleCompPath-filler refl
+                                                                                (λ i → push (seqMap g (suc n) a) i) refl i j)) k
+                                                      ; (l = i1) → north })
+                                             (merid (inr (push (seqMap g (suc n) a) j)) (k ∧ (~ l)))
+                          ; (j = i0) → hcomp (λ j → λ { (i = i0) → aux-filler-tot {A = Susp (Bob n)} (merid (inm north)) (merid (inl (inl tt))) (λ i j → merid (pushₗ (~ i)) j) j (~ l) (~ k)
+                                                      ; (i = i1) → aux-filler-tot {A = Susp (Bob n)} (merid (inm north)) (merid (inr (inl tt))) (λ i j → merid (pushᵣ (~ i)) j) j (~ l) (~ k)
+                                                      ; (k = i0) → prefiller2 n l i j
+                                                      ; (k = i1) → prefiller11 n i l j
+                                                      ; (l = i0) → doubleCompPath-filler (merid (inl (inl tt)))
+                                                                     ((sym (merid (inm north))) ∙ (merid (inm north)))
+                                                                     (sym (merid (inr (inl tt)))) (~ k ∧ j) i
+                                                      ; (l = i1) → merid (inm north) (~ j) })
+                                             (rCancel (sym (merid (inm north))) l i)
+                          ; (j = i1) → doubleCompPath-filler (merid (inl (inr (inl (seqMap f (suc n) a)))))
+                                                             (sym (merid (inm south)) ∙ merid (inm north))
+                                                             (sym (merid (inr (inr (inl (seqMap g (suc n) a)))))) ((~ k) ∨ l) i
+                          ; (k = i1) → prefiller10 n a j i l
+                          ; (k = i0) → pre∂filler0' n a j i l })
+                 (doubleCompPath-filler (merid (inl ((fn+1/fn (suc n) (push a j)))))
+                                        (sym (merid (inm (merid (inr a) j))) ∙ merid (inm north))
+                                        (sym (merid (inr ((gn+1/gn (suc n) (push a j)))))) (~ k) i ))
+
+  -- simplifying step2
+  filler6 : (n : ℕ) (a : B .fst (suc n)) → Square {A = Susp (Bob n)} (λ _ → south) (λ _ → south) (λ _ → south) (λ _ → south)
+  filler6 n a i j =
+    hcomp (λ k → λ { (i = i0) → merid (inm north) (~ j ∨ k)
+                   ; (i = i1) → merid (inm south) (~ j ∨ k)
+                   ; (j = i0) → south
+                   ; (j = i1) → merid (inm (merid (inl tt) i)) k })
+          (merid (inm (merid (inr a) i)) (~ j))
+
+  prefiller7 : (n : ℕ) (a : B .fst (suc n)) → I → I → I → Susp (Bob n)
+  prefiller7 n a i j =
+    hfill (λ k → λ { (i = i0) → merid (inm north) (~ k)
+                   ; (i = i1) → doubleCompPath-filler (merid (inl (inr (inl (seqMap f (suc n) a))))) refl
+                                                      (sym (merid (inr (inr (inl (seqMap g (suc n) a)))))) k j
+                   ; (j = i0) → merid (((sym pushₗ) ∙ (λ i → inl (push (seqMap f (suc n) a) i))) i) (~ k)
+                   ; (j = i1) → merid (((sym pushᵣ) ∙ (λ i → inr (push (seqMap g (suc n) a) i))) i) (~ k) })
+          (inS (filler6 n a i j))
+
+  filler7 : (n : ℕ) (a : B .fst (suc n)) → Square {A = Susp (Bob n)} (λ _ → north) (merid (inl (inr (inl (seqMap f (suc n) a)))) ∙∙ refl ∙∙ sym (merid (inr (inr (inl (seqMap g (suc n) a)))))) (λ _ → north) (λ _ → north)
+  filler7 n a i j = prefiller7 n a i j i1
+
+  step3-filler : (n : ℕ) (a : B .fst (suc n)) → I → I → I → Susp (Bob n)
+  step3-filler n a i j =
+    hfill (λ k → λ { (i = i0) → merid (inl (inr (inl (seqMap f (suc n) a)))) (j ∧ k)
+                   ; (i = i1) → merid (inr (inr (inl (seqMap g (suc n) a)))) (j ∧ k)
+                   ; (j = i0) → north
+                   ; (j = i1) → doubleCompPath-filler (sym (merid (inl (inr (inl (seqMap f (suc n) a))))))
+                                                      ((merid (inl (inr (inl (seqMap f (suc n) a))))) ∙∙ refl
+                                                       ∙∙ sym (merid (inr (inr (inl (seqMap g (suc n) a))))))
+                                                      (merid (inr (inr (inl (seqMap g (suc n) a))))) k i })
+          (inS (filler7 n a j i))
+
+  step3 : (n : ℕ) → (x : QuotCW pushoutSkel (suc (suc n))) → Susp (Bob n)
+  step3 n (inl x) = north
+  step3 n (inr (inl x)) = south
+  step3 n (inr (inr x)) = south
+  step3 n (inr (push a i)) =
+    ((sym (merid (inl (inr (seqMap f (suc (suc n)) a)))))
+    ∙∙ ((merid (inl (inr (seqMap f (suc (suc n)) a))))
+       ∙∙ refl
+       ∙∙ sym (merid (inr (inr (seqMap g (suc (suc n)) a)))))
+    ∙∙ (merid (inr (inr (seqMap g (suc (suc n)) a))))) i
+  step3 n (push (inl c) i) = merid (inl (inr c)) i
+  step3 n (push (inr d) i) = merid (inr (inr d)) i
+  step3 n (push (push a i) j) = step3-filler n a i j i1
+
+  -- proving that step2 ≡ step3
+  filler8 : (n : ℕ) (a : B .fst (suc (suc n))) →
+    Square {A = Susp (Bob n)} (∂middle-aux' n (inr a))
+           ((merid (inl (inr (seqMap f (suc (suc n)) a)))) ∙∙ refl ∙∙ sym (merid (inr (inr (seqMap g (suc (suc n)) a)))))
+           (λ _ → north) (λ _ → north)
+  filler8 n a i j =
+    hcomp (λ k → λ { (i = i0) → doubleCompPath-filler (merid (inl (inr (seqMap f (suc (suc n)) a))))
+                                                      (sym (merid (inm south)) ∙ merid (inm north))
+                                                      (sym (merid (inr (inr (seqMap g (suc (suc n)) a))))) k j
+                   ; (i = i1) → doubleCompPath-filler (merid (inl (inr (seqMap f (suc (suc n)) a)))) refl
+                                                      (sym (merid (inr (inr (seqMap g (suc (suc n)) a))))) k j
+                   ; (j = i0) → merid (inl (inr (seqMap f (suc (suc n)) a))) (~ k)
+                   ; (j = i1) → merid (inr (inr (seqMap g (suc (suc n)) a))) (~ k) })
+          (hcomp (λ k → λ { (i = i0) → doubleCompPath-filler refl (sym (merid (inm south))) (merid (inm north)) k j
+                          ; (i = i1) → merid (inm south) (~ j ∨ k)
+                          ; (j = i0) → south
+                          ; (j = i1) → merid (inm (merid (inl tt) i)) k })
+                 (merid (inm south) (~ j)))
+
+  -- step3-eq : (n : ℕ) → (x : QuotCW pushoutSkel (suc (suc n))) → step1 n x ≡ step3 n x
+  -- step3-eq n (inl x) = refl
+  -- step3-eq n (inr (inl x)) = refl
+  -- step3-eq n (inr (inr x)) = refl
+  -- step3-eq n (inr (push a i)) j =
+  --   hcomp (λ k → λ { (i = i0) → merid (inl (inr (seqMap f (suc (suc n)) a))) k
+  --                  ; (i = i1) → merid (inr (inr (seqMap g (suc (suc n)) a))) k
+  --                  ; (j = i0) → doubleCompPath-filler (sym (merid (inl (inr (seqMap f (suc (suc n)) a)))))
+  --                                                     (∂middle-aux' n (inr a))
+  --                                                     (merid (inr (inr (seqMap g (suc (suc n)) a)))) k i
+  --                  ; (j = i1) → doubleCompPath-filler (sym (merid (inl (inr (seqMap f (suc (suc n)) a)))))
+  --                                                     ((merid (inl (inr (seqMap f (suc (suc n)) a)))) ∙∙ refl
+  --                                                      ∙∙ sym (merid (inr (inr (seqMap g (suc (suc n)) a)))))
+  --                                                     (merid (inr (inr (seqMap g (suc (suc n)) a)))) k i })
+  --         (filler8 n a j i)
+  -- step3-eq n (push (inl x) i) = refl
+  -- step3-eq n (push (inr x) i) = refl
+  -- step3-eq n (push (push a i) j) k =
+  --   hcomp (λ l → λ { (i = i0) → merid (inl (inr (inl (seqMap f (suc n) a)))) (j ∧ l)
+  --                  ; (i = i1) → merid (inr (inr (inl (seqMap g (suc n) a)))) (j ∧ l)
   --                  ; (j = i0) → north
-  --                  ; (j = i1) → doubleCompPath-filler (sym (merid (inl (inr (inl (seqMap f (suc n) a))))))
-  --                                                     (∂middle-aux' n (inr (inl a)))
-  --                                                     (merid (inr (inr (inl (seqMap g (suc n) a))))) k i })
-  --         (inS (∂filler0' n a j i))
+  --                  ; (k = i1) → step3-filler n a i j l
+  --                  ; (k = i0) → step1-filler n a i j l })
+  --         (hcomp (λ l → λ { (i = i0) → {!!}
+  --                         ; (i = i1) → {!!}
+  --                         ; (j = i0) →
+  --                           hcomp (λ j → λ { (i = i0) → {!!}
+  --                                          ; (i = i1) → {!!}
+  --                                          ; (l = i0) → {!!}
+  --                                          ; (l = i1) → {!!}
+  --                                          ; (k = i1) → {!!}
+  --                                          ; (k = i0) → prefiller2 n l i j })
+  --                                 {!!}
+  --                         ; (j = i1) → {!!}
+  --                         ; (k = i1) → {!prefiller7' n a j i l!}
+  --                         ; (k = i0) → pre∂filler0' n a j i l })
+  --                (doubleCompPath-filler (merid (inl ((fn+1/fn (suc n) (push a j)))))
+  --                                       (sym (merid (inm (merid (inr a) j))) ∙ merid (inm north))
+  --                                       (sym (merid (inr ((gn+1/gn (suc n) (push a j)))))) (~ k) i ))
 
-  -- step2 : (n : ℕ) → (x : QuotCW pushoutSkel (suc (suc n))) → Susp (Bob n)
-  -- step2 n (inl x) = north
-  -- step2 n (inr x) = step2-cod n x
-  -- step2 n (push (inl c) i) = merid (inl (inr c)) i
-  -- step2 n (push (inr d) i) = merid (inr (inr d)) i
-  -- step2 n (push (push a i) j) = step2-filler n a i j i1
+    -- merid (inl ((fn+1/fn (suc n) b)))
+    -- ∙∙ (refl
+    --    ∙∙ sym (merid (inm (merid (inr a) j)))
+    --    ∙∙ merid (inm north))
+    -- ∙∙ sym (merid (inr ((gn+1/gn (suc n) b))))
 
+  -- step4 : (n : ℕ) → (x : QuotCW pushoutSkel (suc (suc n))) → Susp (Bob n)
+  -- step4 n (inl x) = north
+  -- step4 n (inr (inl x)) = {!!}
+  -- step4 n (inr (inr x)) = {!!}
+  -- step4 n (inr (push a i)) = {!!}
+  -- step4 n (push (inl c) i) = {!!}
+  -- step4 n (push (inr d) i) = {!!}
+  -- step4 n (push (push a i) j) = {!!}
 
-
-  -- ∂Bob (inl (push (seqMap f (suc (suc n)) a) i))
-  --   = merid (inl inr (seqMap f (suc (suc n)) a)) i
-
-  -- step1 : (n : ℕ) → (x : QuotCW pushoutSkel (suc (suc n))) → Susp (Bob n)
-  -- step1 n (inl x) = north
-  -- step1 n (inr (inl x)) = south
-  -- step1 n (inr (inr x)) = south
-  -- step1 n (inr (push a i)) = (sym (merid (inm south)) ∙∙ refl ∙∙ merid (inm north)) i
-  -- step1 n (push (inl c) i) = merid (inl (inr c)) i
-  -- step1 n (push (inr d) i) = merid (inr (inr d)) i
-  -- step1 n (push (push a i) j) =
-  --   hcomp (λ k → λ { (i = i0) → merid (inl (push (seqMap f (suc n) a) k)) j
-  --                  ; (i = i1) → merid (inr (push (seqMap g (suc n) a) k)) j
-  --                  ; (j = i0) → north
-  --                  ; (j = i1) → (sym (merid (inm south)) ∙∙ refl ∙∙ merid (inm north)) i })
-  --         (hcomp (λ k → λ { (i = i0) → merid (pushₗ (~ k)) j
-  --                         ; (i = i1) → merid (pushᵣ (~ k)) j
-  --                         ; (j = i0) → north
-  --                         ; (j = i1) → (sym (merid (inm (merid (inr a) k))) ∙∙ refl ∙∙ merid (inm north)) i })
-  --                (doubleCompPath-filler (sym (merid (inm north))) refl (merid (inm north)) j i) )
-
-  -- step1-eq : (n : ℕ) (x : QuotCW pushoutSkel (suc (suc n))) → ∂Bob' n (Pn+1/Pn→Bob (suc n) x) ≡ step1 n x
-  -- step1-eq n x = {!!}
-  -- step1-eq n (inr (push a i)) j =
-  --   hcomp (λ k → λ { (i = i0) → {!!}
-  --                  ; (i = i1) → {!!}
-  --                  ; (j = i0) → ∂Bob' n (doubleCompPath-filler (sym (sym pushₗ ∙ λ i → inl (push (seqMap f (suc (suc n)) a) i)))
-  --                                                              (λ i → inm (toSusp (QuotCW∙ B (suc n)) (inr a) i))
-  --                                                              (sym pushᵣ ∙ (λ i → inr (push (seqMap g (suc (suc n)) a) i))) k i)
-  --                  ; (j = i1) → {!!} })
-  --         {!!}
-
-  -- step2-eq : (n : ℕ) (x : QuotCW pushoutSkel (suc (suc n)))
-  --   → step1 n x ≡ (suspFun (Pn+1/Pn→Bob n) ∘ suspFun (to_cofibCW (suc n) pushoutSkel) ∘ δ (suc (suc n)) pushoutSkel) x
-  -- step2-eq n (inl x) = refl
-  -- step2-eq n (inr (inl x)) = refl
-  -- step2-eq n (inr (inr x)) = refl
-  -- step2-eq n (inr (push a i)) j =
-  --   hcomp (λ k → λ { (i = i0) → merid (inm north) ((~ j) ∨ k)
-  --                  ; (i = i1) → merid (inm north) ((~ j) ∨ k)
-  --                  ; (j = i0) → (sym (merid (inm (merid (inl tt) k))) ∙∙ refl ∙∙ merid (inm north)) i
-  --                  ; (j = i1) → merid (inm north) k })
-  --         (doubleCompPath-filler (sym (merid (inm north))) refl (merid (inm north)) (~ j) (~ i))
-  -- step2-eq n (push (inl x) i) = refl
-  -- step2-eq n (push (inr x) i) = refl
-  -- step2-eq n (push (push a i) j) k = {!!}
+  step5 : (n : ℕ) → (x : QuotCW pushoutSkel (suc (suc n))) → Susp (Bob n)
+  step5 n (inl x) = north
+  step5 n (inr x) = south
+  step5 n (push (inl c) i) = merid (inl (inr c)) i
+  step5 n (push (inr d) i) = merid (inr (inr d)) i
+  step5 n (push (push a i) j) =
+    merid ((sym (sym pushₗ ∙ (λ i → inl (push (seqMap f (suc n) a) i)))
+          ∙∙ ((λ i → inm (merid (inr a) i)) ∙ (λ i → inm (merid (inl tt) (~ i))))
+          ∙∙ (sym pushᵣ ∙ (λ i → inr (push (seqMap g (suc n) a) i)))) i) j
 
   -- easyHomotopy : (n : ℕ) → (x : QuotCW pushoutSkel (suc (suc n)))
   --   → ∂Bob' n (Pn+1/Pn→Bob (suc n) x) ≡ (suspFun (Pn+1/Pn→Bob n) ∘ suspFun (to_cofibCW (suc n) pushoutSkel) ∘ δ (suc (suc n)) pushoutSkel) x
-  -- easyHomotopy n x = {!!} --step1-eq n x ∙ step2-eq n x
-
-
-  -- pre∂filler0' : (n : ℕ) (a : B .fst (suc n)) → I → I → I → Susp (Bob n)
-  -- pre∂filler0' n a i j =
-  --   hfill (λ k → λ { (i = i0) → {!rCancel (sym (merid (inm north))) (j) (~ k)!}
-  --                  ; (i = i1) → doubleCompPath-filler (merid (inl (fn+1/fn (suc n) (inr (inl a)))))
-  --                                                     (sym (merid (inm south)) ∙ merid (inm north))
-  --                                                     (sym (merid (inr (gn+1/gn (suc n) (inr (inl a)))))) k j
-  --                  ; (j = i0) → merid (inl ((fn+1/fn (suc n) (push a i)))) (~ k)
-  --                  ; (j = i1) → merid (inr ((gn+1/gn (suc n) (push a i)))) (~ k) })
-  --         (inS ((sym (merid (inm (suspFun (to_cofibCW n B) (δ (suc n) B (push a i))))) ∙ merid (inm north)) j))
-
-  -- ∂filler0' : (n : ℕ) (a : B .fst (suc n))
-  --   → Square {A = Susp (Bob n)} (λ i → north) (∂middle-aux' n (inr (inl a))) (λ i → north) (λ i → north)
-  -- ∂filler0' n a i j = pre∂filler0' n a i j i1
+  -- easyHomotopy n x = {!!} --step1-eq n x ∙ step3-eq n x
