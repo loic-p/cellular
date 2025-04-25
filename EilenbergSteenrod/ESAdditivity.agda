@@ -26,7 +26,6 @@ open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup
 open import Cubical.Algebra.AbGroup.Instances.DirectProduct
 
 open import EilenbergSteenrod.CWWedgeSum
-open import EilenbergSteenrod.CWWedgeSum
 
 open import Cubical.Foundations.HLevels
 open import Cubical.Data.Nat.Order

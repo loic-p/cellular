@@ -36,16 +36,16 @@ open import Cubical.HITs.SequentialColimit
 open import Cubical.HITs.SphereBouquet
 open import Cubical.HITs.PropositionalTruncation as PT
 
-open import EilenbergSteenrod.StrictifyCW renaming (strictCWskel to str)
-open import EilenbergSteenrod.CWPushout
+open import Cubical.CW.Strictification renaming (strictCWskel to str)
+open import Cubical.CW.Instances.Pushout
 open import EilenbergSteenrod.Triangle
 
 module _ (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
   (fʷ : cellMap (str Bʷ) (str Cʷ))
   (gʷ : cellMap (str Bʷ) (str Dʷ)) where
 
-  open Pushoutz ℓ Bʷ Cʷ Dʷ fʷ gʷ
-  open Trianglez ℓ Bʷ Cʷ Dʷ fʷ gʷ
+  open CWPushout ℓ Bʷ Cʷ Dʷ fʷ gʷ
+  open CWTriangle ℓ Bʷ Cʷ Dʷ fʷ gʷ
   open SequenceMap renaming (map to seqMap)
 
   fn+1/fn : (n : ℕ) → QuotCW B n → QuotCW C n

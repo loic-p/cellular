@@ -35,8 +35,8 @@ open import Cubical.HITs.SequentialColimit
 open import Cubical.HITs.SphereBouquet
 open import Cubical.HITs.PropositionalTruncation as PT
 
-open import EilenbergSteenrod.StrictifyCW renaming (strictCWskel to str)
-open import EilenbergSteenrod.CWPushout
+open import Cubical.CW.Strictification renaming (strictCWskel to str)
+open import Cubical.CW.Instances.Pushout
 open import Cubical.Foundations.Pointed
 
 open SequenceMap renaming (map to seqMap)
@@ -58,7 +58,7 @@ module _ {ℓ} {A : Type ℓ}
   {a₋₋₀ : Square a₀₋₀ a₁₋₀ a₋₀₀ a₋₁₀}
   {a₋₋₁ : Square a₀₋₁ a₁₋₁ a₋₀₁ a₋₁₁}
   where
-  cubePermute-ijk↦jik : Cube a₀₋₋ a₁₋₋ a₋₀₋ a₋₁₋ a₋₋₀ a₋₋₁ → Cube a₋₀₋ a₋₁₋ a₀₋₋ a₁₋₋ (flipSquare a₋₋₀) (flipSquare a₋₋₁) 
+  cubePermute-ijk↦jik : Cube a₀₋₋ a₁₋₋ a₋₀₋ a₋₁₋ a₋₋₀ a₋₋₁ → Cube a₋₀₋ a₋₁₋ a₀₋₋ a₁₋₋ (flipSquare a₋₋₀) (flipSquare a₋₋₁)
   cubePermute-ijk↦jik c i j k = c j i k
 
   cubePermute-ijk↦kji : Cube a₀₋₋ a₁₋₋ a₋₀₋ a₋₁₋ a₋₋₀ a₋₋₁
@@ -185,10 +185,10 @@ data 3⋁ {ℓ ℓ' ℓ''} (A : Pointed ℓ) (B : Pointed ℓ') (C : Pointed ℓ
 3⋁Susp-Susp3⋁ A B C (pushₗ i) = north
 3⋁Susp-Susp3⋁ A B C (pushᵣ i) = north
 
-module Trianglez (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
+module CWTriangle (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
   (fʷ : cellMap (str Bʷ) (str Cʷ))
   (gʷ : cellMap (str Bʷ) (str Dʷ)) where
-  open Pushoutz ℓ Bʷ Cʷ Dʷ fʷ gʷ
+  open CWPushout ℓ Bʷ Cʷ Dʷ fʷ gʷ
 
   Bob : (n : ℕ) → Type ℓ
   Bob n = 3⋁ (QuotCW∙ C (suc n)) (Susp∙ (QuotCW B n)) (QuotCW∙ D (suc n))
@@ -324,7 +324,7 @@ module Trianglez (ℓ : Level) (Bʷ Cʷ Dʷ : CWskel ℓ)
             (inm (toSusp (QuotCW∙ B zero) (inr (inr x)) (~ j)))
     help (suc n) (inl (inr x)) b =
       cong (cong inm ∘ toSusp (QuotCW∙ B (suc n)))
-        (cong (Strict→BobΩinm n x) (Iso.rightInv (IsoSphereSusp (suc n)) b)) ◁ main b -- 
+        (cong (Strict→BobΩinm n x) (Iso.rightInv (IsoSphereSusp (suc n)) b)) ◁ main b --
       where
       pₗ = sym pushₗ ∙ λ i₂ → inl (push (seqMap f (suc (suc n)) (inr x)) i₂)
       pᵣ = sym pushᵣ ∙ (λ i₃ → inr (push (seqMap g (suc (suc n)) (inr x)) i₃))
