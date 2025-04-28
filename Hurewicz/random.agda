@@ -14,7 +14,7 @@ open import Cubical.CW.Base
 open import Cubical.CW.Map
 open import Cubical.CW.Connected
 open import Cubical.CW.Homology.Base
-open import Hurewicz.SubcomplexNew
+open import Cubical.CW.Subcomplex
 
 
 open import Cubical.Data.Empty
@@ -86,6 +86,14 @@ open import Cubical.Algebra.Group.Abelianization.Base
 open import Cubical.Algebra.Group.Abelianization.Properties as Abi
 open import Cubical.Homotopy.Group.Properties
 
+open import Cubical.Data.AbPath
+
+-πᵃᵇinvDistr : ∀ {ℓ} {A : Pointed ℓ} (p q : ∥ Ωᵃᵇ A ∥₂) → -πᵃᵇ {x = pt A} (·πᵃᵇ p q) ≡ ·πᵃᵇ (-πᵃᵇ p) (-πᵃᵇ q)
+-πᵃᵇinvDistr {A = A} p q =
+  GroupTheory.invDistr (AbGroup→Group (π₁ᵃᵇAbGroup A)) p q
+  ∙ ·πᵃᵇcomm _ _
+
+
 --- Characterisation of maps Sⁿ -> cofib α for α : ⋁Sⁿ → VSⁿ
 normalFormCofibFun : ∀ {n m k : ℕ}
   (α : SphereBouquet∙ (suc n) (Fin m) →∙ SphereBouquet∙ (suc n) (Fin k))
@@ -127,79 +135,80 @@ normalFormCofibFun {n = n} {m} {k} α f =
   makefun : ∥ ((x : _) → Σ[ x' ∈ SphereBouquet (suc n) (Fin k) ] inr x' ≡ fst f x) ∥₁
   makefun = sphereToTrunc _ λ x → help (fst f x) .fst
 
-module _ {ℓ ℓ' ℓ'' ℓ'''} {A : Type ℓ} {B : Type ℓ'} {C : Type ℓ''} {D : Type ℓ'''}
-  (f1 : A → B) (f2 : B → C) {g : A → D} where
-  PushoutComp→IteratedPushout : Pushout (f2 ∘ f1) g → Pushout {C = Pushout f1 g} f2 inl
-  PushoutComp→IteratedPushout (inl x) = inl x
-  PushoutComp→IteratedPushout (inr x) = inr (inr x)
-  PushoutComp→IteratedPushout (push a i) = (push (f1 a) ∙ λ i → inr (push a i)) i
+-- -- move to pushout
+-- module _ {ℓ ℓ' ℓ'' ℓ'''} {A : Type ℓ} {B : Type ℓ'} {C : Type ℓ''} {D : Type ℓ'''}
+--   (f1 : A → B) (f2 : B → C) {g : A → D} where
+--   PushoutComp→IteratedPushout : Pushout (f2 ∘ f1) g → Pushout {C = Pushout f1 g} f2 inl
+--   PushoutComp→IteratedPushout (inl x) = inl x
+--   PushoutComp→IteratedPushout (inr x) = inr (inr x)
+--   PushoutComp→IteratedPushout (push a i) = (push (f1 a) ∙ λ i → inr (push a i)) i
 
-  IteratedPushout→PushoutComp : Pushout {C = Pushout f1 g} f2 inl → Pushout (f2 ∘ f1) g
-  IteratedPushout→PushoutComp (inl x) = inl x
-  IteratedPushout→PushoutComp (inr (inl x)) = inl (f2 x)
-  IteratedPushout→PushoutComp (inr (inr x)) = inr x
-  IteratedPushout→PushoutComp (inr (push a i)) = push a i
-  IteratedPushout→PushoutComp (push a i) = inl (f2 a)
+--   IteratedPushout→PushoutComp : Pushout {C = Pushout f1 g} f2 inl → Pushout (f2 ∘ f1) g
+--   IteratedPushout→PushoutComp (inl x) = inl x
+--   IteratedPushout→PushoutComp (inr (inl x)) = inl (f2 x)
+--   IteratedPushout→PushoutComp (inr (inr x)) = inr x
+--   IteratedPushout→PushoutComp (inr (push a i)) = push a i
+--   IteratedPushout→PushoutComp (push a i) = inl (f2 a)
 
-  Iso-PushoutComp-IteratedPushout : Iso (Pushout (f2 ∘ f1) g) (Pushout {C = Pushout f1 g} f2 inl)
-  Iso.fun Iso-PushoutComp-IteratedPushout = PushoutComp→IteratedPushout
-  Iso.inv Iso-PushoutComp-IteratedPushout = IteratedPushout→PushoutComp
-  Iso.rightInv Iso-PushoutComp-IteratedPushout (inl x) = refl
-  Iso.rightInv Iso-PushoutComp-IteratedPushout (inr (inl x)) = push x
-  Iso.rightInv Iso-PushoutComp-IteratedPushout (inr (inr x)) = refl
-  Iso.rightInv Iso-PushoutComp-IteratedPushout (inr (push a i)) j =
-    compPath-filler' (push (f1 a)) (λ i₁ → inr (push a i₁)) (~ j) i
-  Iso.rightInv Iso-PushoutComp-IteratedPushout (push a i) j = push a (i ∧ j)
-  Iso.leftInv Iso-PushoutComp-IteratedPushout (inl x) = refl
-  Iso.leftInv Iso-PushoutComp-IteratedPushout (inr x) = refl
-  Iso.leftInv Iso-PushoutComp-IteratedPushout (push a i) j = T j i
-    where
-    T = cong-∙ IteratedPushout→PushoutComp (push (f1 a)) (λ i → inr (push a i))
-      ∙ sym (lUnit _)
+--   Iso-PushoutComp-IteratedPushout : Iso (Pushout (f2 ∘ f1) g) (Pushout {C = Pushout f1 g} f2 inl)
+--   Iso.fun Iso-PushoutComp-IteratedPushout = PushoutComp→IteratedPushout
+--   Iso.inv Iso-PushoutComp-IteratedPushout = IteratedPushout→PushoutComp
+--   Iso.rightInv Iso-PushoutComp-IteratedPushout (inl x) = refl
+--   Iso.rightInv Iso-PushoutComp-IteratedPushout (inr (inl x)) = push x
+--   Iso.rightInv Iso-PushoutComp-IteratedPushout (inr (inr x)) = refl
+--   Iso.rightInv Iso-PushoutComp-IteratedPushout (inr (push a i)) j =
+--     compPath-filler' (push (f1 a)) (λ i₁ → inr (push a i₁)) (~ j) i
+--   Iso.rightInv Iso-PushoutComp-IteratedPushout (push a i) j = push a (i ∧ j)
+--   Iso.leftInv Iso-PushoutComp-IteratedPushout (inl x) = refl
+--   Iso.leftInv Iso-PushoutComp-IteratedPushout (inr x) = refl
+--   Iso.leftInv Iso-PushoutComp-IteratedPushout (push a i) j = T j i
+--     where
+--     T = cong-∙ IteratedPushout→PushoutComp (push (f1 a)) (λ i → inr (push a i))
+--       ∙ sym (lUnit _)
 
 
--- move to Wedge.Properties?
-module _ {ℓ ℓ'} {A : Type ℓ} (B : A → Pointed ℓ')
-  where
-  cofibFst : Type _
-  cofibFst = cofib {A = Σ A (fst ∘ B)} {B = A} fst
+-- -- move to Wedge.Properties?
+-- module _ {ℓ ℓ'} {A : Type ℓ} (B : A → Pointed ℓ')
+--   where
+--   cofibFst : Type _
+--   cofibFst = cofib {A = Σ A (fst ∘ B)} {B = A} fst
 
-  cofibFst→⋁ : cofibFst → ⋁gen A λ a → Susp∙ (fst (B a))
-  cofibFst→⋁ (inl x) = inl x
-  cofibFst→⋁ (inr a) = inr (a , north)
-  cofibFst→⋁ (push (a , b) i) = (push a ∙ λ i → inr (a , toSusp (B a) b i)) i
+--   cofibFst→⋁ : cofibFst → ⋁gen A λ a → Susp∙ (fst (B a))
+--   cofibFst→⋁ (inl x) = inl x
+--   cofibFst→⋁ (inr a) = inr (a , north)
+--   cofibFst→⋁ (push (a , b) i) = (push a ∙ λ i → inr (a , toSusp (B a) b i)) i
 
-  ⋁→cofibFst : ⋁gen A (λ a → Susp∙ (fst (B a))) → cofibFst
-  ⋁→cofibFst (inl x) = inl x
-  ⋁→cofibFst (inr (x , north)) = inl tt
-  ⋁→cofibFst (inr (x , south)) = inr x
-  ⋁→cofibFst (inr (x , merid a i)) = push (x , a) i
-  ⋁→cofibFst (push a i) = inl tt
+--   ⋁→cofibFst : ⋁gen A (λ a → Susp∙ (fst (B a))) → cofibFst
+--   ⋁→cofibFst (inl x) = inl x
+--   ⋁→cofibFst (inr (x , north)) = inl tt
+--   ⋁→cofibFst (inr (x , south)) = inr x
+--   ⋁→cofibFst (inr (x , merid a i)) = push (x , a) i
+--   ⋁→cofibFst (push a i) = inl tt
 
-  Iso-cofibFst-⋁ : Iso cofibFst (⋁gen A (λ a → Susp∙ (fst (B a))))
-  Iso.fun Iso-cofibFst-⋁ = cofibFst→⋁
-  Iso.inv Iso-cofibFst-⋁ = ⋁→cofibFst
-  Iso.rightInv Iso-cofibFst-⋁ (inl x) = refl
-  Iso.rightInv Iso-cofibFst-⋁ (inr (x , north)) = push x
-  Iso.rightInv Iso-cofibFst-⋁ (inr (x , south)) i = inr (x , merid (pt (B x)) i)
-  Iso.rightInv Iso-cofibFst-⋁ (inr (x , merid a i)) j =
-    hcomp (λ k → λ {(i = i0) → push x (j ∨ ~ k)
-                   ; (i = i1) → inr (x , merid (pt (B x)) j)
-                   ; (j = i0) → compPath-filler' (push x)
-                                   (λ i₁ → inr (x , toSusp (B x) a i₁)) k i
-                   ; (j = i1) → inr (x , merid a i)})
-          (inr (x , compPath-filler (merid a) (sym (merid (pt (B x)))) (~ j) i))
-  Iso.rightInv Iso-cofibFst-⋁ (push a i) j = push a (i ∧ j)
-  Iso.leftInv Iso-cofibFst-⋁ (inl x) = refl
-  Iso.leftInv Iso-cofibFst-⋁ (inr x) = push (x , snd (B x))
-  Iso.leftInv Iso-cofibFst-⋁ (push (a , b) i) j = help j i
-    where
-    help : Square (cong ⋁→cofibFst ((push a ∙ λ i → inr (a , toSusp (B a) b i))))
-                  (push (a , b)) refl (push (a , (snd (B a))))
-    help = (cong-∙ ⋁→cofibFst (push a) (λ i → inr (a , toSusp (B a) b i))
-         ∙ sym (lUnit _)
-         ∙ cong-∙ (⋁→cofibFst ∘ inr ∘ (a ,_)) (merid b) (sym (merid (snd (B a)))))
-         ◁ λ i j → compPath-filler (push (a , b)) (sym (push (a , pt (B a)))) (~ i) j
+--   Iso-cofibFst-⋁ : Iso cofibFst (⋁gen A (λ a → Susp∙ (fst (B a))))
+--   Iso.fun Iso-cofibFst-⋁ = cofibFst→⋁
+--   Iso.inv Iso-cofibFst-⋁ = ⋁→cofibFst
+--   Iso.rightInv Iso-cofibFst-⋁ (inl x) = refl
+--   Iso.rightInv Iso-cofibFst-⋁ (inr (x , north)) = push x
+--   Iso.rightInv Iso-cofibFst-⋁ (inr (x , south)) i = inr (x , merid (pt (B x)) i)
+--   Iso.rightInv Iso-cofibFst-⋁ (inr (x , merid a i)) j =
+--     hcomp (λ k → λ {(i = i0) → push x (j ∨ ~ k)
+--                    ; (i = i1) → inr (x , merid (pt (B x)) j)
+--                    ; (j = i0) → compPath-filler' (push x)
+--                                    (λ i₁ → inr (x , toSusp (B x) a i₁)) k i
+--                    ; (j = i1) → inr (x , merid a i)})
+--           (inr (x , compPath-filler (merid a) (sym (merid (pt (B x)))) (~ j) i))
+--   Iso.rightInv Iso-cofibFst-⋁ (push a i) j = push a (i ∧ j)
+--   Iso.leftInv Iso-cofibFst-⋁ (inl x) = refl
+--   Iso.leftInv Iso-cofibFst-⋁ (inr x) = push (x , snd (B x))
+--   Iso.leftInv Iso-cofibFst-⋁ (push (a , b) i) j = help j i
+--     where
+--     help : Square (cong ⋁→cofibFst ((push a ∙ λ i → inr (a , toSusp (B a) b i))))
+--                   (push (a , b)) refl (push (a , (snd (B a))))
+--     help = (cong-∙ ⋁→cofibFst (push a) (λ i → inr (a , toSusp (B a) b i))
+--          ∙ sym (lUnit _)
+--          ∙ cong-∙ (⋁→cofibFst ∘ inr ∘ (a ,_)) (merid b) (sym (merid (snd (B a)))))
+--          ◁ λ i j → compPath-filler (push (a , b)) (sym (push (a , pt (B a)))) (~ i) j
 
 open import Cubical.CW.Properties
 open import Cubical.CW.Instances.Sn

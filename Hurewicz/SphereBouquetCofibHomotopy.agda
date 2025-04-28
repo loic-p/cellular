@@ -80,7 +80,7 @@ open import Cubical.HITs.SphereBouquet.Degree
 open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup as FAB 
 
 open import Hurewicz.random
-open import Hurewicz.AbPath
+open import Cubical.Data.AbPath
 
 
 open import Cubical.Homotopy.Connected

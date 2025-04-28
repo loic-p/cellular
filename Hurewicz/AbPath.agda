@@ -75,7 +75,7 @@ open import Cubical.HITs.Wedge
 open import Cubical.HITs.SphereBouquet.Degree
 open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup as FAB
 
-open import Hurewicz.random
+-- open import Hurewicz.random
 
 
 open import Cubical.Homotopy.Connected
@@ -119,8 +119,6 @@ Pathᵃᵇ A = _≡ᵃᵇ_
 
 Ωᵃᵇ : ∀ {ℓ} (A : Pointed ℓ) → Type ℓ
 Ωᵃᵇ (A , a) = a ≡ᵃᵇ a
-
-
 
 elimProp≡ᵃᵇ : ∀ {ℓ ℓ'} {A : Type ℓ} {x y : A} {B : x ≡ᵃᵇ y → Type ℓ'}
   → ((s : _) → isProp (B s))
@@ -269,7 +267,3 @@ Iso.leftInv (fst (Abelianizeπ₁≅π₁ᵃᵇ A)) = Abi.elimProp _ (λ _ → i
   (ST.elim (λ _ → isOfHLevelPath 2 isset _ _) λ p → refl)
 snd (Abelianizeπ₁≅π₁ᵃᵇ A) = snd Abelianizeπ₁→π₁ᵃᵇ
 
--πᵃᵇinvDistr : ∀ {ℓ} {A : Pointed ℓ} (p q : ∥ Ωᵃᵇ A ∥₂) → -πᵃᵇ {x = pt A} (·πᵃᵇ p q) ≡ ·πᵃᵇ (-πᵃᵇ p) (-πᵃᵇ q)
--πᵃᵇinvDistr {A = A} p q =
-  GroupTheory.invDistr (AbGroup→Group (π₁ᵃᵇAbGroup A)) p q
-  ∙ ·πᵃᵇcomm _ _

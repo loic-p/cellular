@@ -1,7 +1,7 @@
 {-# OPTIONS --cubical --lossy-unification #-}
 module Hurewicz.SFT where
 
-open import Hurewicz.SubcomplexNew
+open import Cubical.CW.Subcomplex
 open import Hurewicz.random
 
 open import Cubical.Foundations.Prelude
