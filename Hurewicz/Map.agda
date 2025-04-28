@@ -17,7 +17,7 @@ open import Cubical.Foundations.Path
 open import Cubical.CW.Base
 open import Cubical.CW.Map
 open import Cubical.CW.Connected
-open import Cubical.CW.Homology
+open import Cubical.CW.Homology.Base
 open import Cubical.CW.Approximation
 open import Cubical.CW.ChainComplex
 
@@ -46,6 +46,7 @@ open import Cubical.HITs.SetQuotients as SQ renaming (_/_ to _/s_)
 open import Cubical.HITs.Wedge
 
 open import Cubical.Homotopy.Group.Base
+open import Cubical.Homotopy.Group.Properties
 open import Cubical.Homotopy.Connected
 
 open import Cubical.Algebra.Group
@@ -58,7 +59,9 @@ open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup
 
 open import Cubical.Relation.Nullary
 
-open import Hurewicz.SnNew
+open import Cubical.CW.Instances.Sn
+open import Cubical.CW.Homology.Groups.Sn
+
 open import Hurewicz.SphereBouquetCofib2
 open import Hurewicz.SphereBouquetCofibHomotopy
 open import Hurewicz.SphereBouquetCofibHomotopyP2
@@ -481,7 +484,7 @@ module _ where
          lem : (f : _) (fp : incl∙ Xsk x₀ ∘∙ f' ≡ f)
                (g : _) (gp : incl∙ Xsk x₀ ∘∙ g' ≡ g)
            → GoalTy f g
-         lem = J> (J> main) -- J> (J> main)
+         lem = J> (J> main)
 
 
   HurewiczHom : {n : ℕ} (X : CW ℓ-zero) (x : fst X) (conX : isConnected 2 (fst X))
@@ -499,6 +502,7 @@ HurewiczMapNat {n = n} X Y x y g =
              {C = Sᶜʷ (suc n)} {D = X} {E = Y} (suc n) (fst g) (fst f))))
              (genHₙSⁿ n))
 
+--- Move to def of H^n 
 H̃ˢᵏᵉˡ-comm : ∀ {ℓ} {n : ℕ} {X : CWskel ℓ} (x y : H̃ˢᵏᵉˡ X (suc n) .fst)
   → GroupStr._·_ (H̃ˢᵏᵉˡ X (suc n) .snd) x y ≡ GroupStr._·_ (H̃ˢᵏᵉˡ X (suc n) .snd) y x
 H̃ˢᵏᵉˡ-comm = SQ.elimProp2 (λ _ _ → GroupStr.is-set (H̃ˢᵏᵉˡ _ _ .snd) _ _)
@@ -513,6 +517,7 @@ H̃ᶜʷ-comm {n = n} = uncurry λ X
 
 H̃ᶜʷAb : ∀ {ℓ} → CW ℓ → ℕ → AbGroup ℓ-zero
 H̃ᶜʷAb X n = Group→AbGroup (H̃ᶜʷ X (suc n)) (H̃ᶜʷ-comm X)
+
 
 HurewiczHomAb : (X : CW ℓ-zero) (x : fst X) (isC : isConnected 2 (fst X))
   (n : ℕ) → AbGroupHom (AbelianizationAbGroup (π'Gr n (fst X , x))) (H̃ᶜʷAb X n)
@@ -1118,6 +1123,92 @@ PreHurewiczLemma n X conX ind' x =
                            (λ z → secEq (snd (snd X)) (incl (F₃ .fst (fst g z))) (~ i))
                            .fst (genHₙSⁿ n)
 
+e1 : (n m : ℕ) (l : m <ᵗ suc n) (X : Type) (cwX : isConnectedCW n X)
+  → isContr (fst (fst cwX) (suc m))
+e1 n zero l X cwX =
+  subst isContr (cong Fin (sym ((snd (fst cwX)) .snd .fst))
+                ∙ sym (ua (CW₁-discrete (fst (fst cwX)
+                                      , fst (snd (fst cwX))))))
+       (inhProp→isContr fzero isPropFin1)
+e1 n (suc m) l X cwX =
+  subst isContr
+    (ua (compEquiv (isoToEquiv (PushoutEmptyFam
+      (¬Fin0 ∘ subst Fin (snd (fst cwX) .snd .snd m l) ∘ fst)
+      (¬Fin0 ∘ subst Fin (snd (fst cwX) .snd .snd m l))))
+      (invEquiv (snd (snd (snd (fst (snd (fst cwX))))) (suc m)))))
+    (e1 n m (<ᵗ-trans l <ᵗsucm) X cwX)
+
+e2 : (n : ℕ) (X : Type) (cwX : isConnectedCW n X)
+  → fst (fst cwX) (suc (suc n))
+  ≃ SphereBouquet (suc n) (Fin (fst (fst (snd (fst cwX))) (suc n)))
+e2 n X cwX =
+  compEquiv
+    (snd (snd (snd (fst (snd (fst cwX))))) (suc n))
+    (compEquiv
+     (pushoutEquiv _ _ _ fst
+       (idEquiv _)
+       (isContr→≃Unit (e1 n n <ᵗsucm X cwX))
+       (idEquiv _)
+       (λ _ _ → tt)
+       (λ i x → fst x))
+     (compEquiv (isoToEquiv (Iso-cofibFst-⋁ (λ A → S₊∙ n)))
+     (pushoutEquiv _ _ _ _ (idEquiv _) (idEquiv _)
+       (Σ-cong-equiv-snd (λ _ → isoToEquiv (invIso (IsoSucSphereSusp n))))
+       (λ _ _ → tt) (λ i x → x , IsoSucSphereSusp∙ n i))))
+
+
+-- TODO: Pull out and place somewhere good
+e3 : (n : ℕ) (X : Type) (cwX : isConnectedCW n X) (str : _)
+  → ∃[ α ∈ SphereBouquet∙ (suc n) (Fin (fst (fst (snd (fst cwX))) (suc (suc n))))
+       →∙ SphereBouquet∙ (suc n) (Fin (fst (fst (snd (fst cwX))) (suc n))) ]
+       ((fst cwX .fst (suc (suc (suc n)))) , str) ≡ SphereBouquet/ᶜʷ  (fst α)
+e3 n X cwX str = PT.rec squash₁
+  (λ {(x , ptz , t) → ∣ F x ptz t , Σ≡Prop (λ _ → squash₁) (isoToPath (e3' x ptz t)) ∣₁})
+  EX
+  where
+  open import Cubical.Axiom.Choice
+  CON : isConnected 2 (fst (fst cwX) (suc (suc n)))
+  CON = subst (isConnected 2) (ua (invEquiv (e2 n X cwX)))
+          (isConnectedSubtr' n 2 isConnectedSphereBouquet')
+
+  EX : ∃[ x ∈ fst (fst cwX) (suc (suc n)) ]
+        (((a : Fin (fst (fst (snd (fst cwX))) (suc (suc n))))
+       → x ≡ fst (snd (fst (snd (fst cwX)))) (suc (suc n))
+               (a , ptSn (suc n)))
+       × (fst (e2 n X cwX) x ≡ inl tt))
+  EX = TR.rec (isProp→isSet squash₁)
+    (λ x₀ → TR.rec squash₁
+      (λ pts → TR.rec squash₁ (λ F → ∣ x₀ , F , pts ∣₁)
+        (invEq (_ , InductiveFinSatAC 1 (fst (fst (snd (fst cwX))) (suc (suc n))) _)
+              λ a → isConnectedPath 1 CON _ _ .fst))
+      (isConnectedPath 1 (isConnectedSubtr' n 2 isConnectedSphereBouquet')
+        (fst (e2 n X cwX) x₀) (inl tt) .fst))
+    (fst CON)
+
+  module _ (x : fst (fst cwX) (suc (suc n)))
+           (pts : (a : Fin (fst (fst (snd (fst cwX))) (suc (suc n))))
+                → x ≡ fst (snd (fst (snd (fst cwX)))) (suc (suc n)) (a , ptSn (suc n)))
+           (ptd : fst (e2 n X cwX) x ≡ inl tt) where
+    F' : SphereBouquet (suc n) (Fin (fst (fst (snd (fst cwX))) (suc (suc n))))
+      → fst (fst cwX) (suc (suc n))
+    F' (inl tt) = x
+    F' (inr x) = fst (snd (fst (snd (fst cwX)))) (suc (suc n)) x
+    F' (push a i) = pts a i
+
+    F : SphereBouquet∙ (suc n) (Fin (fst (fst (snd (fst cwX))) (suc (suc n))))
+     →∙ SphereBouquet∙ (suc n) (Fin (fst (fst (snd (fst cwX))) (suc n)))
+    fst F = fst (e2 n X cwX) ∘ F'
+    snd F = ptd
+
+    e3' : Iso (fst (fst cwX) (suc (suc (suc n)))) (cofib (fst F))
+    e3' =
+      compIso (equivToIso (compEquiv
+        (snd (snd (snd (fst (snd (fst cwX))))) (suc (suc n)))
+        (pushoutEquiv _ _ _ _ (idEquiv _) (e2 n X cwX) (idEquiv _)
+          (λ i x → fst F (inr x))
+          (λ i x → fst x))))
+      (⋁-cofib-Iso (SphereBouquet∙ (suc n)
+                     (Fin (fst (fst (snd (fst cwX))) (suc n)))) F)
 
 
 HurewiczTheorem : (n : ℕ) (X : CW ℓ-zero) (conX : isConnected (suc (suc n)) (fst X)) (x : _)
@@ -1138,90 +1229,7 @@ HurewiczTheorem n = uncurry λ X → PT.elim (λ _ → isPropΠ2  λ _ _ → isP
   HA : (X : _) (cw cw' : _) → Path (CW ℓ-zero) ((X , ∣ cw ∣₁)) (X , ∣ cw' ∣₁)
   HA = λ X cw cw' → Σ≡Prop (λ _ → squash₁) refl
 
-  e1 : (n m : ℕ) (l : m <ᵗ suc n) (X : Type) (cwX : isConnectedCW n X)
-    → isContr (fst (fst cwX) (suc m))
-  e1 n zero l X cwX =
-    subst isContr (cong Fin (sym ((snd (fst cwX)) .snd .fst))
-                  ∙ sym (ua (CW₁-discrete (fst (fst cwX)
-                                        , fst (snd (fst cwX))))))
-         (inhProp→isContr fzero isPropFin1)
-  e1 n (suc m) l X cwX =
-    subst isContr
-      (ua (compEquiv (isoToEquiv (PushoutEmptyFam
-        (¬Fin0 ∘ subst Fin (snd (fst cwX) .snd .snd m l) ∘ fst)
-        (¬Fin0 ∘ subst Fin (snd (fst cwX) .snd .snd m l))))
-        (invEquiv (snd (snd (snd (fst (snd (fst cwX))))) (suc m)))))
-      (e1 n m (<ᵗ-trans l <ᵗsucm) X cwX)
 
-  e2 : (n : ℕ) (X : Type) (cwX : isConnectedCW n X)
-    → fst (fst cwX) (suc (suc n))
-    ≃ SphereBouquet (suc n) (Fin (fst (fst (snd (fst cwX))) (suc n)))
-  e2 n X cwX =
-    compEquiv
-      (snd (snd (snd (fst (snd (fst cwX))))) (suc n))
-      (compEquiv
-       (pushoutEquiv _ _ _ fst
-         (idEquiv _)
-         (isContr→≃Unit (e1 n n <ᵗsucm X cwX))
-         (idEquiv _)
-         (λ _ _ → tt)
-         (λ i x → fst x))
-       (compEquiv (isoToEquiv (Iso-cofibFst-⋁ (λ A → S₊∙ n)))
-       (pushoutEquiv _ _ _ _ (idEquiv _) (idEquiv _)
-         (Σ-cong-equiv-snd (λ _ → isoToEquiv (invIso (IsoSucSphereSusp n))))
-         (λ _ _ → tt) (λ i x → x , IsoSucSphereSusp∙ n i))))
-
-  e3 : (n : ℕ) (X : Type) (cwX : isConnectedCW n X) (str : _)
-    → ∃[ α ∈ SphereBouquet∙ (suc n) (Fin (fst (fst (snd (fst cwX))) (suc (suc n))))
-         →∙ SphereBouquet∙ (suc n) (Fin (fst (fst (snd (fst cwX))) (suc n))) ]
-         ((fst cwX .fst (suc (suc (suc n)))) , str) ≡ SphereBouquet/ᶜʷ  (fst α)
-  e3 n X cwX str = PT.rec squash₁
-    (λ {(x , ptz , t) → ∣ F x ptz t , Σ≡Prop (λ _ → squash₁) (isoToPath (e3' x ptz t)) ∣₁})
-    EX
-    where
-    open import Cubical.Axiom.Choice
-    CON : isConnected 2 (fst (fst cwX) (suc (suc n)))
-    CON = subst (isConnected 2) (ua (invEquiv (e2 n X cwX)))
-            (isConnectedSubtr' n 2 isConnectedSphereBouquet')
-
-    EX : ∃[ x ∈ fst (fst cwX) (suc (suc n)) ]
-          (((a : Fin (fst (fst (snd (fst cwX))) (suc (suc n))))
-         → x ≡ fst (snd (fst (snd (fst cwX)))) (suc (suc n))
-                 (a , ptSn (suc n)))
-         × (fst (e2 n X cwX) x ≡ inl tt))
-    EX = TR.rec (isProp→isSet squash₁)
-      (λ x₀ → TR.rec squash₁
-        (λ pts → TR.rec squash₁ (λ F → ∣ x₀ , F , pts ∣₁)
-          (invEq (_ , InductiveFinSatAC 1 (fst (fst (snd (fst cwX))) (suc (suc n))) _)
-                λ a → isConnectedPath 1 CON _ _ .fst))
-        (isConnectedPath 1 (isConnectedSubtr' n 2 isConnectedSphereBouquet')
-          (fst (e2 n X cwX) x₀) (inl tt) .fst))
-      (fst CON)
-
-    module _ (x : fst (fst cwX) (suc (suc n)))
-             (pts : (a : Fin (fst (fst (snd (fst cwX))) (suc (suc n))))
-                  → x ≡ fst (snd (fst (snd (fst cwX)))) (suc (suc n)) (a , ptSn (suc n)))
-             (ptd : fst (e2 n X cwX) x ≡ inl tt) where
-      F' : SphereBouquet (suc n) (Fin (fst (fst (snd (fst cwX))) (suc (suc n))))
-        → fst (fst cwX) (suc (suc n))
-      F' (inl tt) = x
-      F' (inr x) = fst (snd (fst (snd (fst cwX)))) (suc (suc n)) x
-      F' (push a i) = pts a i
-
-      F : SphereBouquet∙ (suc n) (Fin (fst (fst (snd (fst cwX))) (suc (suc n))))
-       →∙ SphereBouquet∙ (suc n) (Fin (fst (fst (snd (fst cwX))) (suc n)))
-      fst F = fst (e2 n X cwX) ∘ F'
-      snd F = ptd
-
-      e3' : Iso (fst (fst cwX) (suc (suc (suc n)))) (cofib (fst F))
-      e3' =
-        compIso (equivToIso (compEquiv
-          (snd (snd (snd (fst (snd (fst cwX))))) (suc (suc n)))
-          (pushoutEquiv _ _ _ _ (idEquiv _) (e2 n X cwX) (idEquiv _)
-            (λ i x → fst F (inr x))
-            (λ i x → fst x))))
-        (⋁-cofib-Iso (SphereBouquet∙ (suc n)
-                       (Fin (fst (fst (snd (fst cwX))) (suc n)))) F)
 
   module _ (X : Type) (cw : isCW X) (cw' : isConnectedCW n X)
            (isc : isConnected (suc (suc n)) X) (x : X) where

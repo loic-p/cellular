@@ -16,7 +16,7 @@ open import Cubical.Functions.Morphism
 open import Cubical.CW.Base
 open import Cubical.CW.Map
 open import Cubical.CW.Connected
-open import Cubical.CW.Homology
+open import Cubical.CW.Homology.Base
 open import Cubical.CW.Subcomplex
 
 
@@ -45,7 +45,7 @@ open import Cubical.HITs.SetTruncation as ST
 
 
 open import Cubical.Homotopy.Group.Base
--- open import Cubical.Homotopy.Group.Properties
+open import Cubical.Homotopy.Group.Properties
 
 open import Cubical.Algebra.Group
 open import Cubical.Algebra.Group.Morphisms
@@ -604,13 +604,13 @@ Badoo! α ϕ hyp =
 --   π'BoquetFunCofib≅Free/Imα>1-onη : (lock : _) (f : S₊∙ 1 →∙ SphereBouquet∙ 1 (Fin k))
 --     → Iso.fun (fst (π'BoquetFunCofib≅Free/Imα>1-Lock lock))
 --         (η' ∣ (inr ∘ (fst f)) , (λ i → inr (snd f i)) ∙ sym (push (inl tt)) ∣₂)
---      ≡ [  bouquetDegree {m = 1} (fst f ∘ Iso.fun bouquetFin1) .fst (λ _ → 1) ]
+--      ≡ [  bouquetDegree {m = 1} (fst f ∘ Iso.fun ∨genFin1Iso) .fst (λ _ → 1) ]
 --   π'BoquetFunCofib≅Free/Imα>1-onη lock f =
 --       -- G ∣ inr ∘ fst f , (λ i → inr (snd f i)) ∙ sym (push (inl tt)) ∣₂
 --       cong (Iso.fun (fst (Free/Imα≅ℤ[]/ImBouquetDegree-Lock lock)) ∘ Iso.fun (fst (helpIso-Lock lock))) (cong η' (f≡altf lock))
 --     ∙ T f''
 --     ∙ h2 lock f''
---     ∙ cong [_] (cong (λ s → bouquetDegree (s ∘ Iso.fun bouquetFin1) .fst (λ _ → 1)) (cong fst bask))
+--     ∙ cong [_] (cong (λ s → bouquetDegree (s ∘ Iso.fun ∨genFin1Iso) .fst (λ _ → 1)) (cong fst bask))
 --     where
 --     f→ : lockUnit {ℓ-zero} → (f : S₊∙ 1 →∙ SphereBouquet∙ 1 (Fin k)) → (π'Gr 0 (cofib (fst αSphereBouquet) , inl tt) .fst)
 --     f→ unlock f = ∣ (inr ∘ (fst f)) , (λ i → inr (snd f i)) ∙ sym (push (inl tt)) ∣₂
@@ -672,7 +672,7 @@ Badoo! α ϕ hyp =
 --       →  Iso.fun (fst (Free/Imα≅ℤ[]/ImBouquetDegree-Lock lock)) [ η f' ]
 --        ≡ [ bouquetDegree {m = 1} (Ω→SphereMap 1
 --             (cong Bouquet→SphereBouquet
---               (Iso.inv Iso-ΩS¹Bouquet-FreeGroup f')) .fst ∘ Iso.fun bouquetFin1)
+--               (Iso.inv Iso-ΩS¹Bouquet-FreeGroup f')) .fst ∘ Iso.fun ∨genFin1Iso)
 --               .fst (λ _ → 1) ]
 --     h2 unlock f' = cong [_]
 --       (funExt⁻ (cong fst (freeGroupHom≡ {f = compGroupHom (AbelianizationGroupStructure.ηAsGroupHom _)
@@ -685,7 +685,7 @@ Badoo! α ϕ hyp =
 --       g' f' = (Ω→SphereMap 1
 --               (cong Bouquet→SphereBouquet (Iso.inv Iso-ΩS¹Bouquet-FreeGroup f'))
 --               .fst
---               ∘ Iso.fun bouquetFin1)
+--               ∘ Iso.fun ∨genFin1Iso)
 
 --       g : (f' : FreeGroup (Fin k)) → _
 --       g f' = bouquetDegree (g' f') .fst (λ _ → 1)
@@ -723,7 +723,7 @@ Badoo! α ϕ hyp =
 --       cong (Iso.fun (fst (π'BoquetFunCofib≅Free/Imα>1-Lock lock)) ∘ η') f≡altf
 --     ∙ Ls'' f'' lock
 --     ∙ h2 f''
---     ∙ ? -- λ i → [ bouquetDegree (fst (bask i) ∘ Iso.fun bouquetFin1) .fst (λ _ → 1) ]
+--     ∙ ? -- λ i → [ bouquetDegree (fst (bask i) ∘ Iso.fun ∨genFin1Iso) .fst (λ _ → 1) ]
 --     where
 --     η' : π'Gr 0 (cofib (fst αSphereBouquet) , inl tt) .fst
 --       → fst (AbelianizationAbGroup (π'Gr 0 (cofib (fst αSphereBouquet) , inl tt)))
@@ -775,7 +775,7 @@ Badoo! α ϕ hyp =
 --       →  Iso.fun (fst Free/Imα≅ℤ[]/ImBouquetDegree) [ η f' ]
 --        ≡ [ bouquetDegree {m = 1} (Ω→SphereMap 1
 --             (cong Bouquet→SphereBouquet
---               (Iso.inv Iso-ΩS¹Bouquet-FreeGroup f')) .fst ∘ Iso.fun bouquetFin1)
+--               (Iso.inv Iso-ΩS¹Bouquet-FreeGroup f')) .fst ∘ Iso.fun ∨genFin1Iso)
 --               .fst (λ _ → 1) ]
 --     h2 = ?
 

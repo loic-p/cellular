@@ -13,7 +13,7 @@ open import Cubical.Foundations.Pointed
 open import Cubical.CW.Base
 open import Cubical.CW.Map
 open import Cubical.CW.Connected
-open import Cubical.CW.Homology
+open import Cubical.CW.Homology.Base
 open import Cubical.CW.Subcomplex
 
 
@@ -73,7 +73,7 @@ open import Cubical.HITs.Wedge
 
 
 open import Cubical.HITs.SphereBouquet.Degree
-open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup as FAB 
+open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup as FAB
 
 open import Hurewicz.random
 
@@ -86,29 +86,6 @@ open import Cubical.Algebra.Monoid.Base
 open import Cubical.Algebra.Semigroup.Base
 
 
-·GroupAutomorphism : ∀ {ℓ} (G : Group ℓ) (g : fst G) → Iso (fst G) (fst G)
-Iso.fun (·GroupAutomorphism G g) = GroupStr._·_ (snd G) g
-Iso.inv (·GroupAutomorphism G g) = GroupStr._·_ (snd G) (GroupStr.inv (snd G) g)
-Iso.rightInv (·GroupAutomorphism G g) h =
-  GroupStr.·Assoc (snd G) _ _ _
-  ∙ cong₂ (GroupStr._·_ (snd G)) (GroupStr.·InvR (snd G) g) refl
-  ∙ GroupStr.·IdL (snd G) h
-Iso.leftInv (·GroupAutomorphism G g) h =
-  GroupStr.·Assoc (snd G) _ _ _
-  ∙ cong₂ (GroupStr._·_ (snd G)) (GroupStr.·InvL (snd G) g) refl
-  ∙ GroupStr.·IdL (snd G) h
-
-·GroupAutomorphismR : ∀ {ℓ} (G : Group ℓ) (g : fst G) → Iso (fst G) (fst G)
-Iso.fun (·GroupAutomorphismR G g) x = GroupStr._·_ (snd G) x g
-Iso.inv (·GroupAutomorphismR G g) x = GroupStr._·_ (snd G) x (GroupStr.inv (snd G) g)
-Iso.rightInv (·GroupAutomorphismR G g) h =
-  sym (GroupStr.·Assoc (snd G) _ _ _)
-  ∙ cong₂ (GroupStr._·_ (snd G)) refl (GroupStr.·InvL (snd G) g) -- 
-  ∙ GroupStr.·IdR (snd G) h
-Iso.leftInv (·GroupAutomorphismR G g) h =
-    sym (GroupStr.·Assoc (snd G) _ _ _)
-  ∙ cong₂ (GroupStr._·_ (snd G)) refl (GroupStr.·InvR (snd G) g) -- 
-  ∙ GroupStr.·IdR (snd G) h
 
 open import Cubical.Algebra.Group.Subgroup
 open import Cubical.Homotopy.Loopspace
@@ -131,16 +108,19 @@ open import Cubical.HITs.FreeGroup.NormalForm
 open import Cubical.HITs.FreeGroupoid.Properties
 open import Cubical.Algebra.Group.Free
 
+-- 'Abelianised' path types
 data _≡ᵃᵇ_ {ℓ} {A : Type ℓ} (x y : A) : Type ℓ
   where
   paths : x ≡ y → x ≡ᵃᵇ y
   com : (p q r : x ≡ y) → paths (p ∙ sym q ∙ r) ≡ paths (r ∙ sym q ∙ p)
 
+Pathᵃᵇ : ∀ {ℓ} (A : Type ℓ) (x y : A) → Type ℓ
+Pathᵃᵇ A = _≡ᵃᵇ_
+
 Ωᵃᵇ : ∀ {ℓ} (A : Pointed ℓ) → Type ℓ
 Ωᵃᵇ (A , a) = a ≡ᵃᵇ a
 
-Pathᵃᵇ : ∀ {ℓ} (A : Type ℓ) (x y : A) → Type ℓ
-Pathᵃᵇ A = _≡ᵃᵇ_
+
 
 elimProp≡ᵃᵇ : ∀ {ℓ ℓ'} {A : Type ℓ} {x y : A} {B : x ≡ᵃᵇ y → Type ℓ'}
   → ((s : _) → isProp (B s))
@@ -152,22 +132,27 @@ elimProp≡ᵃᵇ {B = B} pr path* (com p q r i) = help i
   help : PathP (λ i → B (com p q r i)) (path* (p ∙ sym q ∙ r)) (path* (r ∙ sym q ∙ p))
   help = isProp→PathP (λ _ → pr _) _ _
 
+pathsᵃᵇLemmaL : ∀ {ℓ} {A : Type ℓ} {x y : A} (z : _)
+  (p : x ≡ z) (q : x ≡ y)(r : x ≡ y) (s : x ≡ y)
+  → Path (z ≡ᵃᵇ y) (paths (sym p ∙ q ∙ sym r ∙ s))
+                  (paths (sym p ∙ s ∙ sym r ∙ q))
+pathsᵃᵇLemmaL =
+  J> λ q r s → cong paths (sym (lUnit _)) ∙ com q r s ∙ cong paths (lUnit _)
 
-congPathsLemmaL : ∀ {ℓ} {A : Type ℓ} {x y : A} (z : _) (p : x ≡ z)  (q : x ≡ y)(r : x ≡ y) (s : x ≡ y)
-  → Path (z ≡ᵃᵇ y) (paths (sym p ∙ q ∙ sym r ∙ s)) (paths (sym p ∙ s ∙ sym r ∙ q))
-congPathsLemmaL = J> λ q r s → cong paths (sym (lUnit _)) ∙ com q r s ∙ cong paths (lUnit _)
-
-congPathsLemmaR : ∀ {ℓ} {A : Type ℓ} {x y : A} (z : _) (p : y ≡ z)  (q : x ≡ y)(r : x ≡ y) (s : x ≡ y)
-  → Path (x ≡ᵃᵇ z) (paths ((q ∙ sym r ∙ s) ∙ p)) (paths ((s ∙ sym r ∙ q) ∙ p))
-congPathsLemmaR = J> λ q r s → cong paths (sym (rUnit _)) ∙ com q r s ∙ cong paths (rUnit _)
+pathsᵃᵇLemmaR : ∀ {ℓ} {A : Type ℓ} {x y : A} (z : _)
+  (p : y ≡ z) (q : x ≡ y)(r : x ≡ y) (s : x ≡ y)
+  → Path (x ≡ᵃᵇ z) (paths ((q ∙ sym r ∙ s) ∙ p))
+                  (paths ((s ∙ sym r ∙ q) ∙ p))
+pathsᵃᵇLemmaR =
+  J> λ q r s → cong paths (sym (rUnit _)) ∙ com q r s ∙ cong paths (rUnit _)
 
 act≡ᵃᵇ : ∀ {ℓ} {A : Type ℓ} {x y : A} (p : x ≡ x) → x ≡ᵃᵇ y → x ≡ᵃᵇ y
 act≡ᵃᵇ p (paths x₁) = paths (p ∙ x₁)
-act≡ᵃᵇ {y = y} p (com q r s i) = congPathsLemmaL _ (sym p) q r s i
+act≡ᵃᵇ {y = y} p (com q r s i) = pathsᵃᵇLemmaL _ (sym p) q r s i
 
 actL·πᵃᵇ : ∀ {ℓ} {A : Type ℓ} {x y z : A} (p : x ≡ y) → y ≡ᵃᵇ z → x ≡ᵃᵇ z
 actL·πᵃᵇ p (paths q) = paths (p ∙ q)
-actL·πᵃᵇ p (com q r s i) = congPathsLemmaL _ (sym p) q r s i
+actL·πᵃᵇ p (com q r s i) = pathsᵃᵇLemmaL _ (sym p) q r s i
 
 ·πᵃᵇ : ∀ {ℓ} {A : Type ℓ} {x y z : A} → ∥ x ≡ᵃᵇ y ∥₂ → ∥ y ≡ᵃᵇ z ∥₂ → ∥ x ≡ᵃᵇ z ∥₂
 ·πᵃᵇ {x = x} {y} {z} = ST.rec2 squash₂ preMult
@@ -176,14 +161,16 @@ actL·πᵃᵇ p (com q r s i) = congPathsLemmaL _ (sym p) q r s i
   preMult (paths p) q = ∣ actL·πᵃᵇ p q ∣₂
   preMult (com p q r i) s = lem s i
     where
-    lem : (s : y ≡ᵃᵇ z) → ∣ actL·πᵃᵇ (p ∙ sym q ∙ r) s ∣₂ ≡ ∣ actL·πᵃᵇ (r ∙ sym q ∙ p) s ∣₂
-    lem = elimProp≡ᵃᵇ (λ _ → squash₂ _ _) λ s i → ∣ congPathsLemmaR _ s p q r i ∣₂
+    lem : (s : y ≡ᵃᵇ z) → ∣ actL·πᵃᵇ (p ∙ sym q ∙ r) s ∣₂
+                        ≡ ∣ actL·πᵃᵇ (r ∙ sym q ∙ p) s ∣₂
+    lem = elimProp≡ᵃᵇ (λ _ → squash₂ _ _) λ s i → ∣ pathsᵃᵇLemmaR _ s p q r i ∣₂
 
 symᵃᵇ : ∀ {ℓ} {A : Type ℓ} {x y : A} → x ≡ᵃᵇ y → y ≡ᵃᵇ x
 symᵃᵇ (paths x) = paths (sym x)
 symᵃᵇ {A = A} {x} {y} (com p q r i) = lem i
   where
-  lem : Path (y ≡ᵃᵇ x) (paths (sym (p ∙ sym q ∙ r))) (paths (sym (r ∙ sym q ∙ p)))
+  lem : Path (y ≡ᵃᵇ x) (paths (sym (p ∙ sym q ∙ r)))
+                      (paths (sym (r ∙ sym q ∙ p)))
   lem = cong paths (symDistr _ _ ∙ cong₂ _∙_ (symDistr _ _) refl
                   ∙ sym (GLaws.assoc _ _ _))
      ∙∙ com _ _ _
@@ -206,15 +193,18 @@ reflᵃᵇ = paths refl
 ·πᵃᵇlUnit = ST.elim (λ _ → isSetPathImplicit) (elimProp≡ᵃᵇ (λ _ → squash₂ _ _)
   λ p → cong ∣_∣₂ (cong paths (sym (lUnit _))))
 
-·πᵃᵇrCancel : ∀ {ℓ} {A : Type ℓ} {x y : A} (p : ∥ x ≡ᵃᵇ y ∥₂) → ·πᵃᵇ p (-πᵃᵇ p) ≡ ∣ reflᵃᵇ ∣₂
+·πᵃᵇrCancel : ∀ {ℓ} {A : Type ℓ} {x y : A} (p : ∥ x ≡ᵃᵇ y ∥₂)
+  → ·πᵃᵇ p (-πᵃᵇ p) ≡ ∣ reflᵃᵇ ∣₂
 ·πᵃᵇrCancel = ST.elim (λ _ → isSetPathImplicit) (elimProp≡ᵃᵇ (λ _ → squash₂ _ _)
   λ p → cong ∣_∣₂ (cong paths (rCancel _)))
 
-·πᵃᵇlCancel : ∀ {ℓ} {A : Type ℓ} {x y : A} (p : ∥ x ≡ᵃᵇ y ∥₂) → ·πᵃᵇ (-πᵃᵇ p) p ≡ ∣ reflᵃᵇ ∣₂
+·πᵃᵇlCancel : ∀ {ℓ} {A : Type ℓ} {x y : A} (p : ∥ x ≡ᵃᵇ y ∥₂)
+  → ·πᵃᵇ (-πᵃᵇ p) p ≡ ∣ reflᵃᵇ ∣₂
 ·πᵃᵇlCancel = ST.elim (λ _ → isSetPathImplicit) (elimProp≡ᵃᵇ (λ _ → squash₂ _ _)
   λ p → cong ∣_∣₂ (cong paths (lCancel _)))
 
-·πᵃᵇassoc : ∀ {ℓ} {A : Type ℓ} {x : A} (p q r : ∥ x ≡ᵃᵇ x ∥₂) → ·πᵃᵇ p (·πᵃᵇ q r)  ≡ ·πᵃᵇ (·πᵃᵇ p q) r
+·πᵃᵇassoc : ∀ {ℓ} {A : Type ℓ} {x : A} (p q r : ∥ x ≡ᵃᵇ x ∥₂)
+  → ·πᵃᵇ p (·πᵃᵇ q r)  ≡ ·πᵃᵇ (·πᵃᵇ p q) r
 ·πᵃᵇassoc = ST.elim3 (λ _ _ _ → isSetPathImplicit)
   (elimProp≡ᵃᵇ (λ _ → isPropΠ2 λ _ _ → squash₂ _ _)
    λ p → elimProp≡ᵃᵇ (λ _ → isPropΠ λ _ → squash₂ _ _)
@@ -246,21 +236,6 @@ IsMonoid.·IdL (isMonoid (isGroup (AbGroupStr.isAbGroup (snd (π₁ᵃᵇAbGroup
 ·InvR (isGroup (AbGroupStr.isAbGroup (snd (π₁ᵃᵇAbGroup A)))) = ·πᵃᵇrCancel
 ·InvL (isGroup (AbGroupStr.isAbGroup (snd (π₁ᵃᵇAbGroup A)))) = ·πᵃᵇlCancel
 IsAbGroup.+Comm (AbGroupStr.isAbGroup (snd (π₁ᵃᵇAbGroup A))) = ·πᵃᵇcomm
-
-module _ {ℓ} {G : Group ℓ} (H : AbGroup ℓ) (ϕ : GroupHom G (AbGroup→Group H)) where
-  fromAbelianization : AbGroupHom (AbelianizationAbGroup G) H
-  fst fromAbelianization = Abi.rec G (AbGroupStr.is-set (snd H)) (fst ϕ)
-    λ x y z → IsGroupHom.pres· (snd ϕ) _ _
-            ∙ cong₂ (AbGroupStr._+_ (snd H)) refl
-                (IsGroupHom.pres· (snd ϕ) _ _
-                ∙ AbGroupStr.+Comm (snd H) _ _
-                ∙ sym (IsGroupHom.pres· (snd ϕ) _ _))
-            ∙ sym (IsGroupHom.pres· (snd ϕ) _ _)
-  snd fromAbelianization =
-    makeIsGroupHom (Abi.elimProp2 _
-      (λ _ _ → AbGroupStr.is-set (snd H) _ _)
-      λ x y → IsGroupHom.pres· (snd ϕ) x y)
-
 
 Ωᵃᵇ→Abelianizeπ₁ : ∀ {ℓ} {A : Pointed ℓ} →  Ωᵃᵇ A → Abelianization (πGr 0 A)
 Ωᵃᵇ→Abelianizeπ₁ (paths x) = η ∣ x ∣₂
@@ -294,11 +269,7 @@ Iso.leftInv (fst (Abelianizeπ₁≅π₁ᵃᵇ A)) = Abi.elimProp _ (λ _ → i
   (ST.elim (λ _ → isOfHLevelPath 2 isset _ _) λ p → refl)
 snd (Abelianizeπ₁≅π₁ᵃᵇ A) = snd Abelianizeπ₁→π₁ᵃᵇ
 
-
 -πᵃᵇinvDistr : ∀ {ℓ} {A : Pointed ℓ} (p q : ∥ Ωᵃᵇ A ∥₂) → -πᵃᵇ {x = pt A} (·πᵃᵇ p q) ≡ ·πᵃᵇ (-πᵃᵇ p) (-πᵃᵇ q)
 -πᵃᵇinvDistr {A = A} p q =
   GroupTheory.invDistr (AbGroup→Group (π₁ᵃᵇAbGroup A)) p q
   ∙ ·πᵃᵇcomm _ _
-
-·πᵃᵇinvInv : ∀ {ℓ} {A : Pointed ℓ} (p : ∥ Ωᵃᵇ A ∥₂) → -πᵃᵇ (-πᵃᵇ p) ≡ p
-·πᵃᵇinvInv = GroupTheory.invInv (AbGroup→Group (π₁ᵃᵇAbGroup _))

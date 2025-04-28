@@ -13,7 +13,7 @@ open import Cubical.Foundations.Pointed
 open import Cubical.CW.Base
 open import Cubical.CW.Map
 open import Cubical.CW.Connected
-open import Cubical.CW.Homology
+open import Cubical.CW.Homology.Base
 open import Cubical.CW.Subcomplex
 
 

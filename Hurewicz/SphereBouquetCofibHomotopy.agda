@@ -16,7 +16,7 @@ open import Cubical.Functions.Morphism
 open import Cubical.CW.Base
 open import Cubical.CW.Map
 open import Cubical.CW.Connected
-open import Cubical.CW.Homology
+open import Cubical.CW.Homology.Base
 open import Cubical.CW.Subcomplex
 
 
@@ -45,7 +45,7 @@ open import Cubical.HITs.SetTruncation as ST
 
 
 open import Cubical.Homotopy.Group.Base
--- open import Cubical.Homotopy.Group.Properties
+open import Cubical.Homotopy.Group.Properties
 
 open import Cubical.Algebra.Group
 open import Cubical.Algebra.Group.Morphisms
@@ -450,7 +450,7 @@ snd (ΠGroupIso fam) = snd (ΠGroupHom λ a → GroupIso→GroupHom (fam a))
               (AbGroup→Group ℤ[Fin k ])
 πₙ⋁Sⁿ≅ℤ[] n k =
   compGroupIso
-    (GroupEquiv→GroupIso (connected→π'Equiv (suc n)
+    (GroupEquiv→GroupIso (connectedFun→π'Equiv (suc n)
       (pickPetalSwap , refl) (con k)))
     (πₙΠSⁿ≅ℤ (suc n) k)
   where
@@ -544,19 +544,19 @@ module πCofibBouquetMap (n k m : ℕ) (α : SphereBouquet∙ (suc (suc n)) (Fin
   snd α∘inr = ΣPathP ((snd α)
             , (compPath-filler' (λ i → inr (α .snd (~ i))) (sym (push (inl tt)))))
 
-  open πLES' inr'
+  open π'LES inr'
   
   con' : isConnectedFun (suc (suc n +ℕ suc n)) (α∘inr .fst)
   con' = isConnectedComp _ _ _ (isEquiv→isConnected _ (isoToIsEquiv is1) _) isConnected-toPullback
 
   con'' : isSurjective (π'∘∙Hom (suc n) α∘inr)
   con'' =
-    connected→π'Surj (suc n) _
+    connectedFun→π'Surj (suc n) _
       λ b → isConnectedSubtr' n (suc (suc (suc n)))
         (subst (λ n → isConnected (suc (suc n)) (fiber (fst α∘inr) b)) (+-suc n n) (con' b))
 
   surjectiveα : isSurjective (π'∘∙Hom (suc n) inr')
-  surjectiveα = connected→π'Surj (suc n) _ coninr
+  surjectiveα = connectedFun→π'Surj (suc n) _ coninr
 
   Iso1 : GroupIso (π'Gr (suc n) (cofib (fst α) , inl tt))
                   (π'Gr (suc n) (SphereBouquet∙ (suc (suc n)) (Fin k))
@@ -630,6 +630,7 @@ module πCofibBouquetMap (n k m : ℕ) (α : SphereBouquet∙ (suc (suc n)) (Fin
 
 -- Free/≅π₁ᵃᵇCofibBouquetMap
 
+-- GOOD!!
 π'CofibBouquetMap≅ℤ[]/BouquetDegree : {n m k : ℕ}
   (α : SphereBouquet∙ (suc (suc n)) (Fin m)
    →∙ SphereBouquet∙ (suc (suc n)) (Fin k))
