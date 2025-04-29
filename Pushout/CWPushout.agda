@@ -36,7 +36,7 @@ open import Cubical.Data.Nat
 open import Cubical.CW.Properties
 open import Cubical.Algebra.ChainComplex
 open import Cubical.CW.ChainComplex
-open import Cubical.CW.Homology
+open import Cubical.CW.Homology.Base
 open import Cubical.Algebra.Group.Morphisms
 
 open import Cubical.Foundations.Pointed
