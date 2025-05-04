@@ -20,6 +20,7 @@ open import Cubical.CW.Connected
 open import Cubical.CW.Homology.Base
 open import Cubical.CW.Approximation
 open import Cubical.CW.ChainComplex
+open import Cubical.Axiom.Choice
 
 open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
@@ -85,6 +86,78 @@ open import Cubical.Algebra.Group.Subgroup
 private
   variable
     ℓ : Level
+
+sphereToTrunc' : {ℓ : Level} (n : ℕ) {A : S⁻ n → Type ℓ}
+  → ((x : S⁻ n) → hLevelTrunc n (A x)) → ∥ ((x : S⁻ n) → A x) ∥₁
+sphereToTrunc' zero _ = ∣ (λ {()}) ∣₁
+sphereToTrunc' (suc n) = sphereToTrunc n
+
+-- "Obstruction theory".
+preLiftFromNDimFinCW : {Y Z : Type ℓ} (n : ℕ) (X : CWskel ℓ)
+  → (f : Y → Z)
+  → isConnectedFun n f
+  → (g : fst X n → Z)
+  → ∃[ l ∈ (fst X n → Y) ] (f ∘ l ≡ g)
+preLiftFromNDimFinCW zero X f isc g =
+  ∣ (λ x → ⊥.rec (X .snd .snd .snd .fst x))
+    , (funExt (λ x → ⊥.rec (X .snd .snd .snd .fst x))) ∣₁
+preLiftFromNDimFinCW {Y = Y} {Z} (suc n) X f isc =
+  subst (λ X → (g : X → Z) → ∃[ l ∈ (X → Y) ] (f ∘ l ≡ g))
+        (ua (invEquiv (X .snd .snd .snd .snd n)))
+        (λ g → PT.rec squash₁ (uncurry (main g))
+          (preLiftFromNDimFinCW n X f (isConnectedFunSubtr n 1 f isc) (g ∘ inl)))
+  where
+  α = X .snd .snd .fst n
+  Xₙ₊₁ = Pushout α fst
+
+  module _ (g : Xₙ₊₁ → Z) (l : fst X n → Y) (lcomm : f ∘ l ≡ g ∘ inl) where
+    P : Xₙ₊₁ → Type _
+    P x = fiber f (g x)
+
+    lem : (n' : ℕ) → n ≡ n' → (x : Fin (fst (X .snd) n))
+      → ∃[ s ∈ P (inr x) ]
+           (∥ (((t : S⁻ n)
+           → s ≡ ((l (α (x , t))) , (funExt⁻ lcomm (α (x , t)) ∙ cong g (push (x , t)))))) ∥₁)
+    lem zero p x = TR.rec squash₁
+      (λ a → ∣ a , ∣ (λ x → ⊥.rec (subst S⁻ p x)) ∣₁ ∣₁)
+      (subst (λ n → isConnectedFun (suc n) f) p isc
+             (g (inr x)) .fst)
+    lem (suc n') p x =
+      PT.map (λ F → (F ⋆S i0) , ∣ F ∣₁)
+      (sphereToTrunc' n {A = λ t →
+      Path (P (inr x))
+            (l (α (x , ⋆S)) , (funExt⁻ lcomm (α (x , ⋆S)) ∙ cong g (push (x , ⋆S))))
+            ((l (α (x , t))) , (funExt⁻ lcomm (α (x , t)) ∙ cong g (push (x , t)))) }
+           λ x → isConnectedPath n (isc _) _ _ .fst)
+      where
+      ⋆S : S⁻ n
+      ⋆S = subst S⁻ (sym p) (ptSn n')
+
+    lemImproved : (x : Fin (fst (X .snd) n))
+      → hLevelTrunc 1 (Σ[ s ∈ P (inr x) ]
+           ((((t : S⁻ n)
+           → s ≡ ((l (α (x , t))) , (funExt⁻ lcomm (α (x , t)) ∙ cong g (push (x , t))))))))
+    lemImproved x = PT.rec (isOfHLevelTrunc 1)
+      (uncurry (λ pinr → PT.rec (isOfHLevelTrunc 1)
+                                 (λ w → ∣ pinr , w ∣ₕ)))
+      (lem n refl x)
+
+    main : ∃[ l ∈ (Xₙ₊₁ → Y) ] (f ∘ l ≡ g)
+    main = TR.rec squash₁ (λ F
+      → ∣ (λ { (inl x) → l x
+              ; (inr x) → F x .fst .fst
+              ; (push (x , a) i) → F x .snd a (~ i) .fst})
+            , funExt (λ { (inl x) → funExt⁻ lcomm x
+                        ; (inr x) → F x .fst .snd
+                        ; (push (x , a) i) j
+                          → hcomp (λ k → λ {(i = i0) → compPath-filler
+                                                          (funExt⁻ lcomm (α (x , a)))
+                                                          (cong g (push (x , a))) (~ k) j
+                                           ; (i = i1) → F x .fst .snd j
+                                           ; (j = i0) → f (F x .snd a (~ i) .fst)
+                                           ; (j = i1) → g (push (x , a) (i ∨ ~ k))})
+                                  (F x .snd a (~ i) .snd j)}) ∣₁)
+           (invEq (_ , InductiveFinSatAC 1 _ _) lemImproved)
 
 record FinitePresentation (A : AbGroup ℓ) : Type ℓ where
   field
@@ -397,3 +470,15 @@ mapFromNSkel X = PT.rec (isPropΠ (λ _ → squash₁))
              (ua (invEquiv (Xstr .snd)))
              ((CW↪∞ ((Xstr .fst .fst) , (Xstr .fst .snd .fst)) n)
              , (isConnected-CW↪∞ n ((Xstr .fst .fst) , (Xstr .fst .snd .fst)))) ∣₁}
+
+liftFromNDimFinCW : (n : ℕ) {Y Z : Type ℓ}
+  (f : Y → Z) (X : Type ℓ) (hX : isNDimFinCW n X)
+  (hf : isConnectedFun n f) (g : X → Z)
+  → ∃[ l ∈ (X → Y) ] (f ∘ l ≡ g)
+liftFromNDimFinCW n {Y} {Z} f X =
+  PT.rec (isPropΠ2 (λ _ _ → squash₁))
+   λ Xstr cf
+     → subst (λ X → (g : X → Z) → ∃-syntax (X → Y) (λ l → f ∘ l ≡ g))
+              (ua (compEquiv (isoToEquiv (realiseFin n (Xstr .fst))) (invEquiv (Xstr .snd))))
+              (preLiftFromNDimFinCW n
+                (Xstr .fst .fst , Xstr .fst .snd .fst) f cf)
