@@ -2,7 +2,7 @@
 module Hurewicz.SFT where
 
 open import Cubical.CW.Subcomplex
-open import Hurewicz.random
+-- open import Hurewicz.random
 
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Equiv
@@ -63,13 +63,12 @@ open import Cubical.Relation.Nullary
 open import Cubical.CW.Instances.Sn
 open import Cubical.CW.Homology.Groups.Sn
 
-open import Hurewicz.SphereBouquetCofib2
+open import Hurewicz.SphereBouquetCofib
 open import Hurewicz.SphereBouquetCofibHomotopy
 open import Hurewicz.SphereBouquetCofibHomotopyP2
 open import Cubical.HITs.Bouquet
 open import Cubical.HITs.FreeGroup.Base
 
-open import Hurewicz.SphereBouquetCofib2
 open import Hurewicz.SphereBouquetCofibHomotopy
 open import Hurewicz.SphereBouquetCofibHomotopyP2
 open import Hurewicz.Map
