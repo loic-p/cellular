@@ -63,15 +63,11 @@ open import Cubical.Relation.Nullary
 open import Cubical.CW.Instances.Sn
 open import Cubical.CW.Homology.Groups.Sn
 
-open import Hurewicz.SphereBouquetCofib
-open import Hurewicz.SphereBouquetCofibHomotopy
-open import Hurewicz.SphereBouquetCofibHomotopyP2
+open import Cubical.Homotopy.Group.PiAbCofibFinSphereBouquetMap
+open import Cubical.Homotopy.Group.PiCofibFinSphereBouquetMap
 open import Cubical.HITs.Bouquet
 open import Cubical.HITs.FreeGroup.Base
 
-open import Hurewicz.SphereBouquetCofibHomotopy
-open import Hurewicz.SphereBouquetCofibHomotopyP2
-open import Hurewicz.Map
 open import Cubical.HITs.Bouquet
 open import Cubical.HITs.FreeGroup.Base
 
@@ -81,6 +77,8 @@ open import Cubical.HITs.Truncation as TR
 open import Cubical.CW.Properties
 open import Cubical.Algebra.Group.QuotientGroup
 open import Cubical.Algebra.Group.Subgroup
+
+open import Hurewicz.Map
 
 private
   variable
@@ -175,7 +173,8 @@ isFPπSphereBouquetCofib :  {n m k : ℕ}
 nGens (isFPπSphereBouquetCofib {n = n} {m = m} {k = k} α) = k
 nRels (isFPπSphereBouquetCofib {n = n} {m = m} {k = k} α) = m
 rels (isFPπSphereBouquetCofib {n = n} {m = m} {k = k} α) = bouquetDegree (fst α)
-fpiso (isFPπSphereBouquetCofib {n = n} {m = m} {k = k} α) = π'CofibBouquetMap≅ℤ[]/BouquetDegree α
+fpiso (isFPπSphereBouquetCofib {n = n} {m = m} {k = k} α) =
+  π'CofibFinSphereBouquetMap≅ℤ[]/BouquetDegree α
 
 module _ (X : Pointed ℓ-zero) (n : ℕ) (hX : isConnectedCW (1 +ℕ n) (typ X)) (cX : isConnected (3 +ℕ n) (typ X))
   (cX' : isConnected 2 (hX .fst .fst (suc (suc (suc (suc n))))))
@@ -207,7 +206,7 @@ module _ (X : Pointed ℓ-zero) (n : ℕ) (hX : isConnectedCW (1 +ℕ n) (typ X)
                      (ΣPathP ((sym (cong fst e)) , pp)))
                      (isFPπSphereBouquetCofib α))
       (help α (cong fst e))})
-      ((e3 (suc n) (fst X)
+      ((connectedCW≃CofibFinSphereBouquetMap (suc n) (fst X)
       hX
       (subCW (4 +ℕ n) ((fst X)
         , ((hX .fst .fst , hX .fst .snd .fst)
