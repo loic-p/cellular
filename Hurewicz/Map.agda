@@ -1,8 +1,11 @@
 {-# OPTIONS --cubical --lossy-unification #-}
+{-
+This file contains
+1. a construction of the Hurewicz map πₙᵃᵇ(X) → H̃ᶜʷₙ(X),
+2. a proof that it's a homomorphism, and
+3. the fact that it is an equivalence when X in (n-1)-connected
+-}
 module Hurewicz.Map where
-
-open import Cubical.CW.Subcomplex
-open import Cubical.CW.Homology.Groups.Subcomplex
 
 open import Cubical.Foundations.Prelude
 open import Cubical.Foundations.Equiv
@@ -15,11 +18,18 @@ open import Cubical.Foundations.Univalence
 open import Cubical.Foundations.Path
 
 open import Cubical.CW.Base
+open import Cubical.CW.Properties
 open import Cubical.CW.Map
 open import Cubical.CW.Connected
-open import Cubical.CW.Homology.Base
+open import Cubical.CW.Subcomplex
 open import Cubical.CW.Approximation
 open import Cubical.CW.ChainComplex
+open import Cubical.CW.Instances.Sn
+open import Cubical.CW.Instances.SphereBouquetMap
+open import Cubical.CW.Homology.Base
+open import Cubical.CW.Homology.Groups.Sn
+open import Cubical.CW.Homology.Groups.SphereBouquetMap
+open import Cubical.CW.Homology.Groups.Subcomplex
 
 open import Cubical.Data.Empty as ⊥
 open import Cubical.Data.Nat renaming (_+_ to _+ℕ_)
@@ -29,7 +39,6 @@ open import Cubical.Data.Nat.Order.Inductive
 open import Cubical.Data.Sigma
 open import Cubical.Data.FinSequence
 open import Cubical.Data.Int
-open import Cubical.Data.Unit
 
 open import Cubical.HITs.S1
 open import Cubical.HITs.Sn
@@ -48,6 +57,7 @@ open import Cubical.HITs.Wedge
 open import Cubical.Homotopy.Group.Base
 open import Cubical.Homotopy.Group.Properties
 open import Cubical.Homotopy.Connected
+open import Cubical.Homotopy.Group.PiAbCofibFinSphereBouquetMap
 
 open import Cubical.Algebra.Group
 open import Cubical.Algebra.Group.Morphisms
@@ -59,24 +69,6 @@ open import Cubical.Algebra.AbGroup.Instances.FreeAbGroup
 
 open import Cubical.Relation.Nullary
 
-open import Cubical.CW.Instances.Sn
-open import Cubical.CW.Homology.Groups.Sn
-
-open import Cubical.CW.Instances.SphereBouquetMap
-open import Cubical.CW.Homology.Groups.SphereBouquetMap
-
-open import Cubical.Homotopy.Group.PiAbCofibFinSphereBouquetMap
-open import Cubical.HITs.Bouquet
-open import Cubical.HITs.FreeGroup.Base
-
-open import Cubical.HITs.Bouquet
-open import Cubical.HITs.FreeGroup.Base
-
-
-open import Cubical.Homotopy.Connected
-open import Cubical.HITs.Truncation as TR
-open import Cubical.CW.Properties
-
 open Iso renaming (inv to inv')
 open FinSequenceMap
 
@@ -84,9 +76,7 @@ private
   variable
     ℓ ℓ' : Level
 
-
-
-
+-- Generators of ℤ[k] with locked definitions for faster type checking
 private
   module _ {k : ℕ} (w : Fin k) (x : _) where
     ℤFinGenerator* : lockUnit {ℓ} → ℤ
@@ -104,7 +94,9 @@ private
     ... | (eq p) = refl
     ... | (gt ineq) = ⊥.rec (¬m<ᵗm (subst (fst x <ᵗ_) aye ineq))
 
--- Construction of the Hurewicz map πₙ(X) → H̃ᶜₙʷ(X)
+--- Parts 1 and 2: construction of map and homomorphism proof ---
+
+-- Construction of the Hurewicz map πₙ(X) → H̃ᶜʷₙ(X)
 module _ where
   -- variations of the map
   preHurewiczMap : {n : ℕ} (X : CW ℓ) (x : fst X)
@@ -147,7 +139,6 @@ module _ where
 
      X' : CW ℓ
      X' = realise Xsk , ∣ Xsk , idEquiv (realise Xsk) ∣₁
-
 
      main : (x₁ : fst Xsk 1) (x : realise Xsk) (y : CW↪∞ Xsk 1 x₁ ≡ x)
        (f g : π' (suc n) (realise Xsk , x))
@@ -549,7 +540,7 @@ module _ where
               (g : _) (gp : incl∙ Xsk x₀ ∘∙ g' ≡ g) → goalTy f g
        goal = J> (J> goal')
 
-  -- THe Hurewicz map as a group homomorphism 
+  -- THe Hurewicz map as a group homomorphism
   HurewiczHom : {n : ℕ} (X : CW ℓ) (x : fst X) (conX : isConnected 2 (fst X))
               → GroupHom (π'Gr n (fst X , x)) (H̃ᶜʷ X (suc n))
   fst (HurewiczHom {n = n} X x conX) = HurewiczMap X x
@@ -586,11 +577,13 @@ snd (HurewiczHomAb X x isC n) = makeIsGroupHom
   (Abi.elimProp2 _ (λ _ _ → GroupStr.is-set (snd (H̃ᶜʷ X (suc n))) _ _)
     (IsGroupHom.pres· (HurewiczHom X x isC .snd)))
 
+
+--- Part 3: proof of the Hurewicz theorem ---
+
 -- The Hurewicz map is an equivalence on cofibres of sphere bouquets
 private
  makeHurewiczMapCofibEquiv :
-   {n m k : ℕ} (α : SphereBouquet∙ (suc n) (Fin m)
-                 →∙ SphereBouquet∙ (suc n) (Fin k))
+   {n m k : ℕ} (α : FinSphereBouquetMap∙ m k n)
    (ϕ : GroupHom (AbelianizationGroup (π'Gr n (cofib∙ (fst α))))
                  (H̃ˢᵏᵉˡ (SphereBouquet/ˢᵏᵉˡ (fst α)) (suc n)))
    → ((k : _) → fst ϕ (πᵃᵇFinSphereBouquetMapGenerator α k)
@@ -613,7 +606,7 @@ private
        (isGen-genH̃ˢᵏᵉˡSphereBouquet/ˢᵏᵉˡ (fst α) k)
 
 HurewiczMapCofibEquiv : ∀ {n m k : ℕ}
-  → (α : (SphereBouquet∙ (suc n) (Fin m)) →∙ SphereBouquet∙ (suc n) (Fin k))
+  → (α : FinSphereBouquetMap∙ m k n)
   → (isC : isConnected 2 (cofib (fst α)))
   → isEquiv (fst (HurewiczHomAb (SphereBouquet/ᶜʷ (fst α)) (inl tt) isC n))
 HurewiczMapCofibEquiv {n = n} {m} {k} α isC = makeHurewiczMapCofibEquiv α
@@ -649,7 +642,7 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC = makeHurewiczMapCofibEquiv α
 
   -- some abbreviations
   module _ (n : ℕ)
-    (α : SphereBouquet∙ (suc n) (Fin m) →∙ SphereBouquet∙ (suc n) (Fin k))
+    (α : FinSphereBouquetMap∙ m k n)
     (trich₁ : _) (trich₂ : _) where
 
     CTB' = BouquetFuns.CTB (suc n)
@@ -682,16 +675,14 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC = makeHurewiczMapCofibEquiv α
         ∘ preπ'FinSphereBouquetMapGenerator α w .fst
         ∘ invEq (isCWSphere (suc n) .snd)
 
-  Sⁿ→cofib : {n : ℕ} (m k : _) (α : SphereBouquet∙ (suc n) (Fin m)
-      →∙ SphereBouquet∙ (suc n) (Fin k))
+  Sⁿ→cofib : {n : ℕ} (m k : _) (α : FinSphereBouquetMap∙ m k n)
       (w : Fin k) (r : _) (P : _)
       → Sgen.Sfam (suc n) r P → SphereBouquet/FamGen m k (fst α) r P
   Sⁿ→cofib m k α w (suc r) (lt x) s = tt
   Sⁿ→cofib m k α w (suc r) (eq x) s = inr (w , s)
   Sⁿ→cofib m k α w (suc r) (gt x) s = inr (inr (w , s))
 
-  Sⁿ→cofib≡  : {n : ℕ} (m k : _) (α : SphereBouquet∙ (suc n) (Fin m)
-      →∙ SphereBouquet∙ (suc n) (Fin k))
+  Sⁿ→cofib≡  : {n : ℕ} (m k : _) (α : FinSphereBouquetMap∙ m k n)
       (w : Fin k) (r : _) (P : _) (Q : _) (x : Sgen.Sfam (suc n) r Q)
      → invEq (SphereBouquet/EqGen m k r (fst α)
                (Trichotomyᵗ-suc P) P Q)
@@ -708,8 +699,7 @@ HurewiczMapCofibEquiv {n = n} {m} {k} α isC = makeHurewiczMapCofibEquiv α
   Sⁿ→cofib≡  m k α w (suc r) (gt s) (eq t) x = refl
   Sⁿ→cofib≡  m k α w (suc r) (gt s) (gt t) x = refl
 
-  module _ (n : ℕ)
-    (α : SphereBouquet∙ (suc n) (Fin m) →∙ SphereBouquet∙ (suc n) (Fin k)) where
+  module _ (n : ℕ) (α : FinSphereBouquetMap∙ m k n) where
     cofib→cofib : (w : _) (n' : Fin (suc (suc (suc n)))) (P : _) (Q : _)
      → cofib (invEq (SαEqGen (suc n) (fst n') (Trichotomyᵗ-suc P) Q) ∘ inl)
      → cofib (invEq (SphereBouquet/EqGen m k (fst n') (fst α)
@@ -1228,138 +1218,55 @@ private
                      (λ z → secEq e∞ (incl (Xˢᵘᵇ→∙X₃₊ₙ .fst (fst g z))) (~ i))
                              .fst (genHₙSⁿ n)
 
-open CWskel-fields
-
-connectedCWContr : (n m : ℕ) (l : m <ᵗ suc n) (X : Type) (cwX : isConnectedCW n X)
-  → isContr (fst (fst cwX) (suc m))
-connectedCWContr n zero l X cwX =
-  subst isContr (cong Fin (sym ((snd (fst cwX)) .snd .fst))
-                ∙ sym (ua (CW₁-discrete (fst (fst cwX)
-                                      , fst (snd (fst cwX))))))
-       (inhProp→isContr fzero isPropFin1)
-connectedCWContr n (suc m) l X cwX =
-  subst isContr
-    (ua (compEquiv (isoToEquiv (PushoutEmptyFam
-      (¬Fin0 ∘ subst Fin (snd (fst cwX) .snd .snd m l) ∘ fst)
-      (¬Fin0 ∘ subst Fin (snd (fst cwX) .snd .snd m l))))
-      (invEquiv (snd (snd (snd (fst (snd (fst cwX))))) (suc m)))))
-    (connectedCWContr n m (<ᵗ-trans l <ᵗsucm) X cwX)
-
-connectedCW≃SphereBouquet : (n : ℕ) (X : Type) (cwX : isConnectedCW n X)
-  → fst (fst cwX) (suc (suc n))
-  ≃ SphereBouquet (suc n) (Fin (fst (fst (snd (fst cwX))) (suc n)))
-connectedCW≃SphereBouquet n X cwX =
-  compEquiv
-    (snd (snd (snd (fst (snd (fst cwX))))) (suc n))
-    (compEquiv
-     (pushoutEquiv _ _ _ fst
-       (idEquiv _)
-       (isContr→≃Unit (connectedCWContr n n <ᵗsucm X cwX))
-       (idEquiv _)
-       (λ _ _ → tt)
-       (λ i x → fst x))
-     (compEquiv (isoToEquiv (Iso-cofibFst-⋁ (λ A → S₊∙ n)))
-     (pushoutEquiv _ _ _ _ (idEquiv _) (idEquiv _)
-       (Σ-cong-equiv-snd (λ _ → isoToEquiv (invIso (IsoSucSphereSusp n))))
-       (λ _ _ → tt) (λ i x → x , IsoSucSphereSusp∙ n i))))
-
-connectedCW≃CofibFinSphereBouquetMap : (n : ℕ) (X : Type)
-  (cwX : isConnectedCW n X) (str : _)
-  → ∃[ α ∈ SphereBouquet∙ (suc n)
-              (A (connectedCWskel→CWskel (fst cwX)) (suc (suc n)))
-       →∙ SphereBouquet∙ (suc n)
-              (A (connectedCWskel→CWskel (fst cwX)) (suc n)) ]
-       ((fst cwX .fst (suc (suc (suc n)))) , str)
-      ≡ SphereBouquet/ᶜʷ  (fst α)
-connectedCW≃CofibFinSphereBouquetMap n X cwX str =
-  PT.rec squash₁
-  (λ {(x , ptz , t) → ∣ F x ptz t , Σ≡Prop (λ _ → squash₁) (isoToPath (e3' x ptz t)) ∣₁})
-  EX
-  where
-  open import Cubical.Axiom.Choice
-  CON : isConnected 2 (fst (fst cwX) (suc (suc n)))
-  CON = subst (isConnected 2) (ua (invEquiv (connectedCW≃SphereBouquet n X cwX)))
-          (isConnectedSubtr' n 2 isConnectedSphereBouquet')
-
-  EX : ∃[ x ∈ fst (fst cwX) (suc (suc n)) ]
-        (((a : Fin (fst (fst (snd (fst cwX))) (suc (suc n))))
-       → x ≡ fst (snd (fst (snd (fst cwX)))) (suc (suc n))
-               (a , ptSn (suc n)))
-       × (fst (connectedCW≃SphereBouquet n X cwX) x ≡ inl tt))
-  EX = TR.rec (isProp→isSet squash₁)
-    (λ x₀ → TR.rec squash₁
-      (λ pts → TR.rec squash₁ (λ F → ∣ x₀ , F , pts ∣₁)
-        (invEq (_ , InductiveFinSatAC 1 (fst (fst (snd (fst cwX))) (suc (suc n))) _)
-              λ a → isConnectedPath 1 CON _ _ .fst))
-      (isConnectedPath 1 (isConnectedSubtr' n 2 isConnectedSphereBouquet')
-        (fst (connectedCW≃SphereBouquet n X cwX) x₀) (inl tt) .fst))
-    (fst CON)
-
-  module _ (x : fst (fst cwX) (suc (suc n)))
-           (pts : (a : Fin (fst (fst (snd (fst cwX))) (suc (suc n))))
-                → x ≡ fst (snd (fst (snd (fst cwX)))) (suc (suc n)) (a , ptSn (suc n)))
-           (ptd : fst (connectedCW≃SphereBouquet n X cwX) x ≡ inl tt) where
-    F' : SphereBouquet (suc n) (Fin (fst (fst (snd (fst cwX))) (suc (suc n))))
-      → fst (fst cwX) (suc (suc n))
-    F' (inl tt) = x
-    F' (inr x) = fst (snd (fst (snd (fst cwX)))) (suc (suc n)) x
-    F' (push a i) = pts a i
-
-    F : SphereBouquet∙ (suc n) (Fin (fst (fst (snd (fst cwX))) (suc (suc n))))
-     →∙ SphereBouquet∙ (suc n) (Fin (fst (fst (snd (fst cwX))) (suc n)))
-    fst F = fst (connectedCW≃SphereBouquet n X cwX) ∘ F'
-    snd F = ptd
-
-    e3' : Iso (fst (fst cwX) (suc (suc (suc n)))) (cofib (fst F))
-    e3' =
-      compIso (equivToIso (compEquiv
-        (snd (snd (snd (fst (snd (fst cwX))))) (suc (suc n)))
-        (pushoutEquiv _ _ _ _ (idEquiv _) (connectedCW≃SphereBouquet n X cwX) (idEquiv _)
-          (λ i x → fst F (inr x))
-          (λ i x → fst x))))
-      (⋁-cofib-Iso (SphereBouquet∙ (suc n)
-                     (Fin (fst (fst (snd (fst cwX))) (suc n)))) F)
-
-
-HurewiczTheorem : (n : ℕ) (X : CW ℓ-zero) (conX : isConnected (suc (suc n)) (fst X)) (x : _)
+-- Finally, the main theorem
+HurewiczTheorem : (n : ℕ) (X : CW ℓ-zero)
+  (conX : isConnected (suc (suc n)) (fst X)) (x : _)
   → isEquiv (HurewiczHomAb X x (isConnectedSubtr' n 2 conX) n .fst)
-HurewiczTheorem n = uncurry λ X → PT.elim (λ _ → isPropΠ2  λ _ _ → isPropIsEquiv _)
-  λ cw isc → PT.rec (isPropΠ (λ _ → isPropIsEquiv _))
-    (λ cw' x → E X cw cw' isc x)
-    (makeConnectedCW n cw isc)
-  where
-  isEqTransport : (cw1 cw2 : CW ℓ) (P : cw1 ≡ cw2)
-    (con1 : isConnected 2 (fst cw1)) (con2 : isConnected 2 (fst cw2))
-    (x' : fst cw1) (x : fst cw2) (PP : PathP (λ i → fst (P i)) x' x)
-    → isEquiv (HurewiczHomAb cw1 x' con1 n .fst)
-    → isEquiv (HurewiczHomAb cw2 x con2 n .fst)
-  isEqTransport cw1 = J> λ con1 con2 x'
-    → J> subst (λ c → isEquiv (HurewiczHomAb cw1 x' c n .fst)) (isPropIsContr _ _)
+HurewiczTheorem n =
+  uncurry λ X → PT.elim (λ _ → isPropΠ2  λ _ _ → isPropIsEquiv _)
+   λ cw isc → PT.rec (isPropΠ (λ _ → isPropIsEquiv _))
+     (λ cw' → main X cw cw' isc)
+     (makeConnectedCW n cw isc)
+   where
+   isEqTransport : (cw1 cw2 : CW ℓ) (P : cw1 ≡ cw2)
+     (con1 : isConnected 2 (fst cw1)) (con2 : isConnected 2 (fst cw2))
+     (x' : fst cw1) (x : fst cw2) (PP : PathP (λ i → fst (P i)) x' x)
+     → isEquiv (HurewiczHomAb cw1 x' con1 n .fst)
+     → isEquiv (HurewiczHomAb cw2 x con2 n .fst)
+   isEqTransport cw1 =
+     J> λ con1 con2 x' →
+      J> (subst (λ c → isEquiv (HurewiczHomAb cw1 x' c n .fst))
+               (isPropIsContr _ _))
 
-  HA : (X : _) (cw cw' : _) → Path (CW ℓ) ((X , ∣ cw ∣₁)) (X , ∣ cw' ∣₁)
-  HA = λ X cw cw' → Σ≡Prop (λ _ → squash₁) refl
+   module _ (X : Type) (cw : isCW X) (cw' : isConnectedCW n X)
+            (isc : isConnected (suc (suc n)) X) (x : X) where
+     Xˢᵏᵉˡ Xˢᵏᵉˡ' : CWskel ℓ-zero
+     Xˢᵏᵉˡ = fst cw
+     Xˢᵏᵉˡ' = connectedCWskel→CWskel (fst cw')
 
+     Xᶜʷ Xᶜʷ' : CWexplicit ℓ-zero
+     Xᶜʷ = X , cw
+     Xᶜʷ' = X , Xˢᵏᵉˡ' , (invEquiv (snd cw'))
 
-
-  module _ (X : Type) (cw : isCW X) (cw' : isConnectedCW n X)
-           (isc : isConnected (suc (suc n)) X) (x : X) where
-    E : isEquiv (HurewiczHomAb (X , ∣ cw ∣₁) x (isConnectedSubtr' n 2 isc) n .fst)
-    E = isEqTransport (X , ∣ (fst cw' .fst , fst cw' .snd .fst)
-                      , invEquiv (snd cw') ∣₁)
-                      (X , ∣ cw ∣₁)
-          (Σ≡Prop (λ _ → squash₁) refl)
-          (isConnectedSubtr' n 2 isc)
-          (isConnectedSubtr' n 2 isc) x x refl
-          (preHurewiczLemma n (X , (fst cw' .fst , fst cw' .snd .fst) , invEquiv (snd cw'))
-            (isConnectedSubtr' n 2 isc)
-            (λ l str con' → PT.rec (isPropIsEquiv _)
-            (λ {(α , e) → TR.rec (isPropIsEquiv _)
-              (λ linl → isEqTransport _ (fst cw' .fst (suc (suc (suc n))) , str) (sym e)
-                              (subst (isConnected 2) (cong fst e) con')
-                              con'
-                              (inl tt)
-                              l
-                              (toPathP (sym linl))
-                              (HurewiczMapCofibEquiv α (subst (isConnected 2) (λ i → fst (e i)) con')))
-              (isConnectedPath 1 con' l (transport (sym (cong fst e)) (inl tt)) .fst)})
-                (connectedCW≃CofibFinSphereBouquetMap n X cw' str)) x)
+     main : isEquiv (HurewiczHomAb (X , ∣ cw ∣₁) x
+                      (isConnectedSubtr' n 2 isc) n .fst)
+     main =
+       isEqTransport (CWexplicit→CW Xᶜʷ') (CWexplicit→CW Xᶜʷ)
+           (Σ≡Prop (λ _ → squash₁) refl)
+           (isConnectedSubtr' n 2 isc)
+           (isConnectedSubtr' n 2 isc) x x refl
+           (preHurewiczLemma n Xᶜʷ'
+             (isConnectedSubtr' n 2 isc)
+             (λ l str con' → PT.rec (isPropIsEquiv _)
+             (λ {(α , e) → TR.rec (isPropIsEquiv _)
+               (λ linl → isEqTransport _ (_ , str) (sym e)
+                           (subst (isConnected 2) (cong fst e) con')
+                           con'
+                           (inl tt)
+                           l
+                           (toPathP (sym linl))
+                           (HurewiczMapCofibEquiv α
+                            (subst (isConnected 2) (λ i → fst (e i)) con')))
+                            (isConnectedPath 1 con' l
+                              (transport (sym (cong fst e)) (inl tt)) .fst)})
+             (connectedCW≃CofibFinSphereBouquetMap n X cw' str)) x)
